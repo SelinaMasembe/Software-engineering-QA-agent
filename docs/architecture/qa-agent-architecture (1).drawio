@@ -1,0 +1,257 @@
+<mxfile host="Electron" agent="claude" pages="3">
+  <diagram id="ctx" name="L1 · System context">
+    <mxGraphModel dx="1444" dy="825" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=none;strokeColor=none;fontColor=#16181d;fontSize=14;align=left;" value="&lt;b&gt;&lt;font face=&quot;Times New Roman&quot;&gt;Software-Engineering QA Agent&amp;nbsp;&lt;/font&gt;&lt;/b&gt;" vertex="1">
+          <mxGeometry height="34" width="1080" x="40" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="dev" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" value="&lt;b&gt;QA engineer&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Primary user. Opens a triage request, approves test scope, reviews and posts the drafted note.&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="320" x="420" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="sysz" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=4;container=1;collapsible=0;verticalAlign=top;align=left;spacingLeft=14;spacingTop=4;fontSize=11;fontStyle=1;dashed=0;fillColor=#ffffff;strokeColor=#454b57;fontColor=#454b57;" value="SYSTEM IN SCOPE" vertex="1">
+          <mxGeometry height="150" width="560" x="300" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="sys" parent="sysz" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#cce5ff;strokeColor=#36393d;" value="&lt;b&gt;QA Agent&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Grounds itself in a frozen repository, proposes tests, runs approved existing tests in a sandbox, explains failures, drafts an issue or PR note.&lt;/font&gt;" vertex="1">
+          <mxGeometry height="96" width="500" x="30" y="34" as="geometry" />
+        </mxCell>
+        <mxCell id="extz" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=4;container=1;collapsible=0;verticalAlign=top;align=left;spacingLeft=14;spacingTop=4;fontSize=11;fontStyle=1;dashed=1;dashPattern=6 4;fillColor=#f6f7f9;strokeColor=#767d8c;fontColor=#454b57;" value="EXTERNAL SYSTEMS" vertex="1">
+          <mxGeometry height="200" width="1080" x="40" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="llm" parent="extz" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" value="&lt;b&gt;LLM provider API&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;UNTRUSTED OUTPUT. Reasoning and drafting. Returns text and tool-call requests.&lt;/font&gt;" vertex="1">
+          <mxGeometry height="130" width="240" x="24" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="repo" parent="extz" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" value="&lt;b&gt;Frozen target repository&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 9.5px;&quot; color=&quot;#767d8c&quot;&gt;READ ONLY. Requirements, docs, source, existing tests, past issues. Pinned at a tag. Prompt-injection surface.&lt;/font&gt;" vertex="1">
+          <mxGeometry height="130" width="240" x="286" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="sbx" parent="extz" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#dae8fc;strokeColor=#6c8ebf;dashed=1;" value="&lt;b&gt;Sandbox runtime&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;UNTRUSTED EXECUTION. Disposable container. Allow-listed test node IDs, no network, no credentials, hard timeout.&lt;/font&gt;" vertex="1">
+          <mxGeometry height="130" width="240" x="548" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="gh" parent="extz" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="&lt;b&gt;GitHub API&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;WRITE, HUMAN-GATED. Issue and PR-note creation. One repository, issues:write only.&lt;/font&gt;" vertex="1">
+          <mxGeometry height="130" width="240" x="810" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="dev" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;exitX=0.343;exitY=1.006;exitDx=0;exitDy=0;exitPerimeter=0;" target="sysz" value="goal, approval decisions">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="529.8" y="205" />
+              <mxPoint x="530" y="205" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="sysz" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;exitX=0.65;exitY=0;exitDx=0;exitDy=0;entryX=0.763;entryY=1.03;entryDx=0;entryDy=0;entryPerimeter=0;" target="dev" value="proposals, traces, drafted note">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="sys" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;startArrow=blockThin;startFill=1;" target="llm" value="prompt + tool schemas / tool-call request">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="repo" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;" target="sys" value="read-only clone at a fixed tag">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="420" y="420" />
+              <mxPoint x="580" y="420" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="sys" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;startArrow=blockThin;startFill=1;" target="sbx" value="test node IDs / structured result">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="580" y="420" />
+              <mxPoint x="708" y="420" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="sys" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=light-dark(#050200, #d29050);fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;dashed=1;" target="gh" value="issue body, after approval only">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="cnt" name="L2 · Containers and trust zones">
+    <mxGraphModel dx="1422" dy="820" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="1300" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t2" value="&lt;b&gt;Container view — organised by trust boundary, not by component type&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=none;strokeColor=none;fontColor=#16181d;fontSize=14;align=left;" vertex="1" parent="1">
+          <mxGeometry x="40" y="16" width="1080" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="za" value="ZONE A · BROWSER — untrusted client" style="rounded=1;whiteSpace=wrap;html=1;arcSize=4;container=1;collapsible=0;verticalAlign=top;align=left;spacingLeft=14;spacingTop=4;fontSize=11;fontStyle=1;dashed=1;dashPattern=6 4;fillColor=#f6f7f9;strokeColor=#767d8c;fontColor=#454b57;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="1080" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="ui" value="&lt;b&gt;Web UI&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Request form, approval queue, trace viewer, drafted-note preview. Holds no credentials. Calls nothing but the orchestrator.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="za">
+          <mxGeometry x="24" y="34" width="500" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="zb" value="ZONE B · APPLICATION — trusted, deterministic" style="rounded=1;whiteSpace=wrap;html=1;arcSize=4;container=1;collapsible=0;verticalAlign=top;align=left;spacingLeft=14;spacingTop=4;fontSize=11;fontStyle=1;dashed=0;fillColor=#ffffff;strokeColor=#454b57;fontColor=#454b57;" vertex="1" parent="1">
+          <mxGeometry x="40" y="230" width="1080" height="400" as="geometry" />
+        </mxCell>
+        <mxCell id="orch" value="&lt;b&gt;Orchestrator&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Single entry point for every tool call. Owns authorization, path and test-ID allow-lists, argument schema validation, iteration cap, repeat-call detection, wall-clock budget, audit write.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#16181d;strokeColor=#16181d;fontColor=#ffffff;" vertex="1" parent="zb">
+          <mxGeometry x="24" y="36" width="1032" height="84" as="geometry" />
+        </mxCell>
+        <mxCell id="ret" value="&lt;b&gt;Retrieval service&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Ingestion, boundary-aware chunking, indexing, query. Returns evidence with a source path per chunk.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="zb">
+          <mxGeometry x="24" y="136" width="330" height="84" as="geometry" />
+        </mxCell>
+        <mxCell id="tools" value="&lt;b&gt;Tool layer&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;search_repo · read_file · run_tests · draft_issue. Each with input schema, output schema, authorization rule, defined failure response.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="zb">
+          <mxGeometry x="375" y="136" width="330" height="84" as="geometry" />
+        </mxCell>
+        <mxCell id="gate" value="&lt;b&gt;Approval gate&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Blocks the loop, emits a pending-action record, waits for a human decision, records decider and timestamp. No timeout auto-approve.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#fdf4e8;strokeColor=#a3560c;fontColor=#6b3c0a;" vertex="1" parent="zb">
+          <mxGeometry x="726" y="136" width="330" height="84" as="geometry" />
+        </mxCell>
+        <mxCell id="s_idx" value="&lt;b&gt;Index store&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;chunks, embeddings, provenance&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="zb">
+          <mxGeometry x="24" y="250" width="196" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="s_state" value="&lt;b&gt;Workflow state&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;session, goal, iteration count, observations&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="zb">
+          <mxGeometry x="232" y="250" width="196" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="s_mem" value="&lt;b&gt;Memory store&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;tests proposed, run or rejected, per module&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="zb">
+          <mxGeometry x="440" y="250" width="196" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="s_trace" value="&lt;b&gt;Trace store&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;prompt, retrieval, tool, latency, outcome&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="zb">
+          <mxGeometry x="648" y="250" width="196" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="s_prompt" value="&lt;b&gt;Prompt registry&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;versioned files, referenced by ID&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="zb">
+          <mxGeometry x="856" y="250" width="196" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="zc" value="ZONE C · AGENT RUNTIME — output treated as untrusted" style="rounded=1;whiteSpace=wrap;html=1;arcSize=4;container=1;collapsible=0;verticalAlign=top;align=left;spacingLeft=14;spacingTop=4;fontSize=11;fontStyle=1;dashed=1;dashPattern=6 4;fillColor=#f6f7f9;strokeColor=#767d8c;fontColor=#454b57;" vertex="1" parent="1">
+          <mxGeometry x="40" y="680" width="1080" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="loop" value="&lt;b&gt;Agent loop&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Sense context, plan, request one action, observe, re-plan or stop. Proposes, never executes. Cannot widen its own permissions or raise its own iteration cap.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="zc">
+          <mxGeometry x="24" y="38" width="500" height="84" as="geometry" />
+        </mxCell>
+        <mxCell id="mc" value="&lt;b&gt;Model client&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;HTTPS to the provider. Tool schemas declared per call. Retry and timeout policy owned here.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="zc">
+          <mxGeometry x="556" y="38" width="500" height="84" as="geometry" />
+        </mxCell>
+        <mxCell id="zd" value="ZONE D · SANDBOX — untrusted execution" style="rounded=1;whiteSpace=wrap;html=1;arcSize=4;container=1;collapsible=0;verticalAlign=top;align=left;spacingLeft=14;spacingTop=4;fontSize=11;fontStyle=1;dashed=1;dashPattern=6 4;fillColor=#fdf4e8;strokeColor=#a3560c;fontColor=#a3560c;" vertex="1" parent="1">
+          <mxGeometry x="40" y="870" width="1080" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="exec" value="&lt;b&gt;Sandbox executor&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Disposable container per run. Read-only copy of the frozen repo, stripped environment, network disabled, hard timeout, container destroyed afterwards.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="zd">
+          <mxGeometry x="24" y="40" width="500" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="split" value="&lt;b&gt;Two-track execution rule&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Tests already in the frozen repo may run on agent request. Tests the agent wrote go into a draft for human review and are never executed automatically.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#fdf4e8;strokeColor=#a3560c;fontColor=#6b3c0a;" vertex="1" parent="zd">
+          <mxGeometry x="556" y="40" width="500" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="ze" value="ZONE E · EXTERNAL WRITE — reachable only through the gate" style="rounded=1;whiteSpace=wrap;html=1;arcSize=4;container=1;collapsible=0;verticalAlign=top;align=left;spacingLeft=14;spacingTop=4;fontSize=11;fontStyle=1;dashed=1;dashPattern=6 4;fillColor=#fdf4e8;strokeColor=#a3560c;fontColor=#a3560c;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1070" width="1080" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="ghc" value="&lt;b&gt;GitHub client&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Token held in orchestrator config. Never in a prompt, never in the sandbox, never returned to the UI. Scoped to one repository.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="ze">
+          <mxGeometry x="24" y="36" width="500" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="f1" value="I1 · HTTP/JSON, SSE" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="ui" target="orch">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f2" value="I2 · context bundle, allowed tools, remaining iterations" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="orch" target="loop">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f3" value="one tool-call request or a final answer" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;exitX=0.85;exitY=0;exitDx=0;exitDy=0;entryX=0.85;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="loop" target="orch">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f4" value="I3 · messages API" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;startArrow=blockThin;startFill=1;" edge="1" parent="1" source="loop" target="mc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f5" value="I5 · query" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="orch" target="ret">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f6" value="I4 · validated args only" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="orch" target="tools">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f7" value="raise for run_tests and draft_issue" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#a3560c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;dashed=1;" edge="1" parent="1" source="tools" target="gate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f8" value="I6 · node IDs, timeout / status, stdout, stderr" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;startArrow=blockThin;startFill=1;" edge="1" parent="1" source="tools" target="exec">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f9" value="I8 · after approval only" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#a3560c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;dashed=1;" edge="1" parent="1" source="gate" target="ghc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f10" value="pending action, decision" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#a3560c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;dashed=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="gate" target="ui">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="walk" name="Request walkthrough">
+    <mxGraphModel dx="1422" dy="820" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="826" pageHeight="1400" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t3" value="&lt;b&gt;One request, traced end to end&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=none;strokeColor=none;fontColor=#16181d;fontSize=14;align=left;" vertex="1" parent="1">
+          <mxGeometry x="40" y="16" width="740" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="w1" value="&lt;b&gt;1 · Request opens a session&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Orchestrator creates the session, sets the iteration budget to five, starts a trace.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="1">
+          <mxGeometry x="60" y="70" width="560" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="w2" value="&lt;b&gt;2 · Memory is consulted first&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Which tests have already been proposed, run or rejected for this module? A membership check, so proposals already seen or declined are not repeated.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="1">
+          <mxGeometry x="60" y="176" width="560" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="we_w2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="w1" target="w2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="w3" value="&lt;b&gt;3 · Retrieval builds the context bundle&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Evidence returns with source paths. An unsupported question must return &#39;not in corpus&#39;.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="1">
+          <mxGeometry x="60" y="282" width="560" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="we_w3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="w2" target="w3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="w4" value="&lt;b&gt;4 · Agent plans one action&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Exactly one tool-call request with arguments. Nothing runs yet.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="1">
+          <mxGeometry x="60" y="388" width="560" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="we_w4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="w3" target="w4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="w5" value="&lt;b&gt;5 · Orchestrator validates&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Schema, path allow-list, test ID against the frozen manifest, permission, iteration count. A rejection is an observation fed back, not a crash.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="1">
+          <mxGeometry x="60" y="494" width="560" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="we_w5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="w4" target="w5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="w6" value="&lt;b&gt;6 · Read tools execute directly&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;search_repo and read_file are side-effect free, so no approval is needed.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="1">
+          <mxGeometry x="60" y="600" width="560" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="we_w6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="w5" target="w6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="w7" value="&lt;b&gt;7 · Test execution is approved once per session&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;HUMAN GATE. The human sees which tests, in which container, under what limits, and approves the scope rather than each call.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#fdf4e8;strokeColor=#a3560c;fontColor=#6b3c0a;" vertex="1" parent="1">
+          <mxGeometry x="60" y="706" width="560" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="we_w7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="w6" target="w7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="w8" value="&lt;b&gt;8 · Sandbox runs, then is destroyed&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Raw stdout and stderr to the trace store, a summary to the loop&#39;s observation.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="1">
+          <mxGeometry x="60" y="812" width="560" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="we_w8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="w7" target="w8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="w9" value="&lt;b&gt;9 · Loop re-plans or stops&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Hard stops: five iterations, wall-clock budget, an identical repeated call, or an iteration that yields no new information.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="1">
+          <mxGeometry x="60" y="918" width="560" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="we_w9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="w8" target="w9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="w10" value="&lt;b&gt;10 · Diagnosis is drafted with its evidence&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Predicted cause, supporting evidence, contradicting evidence, recommended checks. No patch is proposed.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="1">
+          <mxGeometry x="60" y="1024" width="560" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="we_w10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="w9" target="w10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="w11" value="&lt;b&gt;11 · Draft is written, not posted&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;HUMAN GATE. draft_issue stores a draft and returns its ID. Posting is a separate human action.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#fdf4e8;strokeColor=#a3560c;fontColor=#6b3c0a;" vertex="1" parent="1">
+          <mxGeometry x="60" y="1130" width="560" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="we_w11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="w10" target="w11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="w12" value="&lt;b&gt;12 · Outcome closes the loop&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;The verdict is recorded. Confirmed diagnoses enter memory, rejected proposals are remembered.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="1">
+          <mxGeometry x="60" y="1236" width="560" height="76" as="geometry" />
+        </mxCell>
+        <mxCell id="we_w12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="w11" target="w12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="we_back" value="re-plan, within the budget" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jumpStyle=arc;strokeColor=#767d8c;fontSize=10;fontColor=#454b57;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="w9" target="w4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n3" value="Stop conditions are the deliverable here.&#xa;An agent without them is not bounded, and&#xa;Week 5 asks for exactly this contract:&#xa;goal, tools, state, limits, stop." style="shape=note;whiteSpace=wrap;html=1;size=14;fontSize=10;align=left;verticalAlign=top;fillColor=#f6f7f9;strokeColor=#767d8c;fontColor=#454b57;spacingLeft=6;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="640" y="950" width="150" height="130" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
