@@ -1,0 +1,5 @@
+REQ-AUTH-01
+
+The authentication service must reject an incorrect password without creating
+a user session. It must return a result that distinguishes invalid credentials
+from an unavailable authentication service.
