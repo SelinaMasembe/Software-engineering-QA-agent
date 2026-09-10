@@ -1,12 +1,12 @@
 """Model-integration boundary for the Software-Engineering QA Agent."""
 
-from .model_integration import (
+from .client import (
     ChatCompletionsClient,
     ModelCallResult,
     ModelClient,
     TokenUsage,
 )
-from .pipeline import (
+from ..rag.pipeline import (
     PipelineResult,
     ProposalInput,
     generate_test_proposals,

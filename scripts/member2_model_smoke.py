@@ -13,8 +13,8 @@ import os
 import sys
 from pathlib import Path
 
-from qa_agent.model_integration import ChatCompletionsClient, ModelIntegrationError
-from qa_agent.pipeline import ProposalInput, generate_test_proposals
+from models.client import ChatCompletionsClient, ModelIntegrationError
+from rag.pipeline import ProposalInput, generate_test_proposals
 
 
 def build_parser() -> argparse.ArgumentParser:

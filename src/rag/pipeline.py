@@ -6,7 +6,7 @@ import json
 from dataclasses import dataclass
 from typing import Any, Callable, Generic, TypeVar
 
-from .model_integration import (
+from ..models.client import (
     IntegrationInputError,
     ModelCallResult,
     ModelClient,
