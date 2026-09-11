@@ -6,7 +6,7 @@ from .client import (
     ModelClient,
     TokenUsage,
 )
-from ..rag.pipeline import (
+from rag.pipeline import (
     PipelineResult,
     ProposalInput,
     generate_test_proposals,
