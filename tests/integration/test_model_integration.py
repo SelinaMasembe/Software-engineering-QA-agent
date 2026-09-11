@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import patch
 from urllib.error import HTTPError
 
-from qa_agent.model_integration import (
+from models.client import (
     ChatCompletionsClient,
     IntegrationInputError,
     ModelAuthenticationError,
@@ -17,7 +17,7 @@ from qa_agent.model_integration import (
     ModelTimeoutError,
     TokenUsage,
 )
-from qa_agent.pipeline import ProposalInput, generate_test_proposals
+from rag.pipeline import ProposalInput, generate_test_proposals
 
 
 VALID_OUTPUT = {
