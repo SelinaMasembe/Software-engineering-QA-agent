@@ -5,7 +5,7 @@ import unittest
 from unittest.mock import patch
 
 from models.client import ModelConfigurationError
-from config import build_model_client, load_model_settings
+from config.loader import build_model_client, load_model_settings
 
 
 class ModelConfigurationTests(unittest.TestCase):

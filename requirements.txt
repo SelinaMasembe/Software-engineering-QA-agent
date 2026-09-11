@@ -1,1 +1,1 @@
-certifi    #required by clients.py for SSL certificate verification
+certifi    #required by client.py for SSL certificate verification

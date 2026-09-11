@@ -100,15 +100,11 @@ These tests use mocks or scripted responses. They do not require a live API key.
 
 ```bash
 PYTHONPATH=src python3 scripts/member2_model_smoke.py \
-  --endpoint "$MODEL_ENDPOINT" \
-  --model "$MODEL_NAME" \
   --prompt-file docs/prompts/propose_action/v1.0.md \
   --prompt-version v1.0 \
   --requirement-id REQ-AUTH-01 \
   --requirement-file tests/fixtures/member2/login_requirement.txt \
-  --source-file tests/fixtures/member2/login_service.py \
-  --timeout "$MODEL_TIMEOUT_SECONDS" \
-  --max-tokens "$MODEL_MAX_TOKENS"
+  --source-file tests/fixtures/member2/login_service.py
 ```
 
 The smoke test sends one real request and prints sanitized evidence. It does not create or execute test files.

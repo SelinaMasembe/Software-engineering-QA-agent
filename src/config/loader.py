@@ -1,4 +1,4 @@
-"""Application configuration for the QA Agent model integration."""
+"""Load and validate application configuration from environment variables."""
 
 from __future__ import annotations
 
@@ -6,10 +6,7 @@ import os
 from dataclasses import dataclass
 from urllib.parse import urlparse
 
-from models.client import (
-    ChatCompletionsClient,
-    ModelConfigurationError,
-)
+from models.client import ChatCompletionsClient, ModelConfigurationError
 
 
 @dataclass(frozen=True)
@@ -26,10 +23,12 @@ class ModelSettings:
 
 def _required_environment(name: str) -> str:
     value = os.environ.get(name, "").strip()
+
     if not value:
         raise ModelConfigurationError(
             f"Required environment variable {name} is missing."
         )
+
     return value
 
 
@@ -45,6 +44,7 @@ def _parse_positive_float(name: str, value: str) -> float:
         raise ModelConfigurationError(
             f"Environment variable {name} must be greater than zero."
         )
+
     return parsed
 
 
@@ -60,6 +60,7 @@ def _parse_positive_int(name: str, value: str) -> int:
         raise ModelConfigurationError(
             f"Environment variable {name} must be greater than zero."
         )
+
     return parsed
 
 
@@ -68,6 +69,7 @@ def _parse_bool(name: str, value: str) -> bool:
 
     if normalized in {"true", "1", "yes", "on"}:
         return True
+
     if normalized in {"false", "0", "no", "off"}:
         return False
 
@@ -86,7 +88,7 @@ def _validate_endpoint(endpoint_url: str) -> None:
 
 
 def load_model_settings() -> ModelSettings:
-    """Load and validate model settings from environment variables."""
+    """Load and validate model settings from the process environment."""
 
     endpoint_url = _required_environment("MODEL_ENDPOINT")
     _validate_endpoint(endpoint_url)
@@ -98,10 +100,12 @@ def load_model_settings() -> ModelSettings:
         "MODEL_TIMEOUT_SECONDS",
         os.environ.get("MODEL_TIMEOUT_SECONDS", "30"),
     )
+
     max_tokens = _parse_positive_int(
         "MODEL_MAX_TOKENS",
         os.environ.get("MODEL_MAX_TOKENS", "1200"),
     )
+
     json_mode = _parse_bool(
         "MODEL_JSON_MODE",
         os.environ.get("MODEL_JSON_MODE", "true"),
@@ -118,7 +122,7 @@ def load_model_settings() -> ModelSettings:
 
 
 def build_model_client() -> ChatCompletionsClient:
-    """Construct the configured provider client."""
+    """Build a configured model client from validated environment settings."""
 
     settings = load_model_settings()
 

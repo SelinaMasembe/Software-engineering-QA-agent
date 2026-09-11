@@ -168,7 +168,9 @@ Software-engineering-QA-agent/
 ├── scripts/
 │   └── member2_model_smoke.py
 ├── src/
-│   ├── config.py
+│   ├── config/
+│        ├── __init__.py
+│        └── loader.py
 │   ├── models/
 │   │   ├── __init__.py
 │   │   └── client.py
@@ -248,16 +250,16 @@ The offline suite does not require an API key.
 The smoke test sends one real requirement and source-code example to the configured model:
 
 ```bash
+set -a
+source .env
+set +a
+
 PYTHONPATH=src python3 scripts/member2_model_smoke.py \
-  --endpoint "$MODEL_ENDPOINT" \
-  --model "$MODEL_NAME" \
   --prompt-file docs/prompts/propose_action/v1.0.md \
   --prompt-version v1.0 \
   --requirement-id REQ-AUTH-01 \
   --requirement-file tests/fixtures/member2/login_requirement.txt \
-  --source-file tests/fixtures/member2/login_service.py \
-  --timeout "$MODEL_TIMEOUT_SECONDS" \
-  --max-tokens "$MODEL_MAX_TOKENS"
+  --source-file tests/fixtures/member2/login_service.py
 ```
 
 A successful result includes:
@@ -276,7 +278,8 @@ The smoke test proposes an action. It does not create files, execute tests, or m
 |---|---|
 | `.env.example` | Safe template showing required environment variables |
 | `.env` | Local secrets and settings; never commit |
-| `src/config.py` | Loads and validates environment settings |
+| `src/config/loader.py` | Loads and validates environment settings |
+| `src/config/__init__.py` | Exposes the configuration loader interface |
 | `src/models/client.py` | Calls the configured model provider |
 | `scripts/member2_model_smoke.py` | Runs one live model interaction |
 | `tests/test_config.py` | Tests Member 5 configuration behavior |
