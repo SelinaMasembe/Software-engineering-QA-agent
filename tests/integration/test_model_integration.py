@@ -161,7 +161,7 @@ class PipelineTests(unittest.TestCase):
 
 
 class ChatCompletionsClientTests(unittest.TestCase):
-    @patch("qa_agent.model_integration.urlopen")
+    @patch("models.client.urlopen")
     def test_normalizes_successful_provider_response(self, mocked_urlopen) -> None:
         model_output = {"status": "success", "proposals": []}
         mocked_urlopen.return_value = FakeHTTPResponse(
@@ -195,12 +195,12 @@ class ChatCompletionsClientTests(unittest.TestCase):
             request.get_header("Authorization"), "Bearer test-key-never-log"
         )
 
-    @patch("qa_agent.model_integration.urlopen", side_effect=socket.timeout())
+    @patch("models.client.urlopen", side_effect=socket.timeout())
     def test_translates_socket_timeout(self, _mocked_urlopen) -> None:
         with self.assertRaisesRegex(ModelTimeoutError, "8 seconds"):
             make_client().generate(system_prompt="Prompt", user_content="Evidence")
 
-    @patch("qa_agent.model_integration.urlopen")
+    @patch("models.client.urlopen")
     def test_translates_authentication_failure_without_leaking_key(
         self, mocked_urlopen
     ) -> None:
@@ -217,7 +217,7 @@ class ChatCompletionsClientTests(unittest.TestCase):
 
         self.assertNotIn("test-key-never-log", str(context.exception))
 
-    @patch("qa_agent.model_integration.urlopen")
+    @patch("models.client.urlopen")
     def test_rejects_provider_response_without_assistant_text(
         self, mocked_urlopen
     ) -> None:
