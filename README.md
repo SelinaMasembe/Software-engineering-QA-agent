@@ -10,18 +10,6 @@ The system is intended to assist developers and QA engineers without replacing h
 
 ---
 
-## Problem Statement
-
-Put your work here.
-
----
-
-## Project Goal
-
-Put your work here.
-
----
-
 ## Target Users
 
 The primary users of the QA Agent are:
@@ -115,14 +103,6 @@ These boundaries are based on the selected Software-Engineering QA Agent use cas
 
 ---
 
-## Initial Architecture
-
-Put your work here.
-
-`docs/architecture/`
-
----
-
 ## Project Scope
 
 ### In Scope
@@ -167,48 +147,165 @@ Sensitive credentials and restricted information will not be committed to this r
 ## Repository Structure
 
 ```text
-software-engineering-qa-agent/
-│
+Software-engineering-QA-agent/
+├── .env.example
+├── .gitignore
 ├── README.md
-│
+├── requirements.txt
 ├── docs/
-│   ├── requirements/
 │   ├── architecture/
-│   ├── weekly-reports/
 │   ├── evaluation/
-│   └── prompts/
-│
-├── knowledge/
-│
-├── src/
-│
-├── tests/
-│
+│   ├── integration/
+│   ├── prompts/
+│   ├── requirements/
+│   ├── weekly reports/
+│   └── setup.md
 ├── evidence/
-│   ├── traces/
-│   └── screenshots/
-│
-├── demo/
-│
-└── .env.example
+│   ├── demo/
+│   ├── screenshots/
+│   └── traces/
+├── knowledge/
+├── scripts/
+│   └── member2_model_smoke.py
+├── src/
+│   ├── config/
+│        ├── __init__.py
+│        └── loader.py
+│   ├── models/
+│   │   ├── __init__.py
+│   │   └── client.py
+│   ├── prompts/
+│   │   └── loader.py
+│   └── rag/
+│       └── pipeline.py
+└── tests/
+    ├── fixtures/
+    ├── integration/
+    │   └── test_model_integration.py
+    ├── test_config.py
+    └── test_prompt_harness.py
 ```
 
-### Directory Purpose
+## Setup
 
-| Directory              | Purpose                                                             |
-| ---------------------- | ------------------------------------------------------------------- |
-| `docs/requirements/`   | Project requirements, charter, user stories and acceptance criteria |
-| `docs/architecture/`   | Architecture and system design documentation                        |
-| `docs/weekly-reports/` | Weekly progress reports                                             |
-| `docs/evaluation/`     | Evaluation plans and results                                        |
-| `docs/prompts/`        | Approved prompts and prompt documentation                           |
-| `knowledge/`           | Knowledge-base metadata and provenance information                  |
-| `src/`                 | Application and agent source code                                   |
-| `tests/`               | Automated tests                                                     |
-| `evidence/`            | Project evidence, traces and screenshots                            |
-| `demo/`                | Demonstration materials                                             |
+### Requirements
 
----
+- Python 3.10 or newer
+- A Google AI Studio API key
+- Internet access for live model requests
+
+### Create the virtual environment
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -r requirements.txt
+
+### Configure local environment variables
+
+Create a local environment file:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and add the API key. Never commit `.env` or place the key in a command-line argument.
+
+Load the variables into the current terminal session:
+
+```bash
+set -a
+source .env
+set +a
+```
+
+Activating `.venv` does not automatically load `.env`.
+
+## Running Tests
+
+### Member 5 configuration tests
+
+```bash
+PYTHONPATH=src python3 -m unittest tests.test_config -v
+```
+
+### Model integration tests
+
+These tests use mocks and do not contact Google:
+
+```bash
+PYTHONPATH=src python3 -m unittest tests.integration.test_model_integration -v
+```
+
+### Full offline test suite
+
+```bash
+PYTHONPATH=src python3 -m unittest discover -s tests -v
+```
+
+The offline suite does not require an API key.
+
+## Running the Live Smoke Test
+
+The smoke test sends one real requirement and source-code example to the configured model:
+
+```bash
+set -a
+source .env
+set +a
+
+PYTHONPATH=src python3 scripts/member2_model_smoke.py \
+  --prompt-file docs/prompts/propose_action/v1.0.md \
+  --prompt-version v1.0 \
+  --requirement-id REQ-AUTH-01 \
+  --requirement-file tests/fixtures/member2/login_requirement.txt \
+  --source-file tests/fixtures/member2/login_service.py
+```
+
+A successful result includes:
+
+- Model name
+- Prompt version
+- Request latency
+- Token usage
+- Structured model output
+
+The smoke test proposes an action. It does not create files, execute tests, or modify the repository.
+
+## Configuration Files
+
+| File | Purpose |
+|---|---|
+| `.env.example` | Safe template showing required environment variables |
+| `.env` | Local secrets and settings; never commit |
+| `src/config/loader.py` | Loads and validates environment settings |
+| `src/config/__init__.py` | Exposes the configuration loader interface |
+| `src/models/client.py` | Calls the configured model provider |
+| `scripts/member2_model_smoke.py` | Runs one live model interaction |
+| `tests/test_config.py` | Tests Member 5 configuration behavior |
+| `tests/integration/test_model_integration.py` | Tests model-client and pipeline behavior |
+
+## Troubleshooting
+
+### Missing environment variable
+
+Reload the environment:
+
+```bash
+set -a
+source .env
+set +a
+```
+
+## Security Rules
+
+- Never commit `.env`.
+- Never place a real API key in source code, screenshots, tests, or command history.
+- Revoke any key accidentally exposed in chat, logs, or screenshots.
+- Use synthetic or team-owned project data only.
+- Do not use production credentials or production data.
+- Review model-proposed actions before execution.
+- Keep provider errors free from API keys and other secrets.
 
 ## Team Roles
 
@@ -255,46 +352,6 @@ The project will follow these principles:
 5. **Deterministic controls** — permissions, validation and execution restrictions are enforced outside the language model.
 6. **No production access** — the agent will not directly control production systems.
 7. **Evidence-based development** — project decisions and evaluation results will be documented.
-
----
-
-## Current Project Status
-
-### Week 1 — Problem Framing and AI-Native Requirements
-
-Current activities include:
-
-- [x] Select Software-Engineering QA Agent use case
-- [ ] Complete Project Charter
-- [ ] Complete user stories and acceptance criteria
-- [ ] Complete AI Boundary Matrix
-- [ ] Complete initial architecture/context diagram
-- [ ] Create GitHub repository
-- [ ] Create ClickUp project
-- [ ] Assign Week 1 tasks
-- [ ] Collect GitHub and ClickUp evidence
-- [ ] Complete Week 1 progress report
-
-The project will be updated as each deliverable is completed.
-
----
-
-## Future Development
-
-Future project phases will focus on implementing and evaluating the bounded QA workflow.
-
-Potential development areas include:
-
-- Agent implementation
-- Approved tool integration
-- Sandbox test execution
-- Knowledge/context retrieval
-- Test-result analysis
-- Failure summarisation
-- Issue/PR drafting
-- Evaluation scenarios
-- Security and reliability testing
-- Demonstration and final evaluation
 
 ---
 
