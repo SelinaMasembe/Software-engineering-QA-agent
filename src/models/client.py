@@ -9,6 +9,8 @@ from time import perf_counter
 from typing import Any, Mapping, Protocol
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+import certifi
+import ssl
 
 
 class ModelIntegrationError(Exception):
@@ -145,9 +147,15 @@ class ChatCompletionsClient:
             method="POST",
         )
 
+        ssl_context = ssl.create_default_context(cafile=certifi.where())
         started = perf_counter()
+
         try:
-            with urlopen(request, timeout=self.timeout_seconds) as response:
+            with urlopen(
+                request,
+                timeout=self.timeout_seconds,
+                context=ssl_context,
+            ) as response:
                 response_body = response.read().decode("utf-8")
                 request_id = _read_request_id(response)
         except HTTPError as exc:
