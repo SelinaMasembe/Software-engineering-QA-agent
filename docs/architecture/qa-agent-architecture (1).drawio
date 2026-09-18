@@ -1,4 +1,4 @@
-<mxfile host="Electron" agent="claude" pages="3">
+<mxfile host="Electron" agent="claude" pages="4">
   <diagram id="ctx" name="L1 · System context">
     <mxGraphModel dx="1444" dy="825" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
       <root>
@@ -87,7 +87,7 @@
         <mxCell id="orch" value="&lt;b&gt;Orchestrator&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Single entry point for every tool call. Owns authorization, path and test-ID allow-lists, argument schema validation, iteration cap, repeat-call detection, wall-clock budget, audit write.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#16181d;strokeColor=#16181d;fontColor=#ffffff;" vertex="1" parent="zb">
           <mxGeometry x="24" y="36" width="1032" height="84" as="geometry" />
         </mxCell>
-        <mxCell id="ret" value="&lt;b&gt;Retrieval service&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Ingestion, boundary-aware chunking, indexing, query. Returns evidence with a source path per chunk.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="zb">
+        <mxCell id="ret" value="&lt;b&gt;Retrieval service&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Ingestion and provenance (M1) · chunking, index and query (M2) · context building (M3). Returns evidence with a source path per chunk. Detailed in L3.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="zb">
           <mxGeometry x="24" y="136" width="330" height="84" as="geometry" />
         </mxCell>
         <mxCell id="tools" value="&lt;b&gt;Tool layer&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;search_repo · read_file · run_tests · draft_issue. Each with input schema, output schema, authorization rule, defined failure response.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="zb">
@@ -96,7 +96,7 @@
         <mxCell id="gate" value="&lt;b&gt;Approval gate&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Blocks the loop, emits a pending-action record, waits for a human decision, records decider and timestamp. No timeout auto-approve.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#fdf4e8;strokeColor=#a3560c;fontColor=#6b3c0a;" vertex="1" parent="zb">
           <mxGeometry x="726" y="136" width="330" height="84" as="geometry" />
         </mxCell>
-        <mxCell id="s_idx" value="&lt;b&gt;Index store&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;chunks, embeddings, provenance&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="zb">
+        <mxCell id="s_idx" value="&lt;b&gt;Index store&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;chunks, term statistics, provenance&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="zb">
           <mxGeometry x="24" y="250" width="196" height="82" as="geometry" />
         </mxCell>
         <mxCell id="s_state" value="&lt;b&gt;Workflow state&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;session, goal, iteration count, observations&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="zb">
@@ -250,6 +250,92 @@
         </mxCell>
         <mxCell id="n3" value="Stop conditions are the deliverable here.&#xa;An agent without them is not bounded, and&#xa;Week 5 asks for exactly this contract:&#xa;goal, tools, state, limits, stop." style="shape=note;whiteSpace=wrap;html=1;size=14;fontSize=10;align=left;verticalAlign=top;fillColor=#f6f7f9;strokeColor=#767d8c;fontColor=#454b57;spacingLeft=6;spacingTop=2;" vertex="1" parent="1">
           <mxGeometry x="640" y="950" width="150" height="130" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="rag" name="L3 · Retrieval pipeline">
+    <mxGraphModel dx="1444" dy="825" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t4" value="&lt;b&gt;L3 · Retrieval pipeline — who builds each stage, and what crosses between them&lt;/b&gt;" style="text;html=1;fontSize=14;align=left;verticalAlign=middle;fontColor=#16181d;" vertex="1" parent="1">
+          <mxGeometry x="40" y="16" width="1080" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="taint" value="UNTRUSTED TEXT FROM THIS POINT DOWN — repository content travels as labelled evidence with provenance, never as instruction (R1)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=4;fontSize=10;align=center;verticalAlign=middle;fillColor=#fff8e6;strokeColor=#d9a441;dashed=1;fontColor=#8a6416;" vertex="1" parent="1">
+          <mxGeometry x="40" y="54" width="1080" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="r_repo" value="&lt;b&gt;Frozen target repository&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Read-only clone pinned at a fixed tag. Requirements, source, test logs. Nothing in the system writes to it (P4).&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="1">
+          <mxGeometry x="380" y="100" width="400" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="r_m1" value="&lt;b&gt;Corpus collection and provenance tagging&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Member 1 · src/ingestion/tag_provenance.py&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="1">
+          <mxGeometry x="380" y="196" width="400" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="r_chunk" value="&lt;b&gt;Boundary-aware chunking&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Member 2 · rag/chunking.py — prose blocks, top-level defs, log sections; line ranges preserved.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="1">
+          <mxGeometry x="380" y="292" width="400" height="68" as="geometry" />
+        </mxCell>
+        <mxCell id="r_index" value="&lt;b&gt;Index and lexical scoring&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Member 2 · rag/retriever.py — BM25 over locally built statistics. No external call.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="1">
+          <mxGeometry x="380" y="394" width="400" height="68" as="geometry" />
+        </mxCell>
+        <mxCell id="r_pol" value="&lt;b&gt;Answerability policy → not_in_corpus&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Member 2 · rag/retrieval.py — term-coverage and score floors. Decided in code, never by the model (P1).&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="1">
+          <mxGeometry x="380" y="496" width="400" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="r_ctx" value="&lt;b&gt;Context builder&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Member 3 · rag/context_builder.py — decides what the model is told, including when nothing was found.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="1">
+          <mxGeometry x="40" y="640" width="336" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="r_tool" value="&lt;b&gt;search_repo tool (Week 4)&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Member 3 · tools/schemas.py, tools/search_repo.py — wraps to_search_repo_output().&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="1">
+          <mxGeometry x="412" y="640" width="336" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="r_eval" value="&lt;b&gt;Fifteen-case evaluation&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Member 4 · tests/test_rag_eval.py — answerable and unanswerable questions.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="1">
+          <mxGeometry x="784" y="640" width="336" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="n_p4" value="Corpus is frozen and read-only. The pipeline never reads the repository itself, so the corpus stays one owned input." style="rounded=0;whiteSpace=wrap;html=1;fontSize=10;align=left;verticalAlign=top;spacing=6;fillColor=none;strokeColor=none;fontColor=#767d8c;" vertex="1" parent="1">
+          <mxGeometry x="40" y="196" width="310" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="n_prov" value="Provenance is attached before chunking and survives it, so every retrieved passage can still be cited (US-8, R6)." style="rounded=0;whiteSpace=wrap;html=1;fontSize=10;align=left;verticalAlign=top;spacing=6;fillColor=none;strokeColor=none;fontColor=#767d8c;" vertex="1" parent="1">
+          <mxGeometry x="40" y="292" width="310" height="68" as="geometry" />
+        </mxCell>
+        <mxCell id="n_pol" value="An unanswerable question returns not_in_corpus rather than a weak guess. The numbers behind the verdict are returned with it." style="rounded=0;whiteSpace=wrap;html=1;fontSize=10;align=left;verticalAlign=top;spacing=6;fillColor=none;strokeColor=none;fontColor=#767d8c;" vertex="1" parent="1">
+          <mxGeometry x="40" y="496" width="310" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="i_doc" value="&lt;b&gt;SourceDocument&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;source_path · text · doc_type · requirement_id?&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="1">
+          <mxGeometry x="810" y="196" width="310" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="i_chunk" value="&lt;b&gt;Chunk&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;chunk_id · text · source_path · start_line · end_line · requirement_id?&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="1">
+          <mxGeometry x="810" y="292" width="310" height="68" as="geometry" />
+        </mxCell>
+        <mxCell id="i_seam" value="&lt;b&gt;Retriever protocol&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;The swap point. An embedding backend replaces BM25 without changing anything downstream.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="1">
+          <mxGeometry x="810" y="394" width="310" height="68" as="geometry" />
+        </mxCell>
+        <mxCell id="i_res" value="&lt;b&gt;RetrievalResult&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;chunks · not_in_corpus · manifest · scores. to_search_repo_output() matches the Week 4 tool schema.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="1">
+          <mxGeometry x="810" y="496" width="310" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="r_leg1" value="Solid outline · built by Member 2 this week" style="rounded=0;whiteSpace=wrap;html=1;fontSize=10;align=left;verticalAlign=top;spacing=6;fillColor=none;strokeColor=none;fontColor=#767d8c;" vertex="1" parent="1">
+          <mxGeometry x="40" y="744" width="360" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="r_leg2" value="Dashed outline · owned by another member, or a later week" style="rounded=0;whiteSpace=wrap;html=1;fontSize=10;align=left;verticalAlign=top;spacing=6;fillColor=none;strokeColor=none;fontColor=#767d8c;" vertex="1" parent="1">
+          <mxGeometry x="412" y="744" width="440" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="re1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9.5;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;" edge="1" parent="1" source="r_repo" target="r_m1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="re2" value="SourceDocument[]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9.5;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;" edge="1" parent="1" source="r_m1" target="r_chunk">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="re3" value="Chunk[]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9.5;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;" edge="1" parent="1" source="r_chunk" target="r_index">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="re4" value="scored candidates" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9.5;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;" edge="1" parent="1" source="r_index" target="r_pol">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="re5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9.5;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="r_pol" target="r_ctx">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="re6" value="RetrievalResult" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9.5;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="r_pol" target="r_tool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="re7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9.5;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="r_pol" target="r_eval">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
