@@ -1,0 +1,56 @@
+$ PYTHONPATH=src python3 -m unittest tests.test_config tests.test_prompt_harness tests.test_rag_eval tests.integration.test_model_integration tests.integration.test_rag_pipeline -v
+# captured 2026-09-18T07:40:19Z
+
+test_builds_client_without_exposing_api_key_in_errors (tests.test_config.ModelConfigurationTests.test_builds_client_without_exposing_api_key_in_errors) ... ok
+test_loads_model_settings_from_environment (tests.test_config.ModelConfigurationTests.test_loads_model_settings_from_environment) ... ok
+test_rejects_invalid_boolean (tests.test_config.ModelConfigurationTests.test_rejects_invalid_boolean) ... ok
+test_rejects_missing_api_key (tests.test_config.ModelConfigurationTests.test_rejects_missing_api_key) ... ok
+test_rejects_non_https_endpoint (tests.test_config.ModelConfigurationTests.test_rejects_non_https_endpoint) ... ok
+test_every_case_response_is_schema_valid_json (tests.test_prompt_harness.OfflinePromptHarnessTests.test_every_case_response_is_schema_valid_json) ... ok
+test_offline_harness_matches_expectations_for_every_case (tests.test_prompt_harness.OfflinePromptHarnessTests.test_offline_harness_matches_expectations_for_every_case) ... ok
+test_category_counts_match_the_brief (tests.test_rag_eval.RagEvaluationTests.test_category_counts_match_the_brief) ... ok
+test_fifteen_cases_behave_as_documented (tests.test_rag_eval.RagEvaluationTests.test_fifteen_cases_behave_as_documented) ... ok
+test_unanswerable_cases_have_no_required_sources (tests.test_rag_eval.RagEvaluationTests.test_unanswerable_cases_have_no_required_sources) ... ok
+test_normalizes_successful_provider_response (tests.integration.test_model_integration.ChatCompletionsClientTests.test_normalizes_successful_provider_response) ... ok
+test_rejects_provider_response_without_assistant_text (tests.integration.test_model_integration.ChatCompletionsClientTests.test_rejects_provider_response_without_assistant_text) ... ok
+test_translates_authentication_failure_without_leaking_key (tests.integration.test_model_integration.ChatCompletionsClientTests.test_translates_authentication_failure_without_leaking_key) ... ok
+test_translates_socket_timeout (tests.integration.test_model_integration.ChatCompletionsClientTests.test_translates_socket_timeout) ... ok
+test_accepts_member_one_domain_parser_without_owning_domain_models (tests.integration.test_model_integration.PipelineTests.test_accepts_member_one_domain_parser_without_owning_domain_models) ... ok
+test_rejects_empty_evidence_before_calling_provider (tests.integration.test_model_integration.PipelineTests.test_rejects_empty_evidence_before_calling_provider) ... ok
+test_rejects_json_array_instead_of_object (tests.integration.test_model_integration.PipelineTests.test_rejects_json_array_instead_of_object) ... ok
+test_rejects_non_json_model_output (tests.integration.test_model_integration.PipelineTests.test_rejects_non_json_model_output) ... ok
+test_runs_model_and_returns_parsed_output_with_metadata (tests.integration.test_model_integration.PipelineTests.test_runs_model_and_returns_parsed_output_with_metadata) ... ok
+test_chunk_carries_source_path_and_line_numbers (tests.integration.test_rag_pipeline.ChunkingTests.test_chunk_carries_source_path_and_line_numbers) ... ok
+test_code_chunking_survives_a_file_that_does_not_parse (tests.integration.test_rag_pipeline.ChunkingTests.test_code_chunking_survives_a_file_that_does_not_parse) ... ok
+test_code_is_split_on_top_level_definitions (tests.integration.test_rag_pipeline.ChunkingTests.test_code_is_split_on_top_level_definitions) ... ok
+test_explicit_requirement_id_overrides_the_text_heuristic (tests.integration.test_rag_pipeline.ChunkingTests.test_explicit_requirement_id_overrides_the_text_heuristic) ... ok
+test_oversized_block_is_windowed_with_overlap (tests.integration.test_rag_pipeline.ChunkingTests.test_oversized_block_is_windowed_with_overlap) ... ok
+test_rejects_a_document_with_no_readable_text (tests.integration.test_rag_pipeline.ChunkingTests.test_rejects_a_document_with_no_readable_text) ... ok
+test_rejects_a_duplicate_source_path (tests.integration.test_rag_pipeline.ChunkingTests.test_rejects_a_duplicate_source_path) ... ok
+test_rejects_invalid_chunking_configuration (tests.integration.test_rag_pipeline.ChunkingTests.test_rejects_invalid_chunking_configuration) ... ok
+test_requirement_heading_is_joined_to_the_text_it_introduces (tests.integration.test_rag_pipeline.ChunkingTests.test_requirement_heading_is_joined_to_the_text_it_introduces) ... ok
+test_requirement_id_is_extracted_from_text (tests.integration.test_rag_pipeline.ChunkingTests.test_requirement_id_is_extracted_from_text) ... ok
+test_short_block_is_kept_rather_than_discarded (tests.integration.test_rag_pipeline.ChunkingTests.test_short_block_is_kept_rather_than_discarded) ... ok
+test_fingerprint_is_stable_and_changes_with_the_corpus (tests.integration.test_rag_pipeline.ContractTests.test_fingerprint_is_stable_and_changes_with_the_corpus) ... ok
+test_manifest_counts_documents_and_chunks (tests.integration.test_rag_pipeline.ContractTests.test_manifest_counts_documents_and_chunks) ... ok
+test_not_in_corpus_output_carries_no_chunks (tests.integration.test_rag_pipeline.ContractTests.test_not_in_corpus_output_carries_no_chunks) ... ok
+test_result_matches_the_search_repo_output_schema (tests.integration.test_rag_pipeline.ContractTests.test_result_matches_the_search_repo_output_schema) ... ok
+test_trace_record_excludes_chunk_text (tests.integration.test_rag_pipeline.ContractTests.test_trace_record_excludes_chunk_text) ... ok
+test_coverage_floor_is_the_control_for_not_in_corpus (tests.integration.test_rag_pipeline.RetrievalTests.test_coverage_floor_is_the_control_for_not_in_corpus) ... ok
+test_every_returned_chunk_carries_provenance (tests.integration.test_rag_pipeline.RetrievalTests.test_every_returned_chunk_carries_provenance) ... ok
+test_path_scope_restricts_results_to_one_area (tests.integration.test_rag_pipeline.RetrievalTests.test_path_scope_restricts_results_to_one_area) ... ok
+test_query_with_no_meaningful_terms_returns_not_in_corpus (tests.integration.test_rag_pipeline.RetrievalTests.test_query_with_no_meaningful_terms_returns_not_in_corpus) ... ok
+test_rejected_query_still_reports_why_it_was_rejected (tests.integration.test_rag_pipeline.RetrievalTests.test_rejected_query_still_reports_why_it_was_rejected) ... ok
+test_requirement_id_query_finds_its_requirement (tests.integration.test_rag_pipeline.RetrievalTests.test_requirement_id_query_finds_its_requirement) ... ok
+test_returns_the_relevant_requirement_first (tests.integration.test_rag_pipeline.RetrievalTests.test_returns_the_relevant_requirement_first) ... ok
+test_top_k_limits_the_number_of_chunks_returned (tests.integration.test_rag_pipeline.RetrievalTests.test_top_k_limits_the_number_of_chunks_returned) ... ok
+test_unanswerable_question_returns_not_in_corpus (tests.integration.test_rag_pipeline.RetrievalTests.test_unanswerable_question_returns_not_in_corpus) ... ok
+test_identifiers_are_split_into_searchable_words (tests.integration.test_rag_pipeline.TokenizerTests.test_identifiers_are_split_into_searchable_words) ... ok
+test_stopwords_and_single_characters_are_dropped (tests.integration.test_rag_pipeline.TokenizerTests.test_stopwords_and_single_characters_are_dropped) ... ok
+
+----------------------------------------------------------------------
+Ran 46 tests in 0.108s
+
+OK
+
+# exit code 0: 46 tests run (all passed)

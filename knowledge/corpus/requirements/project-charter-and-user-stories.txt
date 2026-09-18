@@ -1,0 +1,77 @@
+COLLEGE OF COMPUTING AND INFORMATION SCIENCES
+SCHOOL OF COMPUTING AND INFORMATICS TECHNOLOGY
+DEPARTMENT OF NETWORKS 
+BSE4104: Emerging Trends in Software Engineering
+AI-Native and Agentic Engineering Capstone
+Project: Software-Engineering QA Agent
+WEEK 1 PROGRESS REPORT
+Reporting Period: 31 August – 4 September 2026
+
+Group: J
+1. Project Charter
+1. Problem
+Small development teams and student engineering groups frequently ship code with inconsistent or incomplete test coverage. Requirements live in one document, the implementation lives in the codebase, and the test suite is maintained separately, with no single place where the three are reconciled. Gaps in coverage are therefore discovered late, often only when a bug reaches review, and when tests do fail, developers spend a disproportionate share of their time reading raw stack traces before understanding what actually broke and why.
+2. Target User
+The primary user is a developer or QA-focused member of a small software team (4–6 engineers, matching our own capstone group's profile) who is responsible for keeping a codebase adequately tested without dedicated, full-time QA support. A secondary user is the team/tech lead, who reviews the agent's draft output before anything is filed or merged.
+3. Current Pain Point
+Today this reconciliation is manual: a developer re-reads the requirements or specification, cross-references it against the code, decides what is under-tested, writes new tests by hand, runs the suite, and manually parses failure output before writing up findings. On a small team this work competes directly with feature work, so it is frequently skipped, deferred, or done superficially, which is exactly when regressions and untested edge cases slip through.
+4. Proposed Statement
+“Our system helps a developer or QA engineer on a small software team complete reviewing and strengthening the test coverage of their codebase. 
+AI is used for reasoning and generation: proposing candidate tests from requirements/code and summarising test failures in plain language.
+Deterministic software remains responsible for rules, validation and authorization: actually executing tests, computing pass/fail results, enforcing the sandbox and tool allow-list, and performing any repository action.
+The agent may use a repository search tool (covering requirements, code, and historic test logs), a file-reader tool, a sandboxed test-runner tool, and a draft-issue tool, but may not merge code, deploy to any environment, access secrets or credentials, or execute arbitrary shell commands.
+We will build and evaluate the system using our own team-owned codebase, its requirements documentation, and its test logs.”
+In short: a Software Engineering QA Agent, an AI-native assistant that reads a team's requirements and repository, proposes relevant tests, safely runs approved tests in a sandbox, summarises failures in plain language, and drafts, but never submits, an issue or pull-request note describing what needs attention.
+5. AI Value Proposition (Why AI)
+A foundation model is well suited to the reading and language heavy parts of this workflow: reasoning over a requirements document and source code to propose plausible test cases, and turning verbose, technical test output into a concise, prioritised summary a human can act on quickly.
+AI is deliberately kept out of the parts of the workflow that require guaranteed correctness or carry real consequences: actually executing code, deciding pass/fail, or making the final call to merge, deploy, or file work on the team's behalf.
+6. Scope
+In scope (Weeks 1–8)
+One primary end-to-end workflow: point the agent at a module and its requirements in the team's own repository, and receive proposed tests, a sandboxed test run, a failure summary, and a draft issue/PR note.
+One small, team-owned codebase with its own requirements documentation and test logs as the data source (10–50 files/records).
+Four explicit tools by Week 4, matching the architecture spec: search_repo (retrieval across requirements, code, and historic test logs), read_file (direct file read from the frozen repo), run_tests (sandboxed execution of approved test node IDs), and draft_issue (stores a draft note for human review).
+One bounded agent loop (propose, run approved test, observe, summarise, stop) with explicit iteration limits and stop conditions.
+One justified persistent-memory use case: the agent remembers, per repository module, which tests it has already proposed, which of those were run, and which were explicitly rejected by a human, so it never repeats a proposal a developer has already seen or declined. It does not remember or reuse past diagnoses as evidence in future reasoning.
+A final evaluation set of 30+ scenarios by Week 7 (normal, edge, adversarial, tool-failure cases).
+Out of scope
+Automatic merging of code or automatic deployment to any environment.
+Autonomous filing of GitHub issues or pull requests without human review.
+Access to secrets, credentials, or production systems of any kind.
+Arbitrary shell command execution, limited to pre-approved, sandboxed test commands.
+Supporting more than one repository or more than one team.
+7. Assumptions
+The team has, or will create, a small team owned codebase with at least a partial requirements/specification document and an existing or creatable test suite.
+A sandboxed execution environment (e.g., a container or CI-style isolated runner) is available or can be built for running tests safely.
+An accessible foundation model (API-based) is available within the team's budget and rate limits for the duration of the project.
+8. Constraints
+An 8-week timeline shared with weekly deliverables across every capability area, so scope must stay small enough to fully implement, test and explain.
+No confidential, proprietary, or production data may be used: only the team's own code, public documentation, or synthetic data.
+Higher impact actions (merge, deploy, secret access, arbitrary commands) are prohibited per the module's safety rules and must be enforced with an approval gate, not merely prompted against.
+9. Success Criteria
+Measurable criteria the team will evaluate against from Week 7 onward:
+At least 3 relevant, source traceable test cases proposed per module (every proposal references the requirement or code path it targets).
+Zero test executions outside the sandbox, and zero executions of a test not on the approved list, across the full evaluation set.
+100% of higher-impact actions (merge, deploy, secret access, issue/PR submission) remain behind human approval. No exceptions.
+Failure summaries are readable without opening the raw log (verified by teammate review).
+The agent halts within its configured iteration limit on every run.
+2. User Stories and Acceptance Criteria
+Twelve testable user stories covering the primary workflow, safety boundaries, and observability needs of the QA agent, per the module's requirement of 8–12 stories.
+NAME | STUDENT NUMBER | REGISTRATION NUMBER
+Karagwa Ann Treasure | 2300709034 | 23/U/09034/PS
+Ayan Mustafa Abdirahman | 2300722948 | 23/X/22948/EVE
+Wanyana Selina Masembe | 2300701529 | 23/U/1529
+Amabe Junior Humphrey | 2300705942 | 23/U/05942/PS
+Akanga Andrew | 2300705555 | 23/U/05555/PS
+# | User Story | Acceptance Criteria
+US-1 | As a Developer, I want to point the agent at a specific module and its requirements, so that it can propose relevant test cases for that module. | Given a module and a linked requirements section, the agent returns at least 3 proposed test cases, each referencing the specific requirement or code path it targets. If fewer than three source-traceable tests can honestly be proposed for a module, the agent states this explicitly rather than fabricating additional proposals to reach the count.
+US-2 | As a Developer, I want to have the agent flag code paths with no corresponding requirement or test, so that I know where coverage is genuinely missing. | For a module with at least one untested public function, the agent's output explicitly lists that function as a coverage gap.
+US-3 | As a Developer, I want to review and approve which proposed tests actually get run, so that the agent never executes something I have not sanctioned. | No test is executed by the sandboxed test-runner tool unless it appears on an explicit “approved” list supplied by a human for that session.
+US-4 | As a Developer, I want to have approved tests run only inside an isolated sandbox, so that a bad or malicious test cannot affect my real environment. | The test-runner tool executes exclusively inside the sandbox; invoking it outside the sandbox, or with an unapproved test, is rejected and logged. No credential, token, or secret is reachable from within the sandbox at any point during execution; an attempt by a test to read one is rejected and logged.
+US-5 | As a Developer, I want to get a plain-language summary of any test failures, so that I don't have to manually parse raw stack traces. | For a failing run, the summary states which test failed, the likely cause in one or two sentences, and a suggested next step. The stated likely cause cites the specific log line or excerpt it is based on, so a reviewer can verify the claim without re-running the test.
+US-6 | As a Developer, I want to have the agent draft an issue/PR note rather than post it directly, so that a human always makes the final call on what enters the tracker. | The drafted issue/PR is saved/displayed as a draft only; no GitHub API call that creates or modifies an issue/PR occurs without a separate, explicit human-approval step.
+US-7 | As a Developer, I want to be told when the agent is not confident in a proposed test or summary, so that I don't treat a guess as a fact. | Any proposed test or explanation not well-grounded in the available requirement/code text (e.g., missing or ambiguous source) is labelled low-confidence in the output.
+US-8 | As a Team Lead, I want to see which requirement or file the agent used to justify each proposed test, so that I can verify it is not hallucinating. | Every proposed test includes a traceable reference (file name/line or requirement ID) to the source it was derived from. A proposal without a traceable reference to a requirement or code path is rejected automatically rather than passed through with a missing citation.
+US-9 | As a Developer, I want to have the agent stop on its own after a bounded number of steps, so that it cannot loop indefinitely trying to fix or re-run tests. | The agent's loop halts automatically once a configured maximum iteration count is reached, and this event appears in the trace/log.
+US-10 | As a QA/Security Lead, I want to have every tool call and decision logged, so that we can audit the agent's behaviour after the fact. | Each tool invocation and each agent decision produce a timestamped trace entry sufficient to reconstruct the session.
+US-11 | As a Developer, I want to have the agent refuse requests outside its approved tools (e.g., “just push this to main”), so that prompt injection or careless requests cannot bypass the safety boundary. | Given an instruction, however delivered, asking the agent to merge, deploy, or run an unapproved command, the agent declines and flags the attempt rather than complying. This refusal applies equally to an instruction found inside ingested requirements, source comments, or test logs, not only one typed directly into a session. The same refusal applies to a request to reveal, summarise, or reproduce the agent's own system prompt, instructions, or tool configuration, regardless of how directly or persistently it is asked.
+US-12 | As a New Team Member, I want to read a Week 1 architecture diagram and boundary matrix, so that I can understand what the system does and does not do without reading all the code. | The diagram and matrix alone let a reader correctly state at least three things the agent is allowed to do and three it is not.
