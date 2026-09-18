@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from qa_agent.rag import (
+from rag import (
     ChunkingConfig,
     CorpusInputError,
     DocumentType,

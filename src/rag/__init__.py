@@ -1,8 +1,11 @@
 """Retrieval boundary for the Software-Engineering QA Agent.
 
-Other modules import from ``qa_agent.rag`` rather than from the files below, so
-the internal split between chunking, retrieval, and the pipeline can change
-without breaking Member 3's context builder or Member 4's evaluation harness.
+Other modules import from ``rag`` rather than from the files below, so the
+internal split between chunking, scoring, and the pipeline can change without
+breaking Member 3's context builder or Member 4's evaluation harness.
+
+Only the retrieval surface is re-exported here. The Week 2 proposal pipeline
+that also lives in this package stays available as ``rag.pipeline``.
 """
 
 from .chunking import (
@@ -16,7 +19,7 @@ from .chunking import (
     chunk_document,
     chunk_documents,
 )
-from .pipeline import (
+from .retrieval import (
     IndexManifest,
     RetrievalPipeline,
     RetrievalPolicy,
