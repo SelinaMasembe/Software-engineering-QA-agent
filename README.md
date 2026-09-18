@@ -151,6 +151,8 @@ Software-engineering-QA-agent/
 ├── .env.example
 ├── .gitignore
 ├── README.md
+├── .githooks/
+    ├── precommit
 ├── requirements.txt
 ├── docs/
 │   ├── architecture/
@@ -166,7 +168,9 @@ Software-engineering-QA-agent/
 │   └── traces/
 ├── knowledge/
 ├── scripts/
-│   └── member2_model_smoke.py
+    └── check_sensitive.py
+│   └── member1_types_smoke.py
+    └── member2_model_smoke.py
 ├── src/
 │   ├── config/
 │        ├── __init__.py
@@ -184,6 +188,7 @@ Software-engineering-QA-agent/
     │   └── test_model_integration.py
     ├── test_config.py
     └── test_prompt_harness.py
+    └── test_check_sensitive.py
 ```
 
 ## Setup
@@ -228,6 +233,20 @@ Activating `.venv` does not automatically load `.env`.
 ```bash
 PYTHONPATH=src python3 -m unittest tests.test_config -v
 ```
+
+### Member 5 sensitive data tests
+
+```bash
+python -m pip install -r requirements.txt
+python -m pytest -q
+python scripts/check_sensitive.py --all
+```
+
+exit code 0 means the sensitive-data scan passed;
+exit code 1 blocks the commit;
+.log, .env, key, database, and credential files must not be committed;
+test placeholders such as test-key are allowed;
+real API keys must never be added to tests or documentation.
 
 ### Model integration tests
 
