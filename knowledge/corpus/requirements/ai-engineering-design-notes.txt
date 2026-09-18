@@ -1,0 +1,78 @@
+COLLEGE OF COMPUTING AND INFORMATION SCIENCES
+SCHOOL OF COMPUTING AND INFORMATICS TECHNOLOGY
+DEPARTMENT OF NETWORKS 
+BSE4104: Emerging Trends in Software Engineering
+AI-Native and Agentic Engineering Capstone
+Project: Software-Engineering QA Agent
+WEEK 1 PROGRESS REPORT
+Reporting Period: 31 August – 4 September 2026
+
+Group: J
+AI ENGINEERING DESIGN NOTES
+Purpose
+This document is the AI Engineering Lead’s Week 1 contribution to the Software Engineering QA Agent: it sets out where AI adds value in the agent’s workflow versus where deterministic software must stay in control, specifies the agent’s bounded reasoning loop, defines the context bundle the model receives on every call, and drafts the four tool schemas ahead of Week 4 implementation. It assumes the project charter, user stories, system architecture, and AI Boundary Matrix already produced by the team, and cross-references them rather than repeating their content.
+AI vs Deterministic Task Allocation
+Every step in the primary workflow is assigned to exactly one of three actors: the foundation model, deterministic application code, or a human. The rule of thumb is that AI does the reading, reasoning, and drafting; deterministic code does anything that must be guaranteed correct or reversible; a human approves anything with real consequences.
+Table 1: AI vs deterministic task allocation across the Software Engineering QA Agent’s primary workflow.
+AI Value Justification (AI Engineering View)
+This expands the charter’s AI value statement with the reasoning behind it, for anyone reviewing the project from an AI engineering angle rather than a product angle.
+A foundation model earns its place in this system on three specific capabilities: reasoning across two different unstructured sources at once, natural-language requirements and source code, to find where they disagree; turning long, technical output into a short explanation a developer can act on without opening a raw log; and producing a structured tool-call request rather than free text, which is what makes it possible for deterministic code to validate an intended action before anything happens. That last point is the actual justification for building a bounded agent instead of a chatbot: the model’s output becomes an intent for the orchestrator to check, never an action it carries out itself.
+The same reasoning sets the boundary the other way. Nothing about executing a test, deciding pass or fail, or writing to GitHub benefits from a model’s involvement, and each of those carries real consequences if it goes wrong. Keeping AI out of them is not a conservative compromise; it is the correct allocation given what a foundation model is actually good at.
+Agent Reasoning Workflow (the Loop)
+The loop below is the AI-specific slice of the system: what happens between the moment the agent has context and the moment a human sees a result. It requests exactly one action at a time and always waits for an observation before planning the next one, which is what keeps a goal-directed loop bounded rather than open-ended.
+Figure 1: Agent reasoning loop: build context, propose one action, validate and gate, execute and observe, decide to stop or continue, draft diagnosis note.
+Four stop conditions apply regardless of what the model itself wants to do next: a hard iteration cap, a wall-clock budget, detection of an identical repeated call, and a step that yields no new information. All four are enforced by deterministic code, not by asking the model nicely to stop, which is the direct implementation of user story US-9.
+Context Bundle: What the Model Needs on Every Call
+Each call to the model receives the same seven-part bundle, so the prompt design is predictable and testable rather than ad hoc:
+The versioned system or task prompt, referenced by its prompt-registry ID, so every trace can be tied back to exactly which prompt version produced it.
+Retrieved requirement and code chunks, each carrying its source path, so every claim the model later makes can be traced back to evidence.
+Which tests have already been proposed, run, or rejected for this module, from the memory store, so the model does not repeat a proposal a developer has already seen or declined.
+The declared tool schemas, which tools are currently permitted, and how many iterations remain.
+The running observation history for the session, i.e. what has already happened in this loop.
+An explicit instruction to label a claim as low-confidence, or return a not-in-corpus result, whenever it is not well-grounded in the retrieved text. This is what implements US-7.
+The repository text is passed in as delimited, labelled evidence, never as instructions. This is the main defence against prompt injection carried in a docstring or comment.
+Tool Contracts: Draft Schemas for Week 4
+The architecture document’s Table 4.3 gives the authorization-level view of these same four tools (purpose, side effect, authorization rule). This section gives the implementation-level input and output schema for each, ready to hand to whoever implements them in Week 4. These are a starting point, not a final interface.
+search_repo
+  input:  { query: string, path_scope?: string, top_k?: integer = 5 }
+  output: { chunks: [ { text, source_path, requirement_id? } ],
+            not_in_corpus: boolean }
+  auth:   always permitted (read-only, no side effect)
+read_file
+  input:  { path: string }
+  output: { path, content } | { error: "path_not_allowed" }
+  auth:   path must be on the frozen-repo allow-list
+run_tests
+  input:  { test_node_ids: [string], session_id: string }
+  output: { status: "pass" | "fail" | "error",
+            per_test: [ { id, result, duration_ms, stdout, stderr } ] }
+  auth:   every id must exist in the frozen test manifest;
+          scope must already be approved for this session;
+          executes only inside the sandbox
+draft_issue
+  input:  { title: string, body: string, evidence_refs: [string] }
+  output: { draft_id: string, status: "draft" }
+  auth:   always permitted to draft; posting to GitHub is a
+          separate, explicit human action
+Risk Considerations Cross-Referenced to the Security and Risk Register
+The three model-behaviour risks below were raised from an AI engineering angle and are now recorded in the Quality/Security Lead’s Security and Risk Register. They are listed here by ID rather than restated in full, so the register stays the single source for risk descriptions, likelihood, impact, and mitigation.
+The model requests a test node ID that does not exist in the frozen manifest. Recorded as R12 in the register: deterministic validation rejects the request and returns it to the loop as an observation, not as a crash.
+Ambiguous or conflicting requirement text leads to an overconfident proposal. Recorded as R6 in the register, mitigated by the low-confidence labelling requirement in the context bundle above and by US-7.
+Repository text, a comment, docstring, or historic issue, contains an embedded instruction aimed at the agent. Recorded as R1 in the register, the highest-rated risk, High likelihood and High impact. Mitigated by treating all retrieved repository content as evidence, never as instruction, which is the retrieval service’s responsibility per the architecture document; this section confirms it from the model-behaviour side.
+NAME | STUDENT NUMBER | REGISTRATION NUMBER
+Karagwa Ann Treasure | 2300709034 | 23/U/09034/PS
+Ayan Mustafa Abdirahman | 2300722948 | 23/X/22948/EVE
+Wanyana Selina Masembe | 2300701529 | 23/U/1529
+Amabe Junior Humphrey | 2300705942 | 23/U/05942/PS
+Akanga Andrew | 2300705555 | 23/U/05555/PS
+Step | Performed by | Why
+Interpret requirements and code to find candidate coverage gaps | AI | Reading unstructured docs and source for meaning is a language and reasoning task, not a rule-based one.
+Propose candidate test cases with source references | AI | Generative task; must stay traceable per US-1 and US-8, so every proposal cites the requirement or code path behind it.
+Validate a proposed action against schema and allow-list | Deterministic (orchestrator) | Needs to be reliable every time; this is the security-critical checkpoint (architecture principle P1).
+Approve which proposed tests may run this session | Human, via the approval gate | High-impact action; the module’s safety rule keeps this behind explicit approval, not a prompt instruction.
+Execute approved tests | Deterministic (sandbox executor) | Needs guaranteed, repeatable, isolated execution. The model must never run code directly.
+Compute pass or fail | Deterministic | This is ground truth. A language model’s judgement is not an acceptable substitute for an actual test result.
+Summarise failure output in plain language | AI | Turning verbose stack traces into a short, prioritised explanation is a generation task.
+Decide whether the loop continues or stops | AI proposes; deterministic caps enforce | Keeps the loop bounded without letting the model raise its own limits (P2, P3).
+Draft an issue or pull-request note | AI | Generative writing task, grounded in the evidence already gathered.
+Approve and post the draft to GitHub | Human | Explicit boundary in the brief: no autonomous issue or PR submission.
