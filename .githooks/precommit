@@ -1,0 +1,9 @@
+#!/bin/sh
+# Blocks commits that contain secrets or personal data.
+ROOT="$(git rev-parse --show-toplevel)"
+PY="$(command -v python3 || command -v python)"
+if [ -z "$PY" ]; then
+  echo "pre-commit: Python not found. Cannot run the sensitive data check." >&2
+  exit 1
+fi
+exec "$PY" "$ROOT/scripts/check_sensitive.py"
