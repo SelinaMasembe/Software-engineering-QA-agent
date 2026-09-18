@@ -1,0 +1,20 @@
+============================= test session starts ==============================
+collected 4 items
+
+tests/test_login_service.py::test_rejects_invalid_password PASSED
+tests/test_login_service.py::test_reports_service_unavailable PASSED
+tests/test_login_service.py::test_locks_account_after_five_failures FAILED
+tests/test_login_service.py::test_resets_counter_on_success PASSED
+
+=================================== FAILURES ===================================
+___________________ test_locks_account_after_five_failures _____________________
+
+    def test_locks_account_after_five_failures():
+        service = LoginService()
+        for _ in range(5):
+            service.authenticate("ada", "wrong")
+>       assert service.is_locked("ada") is True
+E       AssertionError: assert False is True
+
+tests/test_login_service.py:24: AssertionError
+========================= 1 failed, 3 passed in 0.08s ==========================

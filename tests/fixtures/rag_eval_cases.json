@@ -1,0 +1,135 @@
+[
+  {
+    "id": "answerable_reject_incorrect_password",
+    "category": "answerable",
+    "query": "What happens when a user enters an incorrect password?",
+    "expected_not_in_corpus": false,
+    "required_source_paths": ["requirements/authentication.md"],
+    "notes": "Matches REQ-AUTH-01 directly."
+  },
+  {
+    "id": "answerable_lockout_threshold",
+    "category": "answerable",
+    "query": "How many consecutive failed login attempts lock an account?",
+    "expected_not_in_corpus": false,
+    "required_source_paths": ["requirements/authentication.md"],
+    "notes": "Matches REQ-AUTH-02 (five consecutive failures)."
+  },
+  {
+    "id": "answerable_no_credentials_in_logs",
+    "category": "answerable",
+    "query": "May a password appear in a log entry?",
+    "expected_not_in_corpus": false,
+    "required_source_paths": ["requirements/authentication.md"],
+    "notes": "Matches REQ-AUTH-03 (no credential material in logs)."
+  },
+  {
+    "id": "answerable_counter_reset",
+    "category": "answerable",
+    "query": "What resets the failed-attempt counter to zero?",
+    "expected_not_in_corpus": false,
+    "required_source_paths": ["requirements/authentication.md"],
+    "notes": "Matches REQ-AUTH-02 (a successful login resets the counter)."
+  },
+  {
+    "id": "answerable_service_unavailable_behavior",
+    "category": "answerable",
+    "query": "What does authenticate() return when service_available is False?",
+    "expected_not_in_corpus": false,
+    "required_source_paths": ["src/login_service.py"],
+    "notes": "Matches the service_unavailable branch in login_service.py."
+  },
+  {
+    "id": "answerable_max_failed_attempts_constant",
+    "category": "answerable",
+    "query": "What is the value of MAX_FAILED_ATTEMPTS in the login service?",
+    "expected_not_in_corpus": false,
+    "required_source_paths": ["src/login_service.py"],
+    "notes": "Matches the module-level constant in login_service.py."
+  },
+  {
+    "id": "answerable_authentication_result_fields",
+    "category": "answerable",
+    "query": "What fields does the AuthenticationResult dataclass contain?",
+    "expected_not_in_corpus": false,
+    "required_source_paths": ["src/login_service.py"],
+    "notes": "Matches the AuthenticationResult dataclass definition."
+  },
+  {
+    "id": "answerable_cross_document_distinguish_failure_modes",
+    "category": "answerable",
+    "query": "How does the code distinguish invalid credentials from an unavailable authentication service?",
+    "expected_not_in_corpus": false,
+    "required_source_paths": ["requirements/authentication.md", "src/login_service.py"],
+    "notes": "A genuine multi-source question that the pipeline grounds correctly, cited here as the contrast case for the partially-answerable multi-document questions below."
+  },
+  {
+    "id": "unanswerable_kubernetes_ingress",
+    "category": "unanswerable",
+    "query": "How do we configure Kubernetes ingress certificates for the login service?",
+    "expected_not_in_corpus": true,
+    "required_source_paths": [],
+    "notes": "The topic is entirely absent from the corpus."
+  },
+  {
+    "id": "unanswerable_marketing_email_template",
+    "category": "unanswerable",
+    "query": "What is the password reset email template used by the marketing team?",
+    "expected_not_in_corpus": true,
+    "required_source_paths": [],
+    "notes": "The topic is entirely absent from the corpus."
+  },
+  {
+    "id": "unanswerable_mfa_keyword_overlap_trap",
+    "category": "unanswerable",
+    "query": "Does the system support multi-factor authentication?",
+    "expected_not_in_corpus": true,
+    "required_source_paths": [],
+    "notes": "Deliberately shares the word 'authentication' with the corpus. Confirms the not-in-corpus decision is not fooled by a single overlapping keyword."
+  },
+  {
+    "id": "partially_answerable_verbose_phrasing_false_negative",
+    "category": "partially_answerable",
+    "query": "Which test failed in the September 15 run, and what was the exact assertion error message?",
+    "expected_not_in_corpus": true,
+    "required_source_paths": [],
+    "ideal_source_paths": ["logs/test_run_2026_09_15.log"],
+    "known_limitation": "The test-run log genuinely names the failing test and its assertion message, so a fully correct system should answer this. But min_term_coverage is the fraction of ALL query terms a single chunk must contain, and this natural phrasing adds terms ('september', 'run', 'exact', 'message') that no single log chunk contains together. No chunk clears the 0.34 coverage floor, so the pipeline reports not_in_corpus=True. This is a false negative caused by query verbosity diluting the coverage ratio, not by a real gap in the corpus.",
+    "notes": "Documented retrieval failure #1: false not-in-corpus from verbose phrasing."
+  },
+  {
+    "id": "partially_answerable_ranking_inversion",
+    "category": "partially_answerable",
+    "query": "What must the service do when it locks an account?",
+    "expected_not_in_corpus": false,
+    "required_source_paths": ["requirements/authentication.md"],
+    "ideal_top_source_path": "requirements/authentication.md",
+    "known_limitation": "The authoritative requirement (REQ-AUTH-02: 'return a lockout reason') is retrieved but ranks 3rd of the 5 returned chunks, behind two test-log chunks that only share surface vocabulary ('account', 'locks', 'service') without stating the rule. BM25 scores literal term overlap, and the log's incidental phrasing happens to overlap the question's wording more than the requirement's own wording does. A consumer reading only the top-ranked chunk would miss the actual answer.",
+    "notes": "Documented retrieval failure #2: correct source present but not ranked first."
+  },
+  {
+    "id": "partially_answerable_multi_document_dilution",
+    "category": "partially_answerable",
+    "query": "Why did the account lockout test fail, and does the five-failure threshold in the test match the requirement and the code?",
+    "expected_not_in_corpus": false,
+    "required_source_paths": ["requirements/authentication.md"],
+    "ideal_source_paths": ["requirements/authentication.md", "logs/test_run_2026_09_15.log", "src/login_service.py"],
+    "known_limitation": "This question genuinely spans three documents: the requirement, the failing test's log entry, and the code under test. The coverage floor is applied per chunk independently. Only the requirement chunk clears 0.34 coverage; the log chunk that explains the actual failure (0.30) and the code chunk (about 0.10) both fall just under the floor and are silently dropped. The pipeline reports full groundedness (not_in_corpus=False) while citing only one of the three relevant sources, so the answer looks complete but is not.",
+    "notes": "Documented retrieval failure #3: confident-but-incomplete grounding on a cross-document question."
+  },
+  {
+    "id": "partially_answerable_log_fragmentation",
+    "category": "partially_answerable",
+    "query": "Which test failed in the test run log?",
+    "expected_not_in_corpus": false,
+    "required_source_paths": ["logs/test_run_2026_09_15.log"],
+    "required_chunk_ids": ["logs/test_run_2026_09_15.log#L4-L7"],
+    "ideal_chunk_ids": [
+      "logs/test_run_2026_09_15.log#L4-L7",
+      "logs/test_run_2026_09_15.log#L12-L17",
+      "logs/test_run_2026_09_15.log#L19-L19"
+    ],
+    "known_limitation": "The single failure record in the log is split across multiple small chunks by paragraph-boundary chunking: the test list naming the failing test, the traceback header, and the assertion message each land in separate chunks. For this phrasing only the test-list chunk clears the coverage floor, so the pipeline correctly names the failing test but omits the assertion message and traceback that a complete answer needs, even though that text is a few lines away in the same file.",
+    "notes": "Documented retrieval failure #4: a single incident fragmented across chunks, only one of which is retrieved."
+  }
+]
