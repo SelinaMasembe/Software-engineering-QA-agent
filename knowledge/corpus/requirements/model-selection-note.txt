@@ -1,0 +1,27 @@
+COLLEGE OF COMPUTING AND INFORMATION SCIENCES
+SCHOOL OF COMPUTING AND INFORMATICS TECHNOLOGY
+DEPARTMENT OF NETWORKS 
+BSE4104: Emerging Trends in Software Engineering
+AI-Native and Agentic Engineering Capstone
+Project: Software-Engineering QA Agent
+WEEK 1 PROGRESS REPORT
+Reporting Period: 31 August – 4 September 2026
+
+Group: J
+Model Selection Note
+Recommendation
+The current Gemini Flash-tier model available through Google AI Studio, for example Gemini 2.5 Flash or newer; confirm the current default at aistudio.google.com at setup time, since Google ships new Flash-tier releases through the year.
+Capability
+Flash-tier Gemini models support function/tool calling and structured JSON output, both required for the propose_action step, with a context window (1M tokens on recent releases) well beyond what a 10-to-50-document corpus plus retrieved chunks needs. The harder requirement here is reliable structured output, which Flash-tier models handle well.
+Cost, Privacy and Access
+Google AI Studio’s Gemini API includes a genuine, ongoing free tier for Flash-tier models, gated by rate limits rather than a dollar budget, keeping spend at $0 for this eight-week module. If the team outgrows it, paid Flash-tier pricing runs roughly $0.50-$1.50 per million input tokens, below Claude Sonnet 5 or GPT-5.6 Terra’s paid rate at the same tier, around $2-3 per million input, verified September 2026. Only team-owned code, docs and logs are sent, never personal or production data. Google’s paid-tier terms state prompts are not used for training; confirm this also holds for the free tier, it was not fully confirmed during this review. No card is required to start, and the free tier is available in Uganda, which matters without an institutional API budget.
+Latency
+Flash-tier models are optimised for low per-call latency, which matters across the agent’s loop of up to five tool-call-then-observe cycles per run.
+Alternatives and Currency of This Note
+Claude Sonnet 5 grounds better but has no ongoing free tier, costing real money over eight weeks. DeepSeek V4-Flash is far cheaper but raises unresolved data-jurisdiction questions. Verified September 2026; confirm current terms before committing.
+NAME | STUDENT NUMBER | REGISTRATION NUMBER
+Karagwa Ann Treasure | 2300709034 | 23/U/09034/PS
+Ayan Mustafa Abdirahman | 2300722948 | 23/X/22948/EVE
+Wanyana Selina Masembe | 2300701529 | 23/U/1529
+Amabe Junior Humphrey | 2300705942 | 23/U/05942/PS
+Akanga Andrew | 2300705555 | 23/U/05555/PS

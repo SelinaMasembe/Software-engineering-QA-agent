@@ -1,0 +1,69 @@
+COLLEGE OF COMPUTING AND INFORMATION SCIENCES
+SCHOOL OF COMPUTING AND INFORMATICS TECHNOLOGY
+DEPARTMENT OF NETWORKS 
+BSE4104  EMERGING TRENDS IN SOFTWARE ENGINEERING  
+AI-NATIVE & AGENTIC ENGINEERING CAPSTONE
+System Architecture and Integration Specification of the Software-Engineering QA Agent
+Group J
+Table of Contents
+List of Figures
+Figure 3.1: System Context and Human-Decision Boundaries. Amber indicates a boundary that requires a human decision or an isolated execution environment.	5
+Figure 4.1: Container View across Five Trust Zones. Zones	7
+List of Tables
+Table 2.1: Architectural Principles and Their Enforcement Points	4
+Table 3.1: Primary Actor and Responsibilities	5
+Table 3.2: External Systems, Trust Levels and Interface Contracts	5
+Table 4.1: Trust Zones and Boundary Semantics	7
+Purpose and scope
+This document specifies the architecture of the Software-Engineering QA Agent: its context boundary, its containers, the trust zones they sit in, and the interfaces between them. It is the Week 1 architecture and context deliverable.
+The full specification the team builds against container responsibilities, tool contracts, the interface register, the end-to-end request trace, the control-to-container mapping, assumptions and the build order is maintained separately in docs/architecture/full-spec.md. This document carries only the Week 1 architecture and context deliverable.
+What the system does
+A QA engineer asks the system to triage a failing or newly changed area of a repository. The system grounds itself in that repository's requirements, documentation and code, proposes tests, runs approved existing tests in a sandbox, explains what failed and why, and drafts an issue or pull-request note for a human to review and post.
+The system diagnoses and drafts. It does not fix, merge or deploy.
+Architectural principles
+Five principles constrain the design. Each is testable, and each maps to a control that appears later in this document.
+Table Architectural principles.1: Architectural Principles and Their Enforcement Points
+System context
+One primary user, one system in scope, four external dependencies at three different trust levels.
+Figure System context.1: System Context and Human-Decision Boundaries. 
+Table System context.2: Primary Actor and Responsibilities
+External systems
+Table System context.3: External Systems, Trust Levels and Interface Contracts
+Container view and trust zones
+The container diagram is organised by trust boundary rather than by component type. This is deliberate: the boundaries are what the design has to defend, and they stay correct when the technology stack changes.
+Figure Container view and trust zones.2: Container View across Five Trust Zones. Zones
+Table Container view and trust zones.4: Trust Zones and Boundary Semantics
+Deliberately out of scope
+Recorded here so scope creep has to be an explicit decision rather than a drift.
+Patch or fix generation. The system diagnoses and drafts; it does not propose code changes.
+Automatic execution of agent-written tests.
+Free-form shell access. Only test node IDs drawn from a manifest.
+Any second target repository, and any second user persona.
+Network access from inside the sandbox.
+Automatic merge, deployment or release of any kind.
+Training or fine-tuning a model.
+NAME | STUDENT NUMBER | REGISTRATION NUMBER
+Karagwa Ann Treasure | 2300709034 | 23/U/09034/PS
+Ayan Mustafa Abdirahman | 2300722948 | 23/X/22948/EVE
+Wanyana Selina Masembe | 2300701529 | 23/U/1529
+Amabe Junior Humphrey | 2300705942 | 23/U/05942/PS
+Akanga Andrew | 2300705555 | 23/U/05555/PS
+S/N | Principle | How it shows up in the architecture
+P1 | Model output is untrusted input | Every tool-call request returned by the model is validated against a schema, an allow-list and a permission rule before anything executes. The agent runtime holds no credentials and touches no store directly.
+P2 | One choke point for every action | The orchestrator is the sole path to the tool layer. There is no second route from the agent runtime to the filesystem, the sandbox, the network or the stores.
+P3 | Side effects are gated, not merely logged | Test execution and any external write pass through an approval gate that blocks on a human decision. There is no timeout that auto-approves.
+P4 | The corpus is read-only and frozen | The target repository is cloned at a fixed tag. Nothing in the system writes to it. This makes the evaluation set reproducible.
+P5 | Observability is built first, not last | The trace store and prompt registry land in Week 2 alongside the first model call, so Week 7 has a history to analyse rather than a reconstruction to attempt.
+Actor | Responsibility
+QA engineer | Opens a triage request. Approves or rejects the scope of test execution. Reviews the drafted issue and decides whether it is posted. The only human role in scope; no reviewer or administrator persona is modelled.
+System | Trust level | Contract
+LLM provider API | Untrusted output | Receives a versioned prompt, the retrieved context bundle and the declared tool schemas. Returns text and tool-call requests. Nothing it returns is executed without validation.
+Frozen target repository | Read only, untrusted text | Source of requirements, README, testing conventions, source code, the existing test suite and past issue text. Cloned at a fixed tag. Also the system's prompt-injection surface, since a docstring or comment can carry instructions.
+Sandbox runtime | Untrusted execution | Runs allow-listed test node IDs in a disposable container with no network access, no credentials in the environment and a hard timeout.
+GitHub API | Write, human-gated | Issue and pull-request-note creation against one repository, with an issues:write-scoped token. Reachable only after an explicit human approval.
+Zone | Name | What the boundary means
+A | Browser | Untrusted client. Holds no credentials, calls nothing but the orchestrator.
+B | Application | Trusted and deterministic. Every control that must not be an LLM decision lives here: authorization, allow-lists, validation, limits, audit.
+C | Agent runtime | The model's output is treated as untrusted. The runtime proposes actions and never executes them, holds no credentials, and cannot widen its own permissions or raise its own iteration cap.
+D | Sandbox | Untrusted execution, and the highest-risk boundary in the system. Disposable, network-disabled, credential-free.
+E | External write | Reachable only through the approval gate. The only place the system affects anything outside itself.
