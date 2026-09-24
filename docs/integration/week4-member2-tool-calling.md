@@ -28,7 +28,7 @@ dispatcher is ready to accept them through the contracts below.
 | Dispatcher, registry, result types, statuses and codes | Member 2 (me) | Implemented in `src/orchestration/`. |
 | `ProposalSet`, `Action` and structural parsing | Member 1 | I call `ProposalSet.model_validate_json` rather than redefine the types. |
 | Citation validation | Member 1 | The caller runs it before dispatch. |
-| Four tools, their schemas and role metadata | Member 3 | Registered through the `Tool` protocol. |
+| Four tools, their schemas and role metadata | Member 3 | Registered through the `Tool` protocol; my dispatcher enforces the declared roles. |
 | Failure and authorization evidence suite | Member 4 | Can drive the dispatcher with the real tools. |
 | Approval policy and human-approval gate | Member 5 | Injected through the `ApprovalGate` protocol. |
 | Week 4 progress report | Member 5 | Receives my test, demo and architecture evidence. |
@@ -71,6 +71,12 @@ Read-only tools do not consult the approval gate. The dispatcher deep-copies
 arguments between trust boundaries. Exception text from tools and gates is not
 copied into result messages, so secrets in error strings do not leak. Each call
 dispatches one proposal and returns; it is not the Week 5 agent loop.
+
+`dispatch_raw()` combines structural parsing and dispatch for isolated tests and
+the offline demonstration. Once Member 1's citation validator is merged, the
+production call path must parse with `ProposalSet.model_validate_json`, run the
+citation validator, and then call `dispatch()`. Production code must not use
+`dispatch_raw()` to bypass that validation handoff.
 
 ## Files I Created or Changed
 
@@ -154,7 +160,9 @@ class SearchRepoTool:
 
 The tool owns its input and output schemas. The registry owns only the fixed
 allow-list, and the dispatcher owns the order in which checks and execution
-occur. Member 3 declares the final risk and allowed roles for every tool.
+occur. Member 3 declares the final risk and allowed roles for every tool; my
+dispatcher checks the requester's role against those declared roles before
+calling the tool's input validator.
 
 ## Public Contract for Member 5's Approval Gate
 
@@ -235,6 +243,7 @@ rather than reverse another member's security-check change on my branch.
 - `93f9fb3` Test tool dispatcher safety boundaries
 - `3462003` Add offline tool dispatch demonstration
 - `718efef` Document the tool calling architecture
+- `335f36d` Document the Week 4 tool calling contribution
 
 ## Pull Request Description Template
 
