@@ -1,4 +1,4 @@
-<mxfile host="Electron" agent="claude" pages="4">
+<mxfile host="Electron" agent="claude" pages="5">
   <diagram id="ctx" name="L1 · System context">
     <mxGraphModel dx="1444" dy="825" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
       <root>
@@ -337,6 +337,78 @@
         <mxCell id="re7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9.5;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="r_pol" target="r_eval">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="l4_tool" name="L4 · Tool calling">
+    <mxGraphModel dx="1444" dy="825" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="l4_0" />
+        <mxCell id="l4_1" parent="l4_0" />
+        <mxCell id="l4_title" value="&lt;b&gt;L4 · Tool calling — one model proposal becomes one structured DispatchResult&lt;/b&gt;" style="text;html=1;fontSize=14;align=left;verticalAlign=middle;fontColor=#16181d;" vertex="1" parent="l4_1">
+          <mxGeometry x="40" y="16" width="1080" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="l4_scope" value="Single request only; Week 5 loop is out of scope — each proposal is dispatched at most once and the result is returned, not fed back to the model" style="rounded=1;whiteSpace=wrap;html=1;arcSize=4;fontSize=10;align=center;verticalAlign=middle;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="l4_1">
+          <mxGeometry x="40" y="54" width="1080" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="l4_json" value="&lt;b&gt;Untrusted model JSON&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#8a6416&quot;&gt;Raw model output. Treated as data, never as instruction.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#fff8e6;strokeColor=#d9a441;dashed=1;fontColor=#8a6416;" vertex="1" parent="l4_1">
+          <mxGeometry x="160" y="100" width="500" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="l4_parse" value="&lt;b&gt;ProposalSet structural parsing&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Member 1 · src/models/types.py — existing type; checks shape only.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="l4_1">
+          <mxGeometry x="160" y="174" width="500" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="l4_cite" value="&lt;b&gt;Citation validator handoff&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Member 1 · cited evidence is checked before any tool is considered.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="l4_1">
+          <mxGeometry x="160" y="248" width="500" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="l4_disp" value="&lt;b&gt;ToolDispatcher&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Member 2 · src/orchestration/tool_dispatcher.py — one proposal in, one result out.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="l4_1">
+          <mxGeometry x="160" y="322" width="500" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="l4_reg" value="&lt;b&gt;Fixed allow-list ToolRegistry&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Member 2 · tools are registered in code; the model cannot add or rename one.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="l4_1">
+          <mxGeometry x="160" y="396" width="500" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="l4_meta" value="&lt;b&gt;Role authorization and input-schema handoff&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Member 2 checks the role against Member 3's allowed_roles, then calls Member 3's input validator.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="l4_1">
+          <mxGeometry x="160" y="470" width="500" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="l4_gate" value="&lt;b&gt;Approval gate — only when required&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Member 5 · consulted only for tools flagged as needing approval; otherwise skipped.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="l4_1">
+          <mxGeometry x="160" y="544" width="500" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="l4_impl" value="&lt;b&gt;Tool implementation&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Member 3 · tools/*.py — runs only after every applicable check passes.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="l4_1">
+          <mxGeometry x="160" y="618" width="500" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="l4_outv" value="&lt;b&gt;Output-schema validation&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Member 3 · tools/schemas.py — raw output checked against the declared schema.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="l4_1">
+          <mxGeometry x="160" y="692" width="500" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="l4_res" value="&lt;b&gt;Structured DispatchResult&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Member 2 · status plus validated output or rejection reason; every outcome ends here.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="l4_1">
+          <mxGeometry x="160" y="766" width="500" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="l4_o_nat" value="&lt;b&gt;NOT_A_TOOL&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Proposal is not a tool call. Returned as a DispatchResult; nothing runs.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="l4_1">
+          <mxGeometry x="760" y="314" width="360" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="l4_o_rej" value="&lt;b&gt;REJECTED / AWAITING_APPROVAL&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Unknown tool, bad arguments or wrong role → REJECTED. Approval pending → AWAITING_APPROVAL. Nothing runs.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="l4_1">
+          <mxGeometry x="760" y="536" width="360" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="l4_o_exe" value="&lt;b&gt;EXECUTED / TOOL_ERROR&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Output passes its schema → EXECUTED. Tool raised or output failed validation → TOOL_ERROR.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="l4_1">
+          <mxGeometry x="760" y="684" width="360" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="l4_leg1" value="Solid outline · built by Member 2 this week: dispatcher, registry, DispatchResult and statuses" style="rounded=0;whiteSpace=wrap;html=1;fontSize=10;align=left;verticalAlign=top;spacing=6;fillColor=none;strokeColor=none;fontColor=#767d8c;" vertex="1" parent="l4_1">
+          <mxGeometry x="40" y="850" width="540" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="l4_leg2" value="Dashed outline · used here but owned elsewhere: Member 1 types/citations, Member 3 schemas/tools, Member 5 approval" style="rounded=0;whiteSpace=wrap;html=1;fontSize=10;align=left;verticalAlign=top;spacing=6;fillColor=none;strokeColor=none;fontColor=#767d8c;" vertex="1" parent="l4_1">
+          <mxGeometry x="580" y="850" width="540" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="l4_e1" value="raw JSON" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9.5;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="l4_1" source="l4_json" target="l4_parse"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l4_e2" value="ProposalSet" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9.5;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="l4_1" source="l4_parse" target="l4_cite"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l4_e3" value="validated proposal" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9.5;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="l4_1" source="l4_cite" target="l4_disp"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l4_e4" value="tool name" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9.5;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="l4_1" source="l4_disp" target="l4_reg"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l4_e5" value="registered tool" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9.5;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="l4_1" source="l4_reg" target="l4_meta"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l4_e6" value="valid args + role" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9.5;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="l4_1" source="l4_meta" target="l4_gate"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l4_e7" value="approved or not required" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9.5;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="l4_1" source="l4_gate" target="l4_impl"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l4_e8" value="raw output" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9.5;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="l4_1" source="l4_impl" target="l4_outv"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l4_e9" value="validated output" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9.5;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="l4_1" source="l4_outv" target="l4_res"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l4_x1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#767d8c;endArrow=block;endFill=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="l4_1" source="l4_disp" target="l4_o_nat"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l4_x2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#767d8c;endArrow=block;endFill=1;exitX=1;exitY=0.5;entryX=0.5;entryY=0;" edge="1" parent="l4_1" source="l4_reg" target="l4_o_rej"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l4_x3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#767d8c;endArrow=block;endFill=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="l4_1" source="l4_gate" target="l4_o_rej"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l4_x4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#767d8c;endArrow=block;endFill=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="l4_1" source="l4_outv" target="l4_o_exe"><mxGeometry relative="1" as="geometry" /></mxCell>
       </root>
     </mxGraphModel>
   </diagram>
