@@ -19,6 +19,10 @@ from .chunking import (
     chunk_document,
     chunk_documents,
 )
+from .context_builder import (
+    AssembledContext,
+    build_context,
+)
 from .retrieval import (
     IndexManifest,
     RetrievalPipeline,
@@ -35,6 +39,7 @@ from .retriever import (
 )
 
 __all__ = [
+    "AssembledContext",
     "Chunk",
     "ChunkingConfig",
     "CorpusInputError",
@@ -49,6 +54,7 @@ __all__ = [
     "RetrievedChunk",
     "Retriever",
     "SourceDocument",
+    "build_context",
     "build_retrieval_pipeline",
     "chunk_document",
     "chunk_documents",
