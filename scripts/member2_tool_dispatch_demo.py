@@ -24,7 +24,7 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 from models.types import Action  # noqa: E402
-from orchestration import (  # noqa: E402
+from orchestrator import (  # noqa: E402
     ApprovalStatus,
     ApprovalVerdict,
     DispatchCode,
