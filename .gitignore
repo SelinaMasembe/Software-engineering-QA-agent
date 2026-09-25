@@ -8,6 +8,13 @@ build/
 dist/
 *.egg-info/
 .eggs/
+node_modules/
+
+# Runtime approval and draft data
+data/member5-demo/
+data/approval_queue.json
+data/audit.log
+data/issue_drafts.json
 
 # Virtual environments
 .venv/
