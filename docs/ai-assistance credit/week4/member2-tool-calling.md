@@ -10,7 +10,7 @@ guide.
 
 | Tool | Contribution |
 | --- | --- |
-| OpenAI Codex | Analysed the assignment and repository, defined ownership boundaries, implemented and verified the dispatcher, reviewed generated material, exported the diagram, and maintained incremental commits. |
+| OpenAI Codex | Analysed the assignment and repository, defined ownership boundaries, implemented and verified the dispatcher, , exported the diagram, and maintained incremental commits. |
 | Claude Code | Independently reviewed the plan and dispatcher, identified fail-closed edge cases, drafted dispatcher tests, drafted the offline demo, drafted the L4 Draw.io page, and drafted the first-person guide. |
 
 ## Decisions I Reviewed and Accepted
@@ -21,6 +21,7 @@ guide.
 - Approval-required tools fail closed when the gate is missing or unusable.
 - Error messages exclude exception text and possible secrets.
 - Demo adapters are labelled and cannot be mistaken for production tools.
+- Reviewed and corrected the generated draw.io for the architecture.
 
 ## Verification I Performed
 

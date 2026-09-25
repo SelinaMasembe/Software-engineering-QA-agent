@@ -352,12 +352,12 @@ async function main() {
     makeTable(
       ["Work item", "Owner", "Integration boundary"],
       [
-        ["Dispatcher, registry, results, statuses and codes", "Member 2", "Implemented in src/orchestration/."],
+        ["Router, registry, results, statuses and codes", "Member 2", "Implemented in src/orchestrator/router.py."],
         ["ProposalSet, Action and structural parsing", "Member 1", "Reused through the shared model types."],
-        ["Citation validation", "Member 1", "Caller must validate before dispatch()."],
-        ["Four tools, schemas and role metadata", "Member 3", "Injected through the Tool protocol."],
-        ["Failure and authorization evidence suite", "Member 4", "Runs against the integrated real tools."],
-        ["Approval policy and human gate", "Member 5", "Injected through the ApprovalGate protocol."],
+        ["Citation validation", "Member 1", "src/orchestrator/validation.py runs before dispatch()."],
+        ["Four tools, schemas and role metadata", "Member 3", "src/tools/*.py implementations use the Tool protocol."],
+        ["Failure and authorization evidence suite", "Member 4", "tests/test_tool_auth.py runs against the real tools."],
+        ["Approval policy and human gate", "Member 5", "src/orchestrator/approval_gate.py supplies the gate."],
         ["Week 4 progress report", "Member 5", "Receives Member 2's evidence and architecture."],
       ],
       [2540, 1420, 5787],
@@ -441,10 +441,10 @@ async function main() {
     makeTable(
       ["File", "Purpose"],
       [
-        ["src/orchestration/tool_dispatcher.py", "Implements the fixed registry, execution context, protocols, ordered safety checks and structured results."],
-        ["src/orchestration/__init__.py", "Re-exports the public orchestration contracts for stable imports."],
+        ["src/orchestrator/router.py", "Implements the fixed registry, execution context, protocols, ordered safety checks and structured results."],
+        ["src/orchestrator/__init__.py", "Re-exports the public orchestration contracts for stable imports."],
         ["src/models/__init__.py", "Removes a circular package re-export so fresh RAG pipeline imports succeed."],
-        ["tests/integration/test_tool_dispatcher.py", "Contains 16 offline tests for registry, authorization, approval, execution and output boundaries."],
+        ["tests/integration/test_router.py", "Contains 16 fake-based checks for the Member 2 router; it does not replace Member 4's test_tool_auth.py."],
         ["scripts/member2_tool_dispatch_demo.py", "Runs four deterministic scenarios with clearly labelled canned adapters."],
         ["docs/architecture/qa-agent-architecture (1).drawio", "Adds the editable fifth page, L4 · Tool calling."],
         ["docs/architecture/l4-tool-calling.png", "Provides the verified image embedded as Figure 1."],
@@ -544,7 +544,7 @@ async function main() {
     caption("Table 6: Four deterministic offline demonstration scenarios."),
     codeBlock([
       "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest discover \\",
-      "  -s tests/integration -p \"test_tool_dispatcher.py\" -v",
+      "  -s tests/integration -p \"test_router.py\" -v",
       "PYTHONDONTWRITEBYTECODE=1 python3 scripts/member2_tool_dispatch_demo.py",
     ]),
     heading("7.1 Known Baseline Failure", 2),
@@ -576,7 +576,7 @@ async function main() {
     bullet("Member 5: include the test, demo and architecture evidence in the Week 4 progress report."),
     heading("10.1 Member 2 Commit Record", 2),
     body(
-      "6209aa3 Import repair · 658d3e8 Dispatcher · 93f9fb3 Tests · 3462003 Demo · 718efef Architecture · 335f36d Contribution guide · 13e8a64 Validation ownership clarification.",
+      "6209aa3 Import repair · 658d3e8 Dispatcher · 93f9fb3 Tests · 3462003 Demo · 718efef Architecture · 13e8a64 Ownership clarification · cee8b4b Router move · 8294719 Test alignment · 707c136 Architecture path alignment.",
       { after: 0 },
     ),
   );
