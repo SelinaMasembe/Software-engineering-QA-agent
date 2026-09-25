@@ -1,76 +1,63 @@
-"""The run_tests tool: validate a sandboxed test-execution request, but do
-not execute it -- no sandbox executor exists anywhere in this repo yet.
+"""The run_tests tool: validate a sandboxed test-execution request, then run
+it through an injected SandboxExecutor.
 
-Confirmed fresh: grepping "sandbox"/"Executor"/"execute_test" across src/
-and scripts/ turns up only the forward-declared vocabulary in
-models/types.py, no real execution logic. That module's own docstring
-reserves ``RejectionReason``, ``RejectedExecution``, ``TestOutcome``,
-``TestResult``, and ``SandboxExecutionResult`` by name for "whoever
-implements run_tests ... in Week 4" -- the same reserved-shape pattern
-``IssueDraft`` established for draft_issue -- so this tool reuses them
-rather than inventing new ones.
+``models.types`` reserves ``RejectionReason``, ``RejectedExecution``,
+``TestOutcome``, ``TestResult``, and ``SandboxExecutionResult`` by name for
+"whoever implements run_tests ... in Week 4" -- the same reserved-shape
+pattern ``IssueDraft`` established for draft_issue -- so this tool reuses
+them rather than inventing new ones.
 
-``run()`` therefore raises SandboxNotImplementedError instead of faking an
-execution result; a made-up pass/fail would misrepresent a capability that
-does not exist. This is a REQUIRES_APPROVAL tool, so ``run()`` is only ever
-reached after approval; orchestrator.tool_dispatcher's ``except Exception``
-around ``run()`` converts any exception it raises, this one included, into
-a generic ``DispatchStatus.TOOL_ERROR`` / ``DispatchCode.EXECUTION_FAILED``
-without leaking its text to the caller -- confirmed by reading
-``dispatch()`` directly, not assumed.
+This is the batch/session adapter ``src/sandbox/executor.py`` deliberately
+left for this file to own: ``SandboxExecutor.execute(test_node_id)`` runs
+one test and returns one ``TestResult``; ``run()`` here calls it once per
+``test_node_id`` in the request and assembles the results into one
+``SandboxExecutionResult`` carrying the real ``session_id``, attaching the
+identity information the executor itself has no business inventing.
 
-Which test_node_ids are even valid is a separate question from whether they
-can be executed (``RejectionReason`` already keeps UNKNOWN_TEST_NODE_ID and
-OUTSIDE_SANDBOX distinct). No frozen manifest of valid IDs exists in the
-repo either. ``pytest --collect-only`` can enumerate them mechanically, but
-shelling out to pytest at runtime is foreign to every other manifest in
-this codebase (``knowledge/source-register.json``, ``IndexManifest``),
-which are frozen, versioned artifacts, not something recomputed by
-invoking a subprocess. So the manifest is constructor-injected here, the
-same dependency-injection pattern ``SearchRepoTool`` uses for its
-``RetrievalPipeline`` -- how it gets produced is left to whoever assembles
-this tool, not decided in this file.
+``SandboxExecutor`` is constructor-injected, the same dependency-injection
+pattern ``SearchRepoTool`` uses for its ``RetrievalPipeline`` and
+``DraftIssueTool`` uses for its ``DraftStore`` -- not instantiated inside
+``run()``.
+
+This is a REQUIRES_APPROVAL tool, so ``run()`` is only ever reached after
+approval; orchestrator.tool_dispatcher's ``except Exception`` around
+``run()`` converts any exception it raises into a generic
+``DispatchStatus.TOOL_ERROR`` / ``DispatchCode.EXECUTION_FAILED`` without
+leaking its text to the caller -- confirmed by reading ``dispatch()``
+directly, not assumed.
+
+Which test_node_ids are valid is checked in ``validate_arguments`` against
+the constructor-injected manifest, before the approval gate is ever
+consulted and long before ``run()`` sees them. ``run()`` should therefore
+never see an ID the sandbox itself considers uncollectible. If it somehow
+does -- the manifest and the real test suite have drifted out of sync --
+that is a contradiction worth failing loudly on, not silently swallowing;
+see ``ManifestDriftError`` below.
 """
 
 from __future__ import annotations
 
 from typing import Any, Collection, Iterable, Mapping
 
-from models.types import RejectionReason, TestOutcome
+from models.types import RejectionReason, SandboxExecutionResult, TestOutcome, TestResult
 from orchestrator import ToolRisk
+from sandbox import SandboxExecutor
+
+_UNKNOWN_ID_MARKER = f"[{RejectionReason.UNKNOWN_TEST_NODE_ID.value}]"
 
 
-class SandboxNotImplementedError(NotImplementedError):
-    """Raised by RunTestsTool.run(): no sandbox executor exists yet.
-
-    Whoever builds one must implement an object with this method:
-
-        def execute(
-            self, *, session_id: str, test_node_ids: Sequence[str],
-        ) -> models.types.SandboxExecutionResult: ...
-
-    ``SandboxExecutionResult`` (src/models/types.py) must be returned with:
-      - ``results: tuple[TestResult, ...]`` -- one per test actually run,
-        each carrying ``test_id``, ``outcome`` (a ``TestOutcome`` member:
-        PASS/FAIL/ERROR), ``duration_ms``, ``stdout``, ``stderr``.
-      - ``rejected: tuple[RejectedExecution, ...]`` -- anything requested
-        but refused inside the sandbox (e.g. ``RejectionReason.
-        OUTSIDE_SANDBOX`` or ``SECRET_ACCESS_ATTEMPT``), logged rather than
-        silently dropped.
-
-    RunTestsTool would then take that executor via its constructor, the
-    same way SearchRepoTool takes a RetrievalPipeline, and ``run()`` would
-    call ``executor.execute(session_id=..., test_node_ids=...)`` instead of
-    raising this.
+class ManifestDriftError(RuntimeError):
+    """Raised when a test_node_id passed manifest validation in
+    validate_arguments, but the sandbox itself could not collect it at
+    run() time. This should never happen -- it means the injected manifest
+    no longer matches the real test suite the sandbox executes against --
+    and is deliberately raised rather than silently folded into an ordinary
+    ERROR result, which would hide a manifest that has gone stale.
     """
 
 
 class RunTestsTool:
-    """Approval-gated tool satisfying orchestrator.tool_dispatcher's Tool Protocol.
-
-    validate_arguments/validate_output are fully implemented and tested;
-    run() intentionally is not -- see SandboxNotImplementedError.
-    """
+    """Approval-gated tool satisfying orchestrator.tool_dispatcher's Tool Protocol."""
 
     name = "run_tests"
     risk = ToolRisk.REQUIRES_APPROVAL
@@ -78,10 +65,12 @@ class RunTestsTool:
     def __init__(
         self,
         manifest: Collection[str],
+        sandbox: SandboxExecutor,
         *,
         allowed_roles: Iterable[str] = ("developer",),
     ) -> None:
         self.manifest = frozenset(manifest)
+        self.sandbox = sandbox
         self.allowed_roles: Collection[str] = tuple(allowed_roles)
 
     def validate_arguments(self, arguments: Mapping[str, Any]) -> dict[str, Any]:
@@ -124,17 +113,52 @@ class RunTestsTool:
         arguments: Mapping[str, Any],
         context: Any,
     ) -> Mapping[str, Any]:
-        """Never completes -- see SandboxNotImplementedError."""
+        """Run each test_node_id through the sandbox and assemble one
+        SandboxExecutionResult for this session.
 
-        raise SandboxNotImplementedError(
-            "run_tests has no sandbox executor to call. See "
-            "tools.run_tests.SandboxNotImplementedError for the interface "
-            "whoever builds one must implement."
-        )
+        manifest membership was already checked in validate_arguments, so
+        every ID here is expected to be collectible; a result that still
+        comes back tagged as unknown means the manifest and the real test
+        suite have drifted, and that is raised as ManifestDriftError rather
+        than silently accepted.
+        """
+
+        session_id = arguments["session_id"]
+        test_node_ids = arguments["test_node_ids"]
+
+        results: list[TestResult] = []
+        for test_node_id in test_node_ids:
+            result = self.sandbox.execute(test_node_id)
+            if result.outcome is TestOutcome.ERROR and result.stderr.startswith(
+                _UNKNOWN_ID_MARKER
+            ):
+                raise ManifestDriftError(
+                    f"{test_node_id!r} passed manifest validation but the "
+                    "sandbox could not collect it."
+                )
+            results.append(result)
+
+        execution = SandboxExecutionResult(session_id=session_id, results=tuple(results))
+
+        return {
+            "session_id": execution.session_id,
+            "results": [
+                {
+                    "test_id": result.test_id,
+                    "outcome": result.outcome.value,
+                    "duration_ms": result.duration_ms,
+                    "stdout": result.stdout,
+                    "stderr": result.stderr,
+                }
+                for result in execution.results
+            ],
+            "rejected": [
+                {"test_id": rejection.test_id, "reason": rejection.reason.value}
+                for rejection in execution.rejected
+            ],
+        }
 
     def validate_output(self, output: Mapping[str, Any]) -> dict[str, Any]:
-        """Written and tested even though run() cannot produce input for it yet."""
-
         session_id = output.get("session_id")
         results = output.get("results")
         rejected = output.get("rejected", [])

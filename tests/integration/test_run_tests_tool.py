@@ -13,19 +13,41 @@ from orchestrator import (
     ToolRegistry,
     ToolRisk,
 )
-from tools.run_tests import RunTestsTool, SandboxNotImplementedError
+from sandbox import SandboxExecutor
+from tools.run_tests import RunTestsTool
 
 CONTEXT = ExecutionContext(session_id="session-1", actor_id="dev-1", role="developer")
+
+FIXTURE_FILE = "tests/fixtures/sandbox/sample_cases.py"
+PASSING_ID = f"{FIXTURE_FILE}::test_addition_passes"
+FAILING_ID = f"{FIXTURE_FILE}::test_subtraction_deliberately_fails"
 
 MANIFEST = frozenset(
     {
         "tests/test_config.py::ModelConfigurationTests::test_loads_model_settings_from_environment",
         "tests/integration/test_rag_pipeline.py::TokenizerTests::test_identifiers_are_split_into_searchable_words",
+        PASSING_ID,
+        FAILING_ID,
     }
 )
-KNOWN_ID = next(iter(MANIFEST))
+KNOWN_ID = "tests/test_config.py::ModelConfigurationTests::test_loads_model_settings_from_environment"
 
-VALID_ARGUMENTS = {"session_id": "session-1", "test_node_ids": [KNOWN_ID]}
+VALID_ARGUMENTS = {"session_id": "session-1", "test_node_ids": [PASSING_ID]}
+
+
+class CountingSandboxExecutor:
+    """Wraps a real SandboxExecutor and records every execute() call, so a
+    test can prove the dispatcher genuinely never reached run() -- not just
+    infer it from the resulting status.
+    """
+
+    def __init__(self, real: SandboxExecutor) -> None:
+        self._real = real
+        self.calls: list[str] = []
+
+    def execute(self, test_node_id: str):
+        self.calls.append(test_node_id)
+        return self._real.execute(test_node_id)
 
 
 class FakeGate:
@@ -59,7 +81,7 @@ class RunTestsToolTests(unittest.TestCase):
     """Exercise the tool directly, without going through the dispatcher."""
 
     def setUp(self) -> None:
-        self.tool = RunTestsTool(MANIFEST)
+        self.tool = RunTestsTool(MANIFEST, SandboxExecutor())
 
     def test_satisfies_the_requires_approval_tool_protocol_declaration(self) -> None:
         self.assertEqual(self.tool.name, "run_tests")
@@ -70,7 +92,7 @@ class RunTestsToolTests(unittest.TestCase):
         validated = self.tool.validate_arguments(VALID_ARGUMENTS)
 
         self.assertEqual(validated["session_id"], "session-1")
-        self.assertEqual(validated["test_node_ids"], (KNOWN_ID,))
+        self.assertEqual(validated["test_node_ids"], (PASSING_ID,))
 
     def test_missing_or_empty_test_node_ids_is_rejected(self) -> None:
         cases = {
@@ -104,21 +126,37 @@ class RunTestsToolTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.tool.validate_arguments({**VALID_ARGUMENTS, "extra": 1})
 
-    def test_run_raises_the_specific_sandbox_error_not_a_generic_crash(self) -> None:
+    def test_run_executes_a_real_test_through_the_sandbox(self) -> None:
         arguments = self.tool.validate_arguments(VALID_ARGUMENTS)
 
-        with self.assertRaises(SandboxNotImplementedError):
-            self.tool.run(arguments, CONTEXT)
+        output = self.tool.validate_output(self.tool.run(arguments, CONTEXT))
+
+        self.assertEqual(output["session_id"], "session-1")
+        self.assertEqual(len(output["results"]), 1)
+        self.assertEqual(output["results"][0]["test_id"], PASSING_ID)
+        self.assertEqual(output["results"][0]["outcome"], "pass")
+        self.assertEqual(output["rejected"], [])
+
+    def test_run_assembles_multiple_results_into_one_execution(self) -> None:
+        arguments = self.tool.validate_arguments(
+            {"session_id": "session-1", "test_node_ids": [PASSING_ID, FAILING_ID]}
+        )
+
+        output = self.tool.validate_output(self.tool.run(arguments, CONTEXT))
+
+        self.assertEqual(output["session_id"], "session-1")
+        outcomes = {entry["test_id"]: entry["outcome"] for entry in output["results"]}
+        self.assertEqual(outcomes, {PASSING_ID: "pass", FAILING_ID: "fail"})
+        self.assertEqual(output["rejected"], [])
 
 
 class RunTestsValidateOutputTests(unittest.TestCase):
-    """validate_output is fully testable even though run() can't produce
-    real input for it yet -- build the SandboxExecutionResult-shaped dict
-    by hand instead.
+    """validate_output is fully testable independent of run()'s real
+    execution -- build the SandboxExecutionResult-shaped dict by hand.
     """
 
     def setUp(self) -> None:
-        self.tool = RunTestsTool(MANIFEST)
+        self.tool = RunTestsTool(MANIFEST, SandboxExecutor())
 
     def test_accepts_a_well_formed_result(self) -> None:
         output = self.tool.validate_output(
@@ -197,51 +235,49 @@ class RunTestsValidateOutputTests(unittest.TestCase):
 
 class RunTestsToolDispatcherIntegrationTests(unittest.TestCase):
     """Confirm the tool satisfies the Protocol at runtime, via the real
-    ToolRegistry/ToolDispatcher -- not just structurally.
+    ToolRegistry/ToolDispatcher, with a real SandboxExecutor -- no mocks,
+    no stub error, actual subprocess execution end-to-end.
     """
 
     def setUp(self) -> None:
-        self.tool = RunTestsTool(MANIFEST)
+        self.sandbox = CountingSandboxExecutor(SandboxExecutor())
+        self.tool = RunTestsTool(MANIFEST, self.sandbox)
 
     def make_dispatcher(self, gate) -> ToolDispatcher:
         return ToolDispatcher(ToolRegistry([self.tool]), approval_gate=gate)
 
-    def test_approved_request_reaches_run_and_fails_closed_as_tool_error(self) -> None:
+    def test_approved_request_executes_for_real_end_to_end(self) -> None:
         gate = FakeGate(ApprovalVerdict(ApprovalStatus.APPROVED))
 
         result = self.make_dispatcher(gate).dispatch(make_proposal(), context=CONTEXT)
 
-        # run() raised SandboxNotImplementedError, so the dispatcher's own
-        # `except Exception` around run() must have converted it into
-        # TOOL_ERROR/EXECUTION_FAILED -- confirmed by reading dispatch()
-        # directly, not assumed. A REJECTED/AWAITING_APPROVAL result here
-        # would mean run() was never reached at all.
-        self.assertFalse(result.executed)
-        self.assertIs(result.status, DispatchStatus.TOOL_ERROR)
-        self.assertIs(result.code, DispatchCode.EXECUTION_FAILED)
-        self.assertIsNone(result.output)
-        self.assertNotIn("SandboxNotImplementedError", result.message)
+        self.assertTrue(result.executed)
+        self.assertIs(result.status, DispatchStatus.EXECUTED)
+        self.assertEqual(result.output["session_id"], "session-1")
+        self.assertEqual(result.output["results"][0]["test_id"], PASSING_ID)
+        self.assertEqual(result.output["results"][0]["outcome"], "pass")
         self.assertEqual(len(gate.calls), 1)
+        self.assertEqual(self.sandbox.calls, [PASSING_ID])
 
-    def test_denied_request_never_reaches_run(self) -> None:
+    def test_denied_request_never_reaches_run_or_the_sandbox(self) -> None:
         gate = FakeGate(ApprovalVerdict(ApprovalStatus.DENIED))
 
         result = self.make_dispatcher(gate).dispatch(make_proposal(), context=CONTEXT)
 
-        # If run() had been reached, this would be TOOL_ERROR instead --
-        # a distinct status here proves the dispatcher stopped before it.
         self.assertIs(result.status, DispatchStatus.REJECTED)
         self.assertIs(result.code, DispatchCode.APPROVAL_DENIED)
+        self.assertEqual(self.sandbox.calls, [])
 
-    def test_pending_request_never_reaches_run(self) -> None:
+    def test_pending_request_never_reaches_run_or_the_sandbox(self) -> None:
         gate = FakeGate(ApprovalVerdict(ApprovalStatus.PENDING))
 
         result = self.make_dispatcher(gate).dispatch(make_proposal(), context=CONTEXT)
 
         self.assertIs(result.status, DispatchStatus.AWAITING_APPROVAL)
         self.assertIs(result.code, DispatchCode.APPROVAL_PENDING)
+        self.assertEqual(self.sandbox.calls, [])
 
-    def test_unknown_test_node_id_is_rejected_before_the_gate_is_consulted(self) -> None:
+    def test_unknown_test_node_id_is_rejected_before_the_gate_or_sandbox(self) -> None:
         gate = FakeGate(ApprovalVerdict(ApprovalStatus.APPROVED))
         proposal = make_proposal(
             {"session_id": "session-1", "test_node_ids": ["tests/nope.py::not_real"]}
@@ -252,6 +288,7 @@ class RunTestsToolDispatcherIntegrationTests(unittest.TestCase):
         self.assertIs(result.status, DispatchStatus.REJECTED)
         self.assertIs(result.code, DispatchCode.INVALID_ARGUMENTS)
         self.assertEqual(gate.calls, [])
+        self.assertEqual(self.sandbox.calls, [])
 
 
 if __name__ == "__main__":
