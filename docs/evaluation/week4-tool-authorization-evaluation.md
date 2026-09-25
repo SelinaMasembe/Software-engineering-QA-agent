@@ -1,6 +1,6 @@
 # Week 4 Tool Authorization & Failure Test Evidence
 
-Stand-in tool implementations (tests/test_tool_auth.py), dispatched through the real src/orchestration/tool_dispatcher.py. Member 3's real tools were not yet on origin/feat/tools when this evidence was generated; swap STAND_IN_TOOL_CATALOGUE for the real tools once they land.
+The four REAL tools from src/tools/ (Member 3, feat/tools), dispatched through the real src/orchestrator/tool_dispatcher.py (Member 2). The per-tool `allowed_roles` policy exercised here is Member 4's own proposed default access matrix -- no team-wide role policy is wired into the application yet; the enforcement mechanism is real, this specific role set is illustrative.
 
 ## Authorization matrix
 
@@ -27,8 +27,8 @@ Matrix rows: 16. Mismatches between declared access and observed dispatch outcom
 
 ## Failure-case coverage
 
-- Missing/malformed arguments: 12 cases across all four tools (tests/test_tool_auth.py::MissingAndMalformedArgumentTests)
-- Path-traversal attempts on read_file: 7 cases (tests/test_tool_auth.py::PathTraversalSecurityTests)
+- Missing/malformed arguments: 14 cases across all four real tools (tests/test_tool_auth.py::MissingAndMalformedArgumentTests)
+- read_file allow-list boundary: registered-but-missing file vs. unregistered path (including traversal strings and an absolute path), proving the tool never reveals which unregistered paths exist on disk (tests/test_tool_auth.py::ReadFileAllowListTests)
 - Unauthorized/adversarial requests: unregistered tool, non-tool action disguised as a tool call, malformed prompt-injection-style payload, side-effecting tool with no approval gate configured (tests/test_tool_auth.py::UnauthorizedAndAdversarialRequestTests)
 - Approval boundary: role-based approve/pending, explicit deny, and approval-service failure (fails closed, no secret leakage) (tests/test_tool_auth.py::ApprovalBoundaryTests)
-- Unexpected tool responses: tool exception, oversized output, non-mapping return value (tests/test_tool_auth.py::UnexpectedToolResponseTests)
+- Real tool failure modes: a genuinely failing sandboxed test (real subprocess), a hanging test killed by the real wall-clock timeout, and draft_issue's status invariant (tests/test_tool_auth.py::RealToolFailureAndEdgeCaseTests)
