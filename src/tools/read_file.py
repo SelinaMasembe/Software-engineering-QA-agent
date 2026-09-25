@@ -71,7 +71,10 @@ class ReadFileTool:
         if path not in self._allowed_paths:
             return {"status": "path_not_allowed", "path": path}
 
-        file_path = self.corpus_dir / path
+        corpus_root = self.corpus_dir.resolve()
+        file_path = (self.corpus_dir / path).resolve()
+        if corpus_root not in file_path.parents:
+            return {"status": "path_not_allowed", "path": path}
         if not file_path.is_file():
             return {"status": "not_found", "path": path}
 
