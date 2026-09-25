@@ -17,7 +17,9 @@ entries are ``RejectedExecution`` objects requiring a ``session_id`` and a
 deliberately builds one level below that: ``SandboxExecutor.execute(test_node_id)``
 runs exactly one test and returns one ``TestResult`` (from
 ``models.types``, reused as-is -- no parallel shape). Wiring this into
-Wiring this into ``RunTestsTool`` is handled by ``src/tools/run_tests.py``: its ``run()`` method calls this once per test ID and assembles the final ``SandboxExecutionResult`` with the session identity it owns.
+``RunTestsTool`` is handled by ``src/tools/run_tests.py``: its ``run()``
+method calls this once per test ID and assembles the final
+``SandboxExecutionResult`` with the session identity it owns.
 
 Security posture (Security and Risk Register R3/R4/R5/R7, confirmed against
 the register before writing this):
@@ -45,8 +47,10 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from time import perf_counter
+from typing import BinaryIO
 
 from models.types import RejectionReason, TestOutcome, TestResult
 
@@ -54,6 +58,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC_DIR = REPO_ROOT / "src"
 
 DEFAULT_TIMEOUT_SECONDS = 30.0
+_MAX_CAPTURE_BYTES = 64_000
 
 # Deliberately small. PYTHONPATH is computed by this class, never inherited;
 # everything else needed to launch Python correctly (and nothing else) goes
@@ -123,60 +128,67 @@ class SandboxExecutor:
         env = self._build_environment()
 
         started = perf_counter()
-        try:
-            completed = subprocess.run(
+        with (
+            tempfile.TemporaryFile() as stdout_file,
+            tempfile.TemporaryFile() as stderr_file,
+        ):
+            process = subprocess.Popen(
                 command,
                 cwd=self.repo_root,
                 env=env,
-                capture_output=True,
-                text=True,
-                timeout=self.timeout_seconds,
+                stdout=stdout_file,
+                stderr=stderr_file,
                 shell=False,
             )
-        except subprocess.TimeoutExpired as exc:
+            try:
+                process.wait(timeout=self.timeout_seconds)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait()
+                duration_ms = _elapsed_ms(started)
+                stdout = _read_capped_text(stdout_file)
+                stderr = _read_capped_text(stderr_file)
+                return TestResult(
+                    test_id=test_node_id,
+                    outcome=TestOutcome.ERROR,
+                    duration_ms=duration_ms,
+                    stdout=stdout,
+                    stderr=(
+                        f"{stderr}\n[timeout] exceeded {self.timeout_seconds:g}s "
+                        "wall-clock limit; process was killed."
+                    ).strip(),
+                )
+
             duration_ms = _elapsed_ms(started)
-            stdout = exc.stdout or ""
-            stderr = exc.stderr or ""
+            stdout = _read_capped_text(stdout_file)
+            stderr = _read_capped_text(stderr_file)
+
+            if process.returncode in _NOT_COLLECTIBLE_RETURN_CODES:
+                stderr = (
+                    f"[{RejectionReason.UNKNOWN_TEST_NODE_ID.value}] {stderr}"
+                ).strip()
+                return TestResult(
+                    test_id=test_node_id,
+                    outcome=TestOutcome.ERROR,
+                    duration_ms=duration_ms,
+                    stdout=stdout,
+                    stderr=stderr,
+                )
+
+            if process.returncode == 0:
+                outcome = TestOutcome.PASS
+            elif process.returncode == 1:
+                outcome = TestOutcome.FAIL
+            else:
+                outcome = TestOutcome.ERROR
+
             return TestResult(
                 test_id=test_node_id,
-                outcome=TestOutcome.ERROR,
+                outcome=outcome,
                 duration_ms=duration_ms,
                 stdout=stdout,
-                stderr=(
-                    f"{stderr}\n[timeout] exceeded {self.timeout_seconds:g}s "
-                    "wall-clock limit; process was killed."
-                ).strip(),
-            )
-
-        duration_ms = _elapsed_ms(started)
-
-        if completed.returncode in _NOT_COLLECTIBLE_RETURN_CODES:
-            stderr = (
-                f"[{RejectionReason.UNKNOWN_TEST_NODE_ID.value}] "
-                f"{completed.stderr}"
-            ).strip()
-            return TestResult(
-                test_id=test_node_id,
-                outcome=TestOutcome.ERROR,
-                duration_ms=duration_ms,
-                stdout=completed.stdout,
                 stderr=stderr,
             )
-
-        if completed.returncode == 0:
-            outcome = TestOutcome.PASS
-        elif completed.returncode == 1:
-            outcome = TestOutcome.FAIL
-        else:
-            outcome = TestOutcome.ERROR
-
-        return TestResult(
-            test_id=test_node_id,
-            outcome=outcome,
-            duration_ms=duration_ms,
-            stdout=completed.stdout,
-            stderr=completed.stderr,
-        )
 
     def _build_environment(self) -> dict[str, str]:
         env: dict[str, str] = {}
@@ -191,3 +203,13 @@ class SandboxExecutor:
 
 def _elapsed_ms(started: float) -> int:
     return round((perf_counter() - started) * 1_000)
+
+
+def _read_capped_text(stream: BinaryIO) -> str:
+    stream.seek(0)
+    output = stream.read(_MAX_CAPTURE_BYTES + 1)
+    truncated = len(output) > _MAX_CAPTURE_BYTES
+    text = output[:_MAX_CAPTURE_BYTES].decode("utf-8", errors="replace")
+    if truncated:
+        return f"{text}\n[output truncated to {_MAX_CAPTURE_BYTES} bytes]".strip()
+    return text
