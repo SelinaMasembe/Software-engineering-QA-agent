@@ -1,6 +1,6 @@
-"""Public tool-orchestration boundary for the QA agent."""
+"""Public orchestration boundary for the QA agent."""
 
-from .tool_dispatcher import (
+from .router import (
     ApprovalGate,
     ApprovalStatus,
     ApprovalVerdict,
