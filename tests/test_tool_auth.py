@@ -3,7 +3,7 @@
 Tests missing parameters, unauthorized requests, and unexpected tool responses
 for the four planned tools (search_repo, read_file, run_tests, draft_issue),
 dispatched through the REAL Week 4 integration boundary at
-src/orchestration/tool_dispatcher.py (Member 2's deliverable).
+src/orchestrator/tool_dispatcher.py (Member 2's deliverable).
 
 STAND-IN TOOLS, REAL DISPATCHER
 --------------------------------
@@ -44,7 +44,7 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 from models.types import Action, Confidence, EvidenceRef, ProposalSet  # noqa: E402
-from orchestration import (  # noqa: E402
+from orchestrator import (  # noqa: E402
     ApprovalStatus,
     ApprovalVerdict,
     DispatchCode,
@@ -552,7 +552,7 @@ def render_report(rows: list[MatrixRow]) -> str:
         "# Week 4 Tool Authorization & Failure Test Evidence",
         "",
         "Stand-in tool implementations (tests/test_tool_auth.py), dispatched "
-        "through the real src/orchestration/tool_dispatcher.py. Member 3's "
+        "through the real src/orchestrator/tool_dispatcher.py. Member 3's "
         "real tools were not yet on origin/feat/tools when this evidence was "
         "generated; swap STAND_IN_TOOL_CATALOGUE for the real tools once "
         "they land.",
