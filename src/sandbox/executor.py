@@ -17,10 +17,7 @@ entries are ``RejectedExecution`` objects requiring a ``session_id`` and a
 deliberately builds one level below that: ``SandboxExecutor.execute(test_node_id)``
 runs exactly one test and returns one ``TestResult`` (from
 ``models.types``, reused as-is -- no parallel shape). Wiring this into
-``RunTestsTool`` so its ``run()`` calls this in a loop and assembles the
-final ``SandboxExecutionResult`` (attaching the session_id and timestamp it
-actually has) is the deliberate follow-up step this pass does not include;
-``run_tests.py`` is untouched here.
+Wiring this into ``RunTestsTool`` is handled by ``src/tools/run_tests.py``: its ``run()`` method calls this once per test ID and assembles the final ``SandboxExecutionResult`` with the session identity it owns.
 
 Security posture (Security and Risk Register R3/R4/R5/R7, confirmed against
 the register before writing this):
