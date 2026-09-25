@@ -1,1 +1,1 @@
-"""Member 3 tool implementations, registered against orchestration.ToolDispatcher."""
+"""Member 3 tool implementations, registered against orchestrator.ToolDispatcher."""
