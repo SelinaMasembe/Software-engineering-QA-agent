@@ -93,7 +93,7 @@
     "query": "Which test failed in the September 15 run, and what was the exact assertion error message?",
     "expected_not_in_corpus": true,
     "required_source_paths": [],
-    "ideal_source_paths": ["logs/test_run_2026_09_15.log"],
+    "ideal_source_paths": ["logs/test_run_2026_09_15.txt"],
     "known_limitation": "The test-run log genuinely names the failing test and its assertion message, so a fully correct system should answer this. But min_term_coverage is the fraction of ALL query terms a single chunk must contain, and this natural phrasing adds terms ('september', 'run', 'exact', 'message') that no single log chunk contains together. No chunk clears the 0.34 coverage floor, so the pipeline reports not_in_corpus=True. This is a false negative caused by query verbosity diluting the coverage ratio, not by a real gap in the corpus.",
     "notes": "Documented retrieval failure #1: false not-in-corpus from verbose phrasing."
   },
@@ -113,7 +113,7 @@
     "query": "Why did the account lockout test fail, and does the five-failure threshold in the test match the requirement and the code?",
     "expected_not_in_corpus": false,
     "required_source_paths": ["requirements/authentication.md"],
-    "ideal_source_paths": ["requirements/authentication.md", "logs/test_run_2026_09_15.log", "src/login_service.py"],
+    "ideal_source_paths": ["requirements/authentication.md", "logs/test_run_2026_09_15.txt", "src/login_service.py"],
     "known_limitation": "This question genuinely spans three documents: the requirement, the failing test's log entry, and the code under test. The coverage floor is applied per chunk independently. Only the requirement chunk clears 0.34 coverage; the log chunk that explains the actual failure (0.30) and the code chunk (about 0.10) both fall just under the floor and are silently dropped. The pipeline reports full groundedness (not_in_corpus=False) while citing only one of the three relevant sources, so the answer looks complete but is not.",
     "notes": "Documented retrieval failure #3: confident-but-incomplete grounding on a cross-document question."
   },
@@ -122,12 +122,12 @@
     "category": "partially_answerable",
     "query": "Which test failed in the test run log?",
     "expected_not_in_corpus": false,
-    "required_source_paths": ["logs/test_run_2026_09_15.log"],
-    "required_chunk_ids": ["logs/test_run_2026_09_15.log#L4-L7"],
+    "required_source_paths": ["logs/test_run_2026_09_15.txt"],
+    "required_chunk_ids": ["logs/test_run_2026_09_15.txt#L4-L7"],
     "ideal_chunk_ids": [
-      "logs/test_run_2026_09_15.log#L4-L7",
-      "logs/test_run_2026_09_15.log#L12-L17",
-      "logs/test_run_2026_09_15.log#L19-L19"
+      "logs/test_run_2026_09_15.txt#L4-L7",
+      "logs/test_run_2026_09_15.txt#L12-L17",
+      "logs/test_run_2026_09_15.txt#L19-L19"
     ],
     "known_limitation": "The single failure record in the log is split across multiple small chunks by paragraph-boundary chunking: the test list naming the failing test, the traceback header, and the assertion message each land in separate chunks. For this phrasing only the test-list chunk clears the coverage floor, so the pipeline correctly names the failing test but omits the assertion message and traceback that a complete answer needs, even though that text is a few lines away in the same file.",
     "notes": "Documented retrieval failure #4: a single incident fragmented across chunks, only one of which is retrieved."

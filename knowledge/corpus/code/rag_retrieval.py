@@ -286,7 +286,7 @@ def load_documents_from_directory(
     *,
     type_by_suffix: dict[str, DocumentType] | None = None,
 ) -> list[SourceDocument]:
-    """Read a directory into source documents, inferring type from extension."""
+    """Read corpus files and infer type from suffix and corpus location."""
 
     root_path = Path(root)
     if not root_path.is_dir():
@@ -294,25 +294,46 @@ def load_documents_from_directory(
 
     mapping = type_by_suffix or _DEFAULT_TYPE_BY_SUFFIX
     documents: list[SourceDocument] = []
+
     for path in sorted(root_path.rglob("*")):
         if not path.is_file():
             continue
+
         try:
             text = path.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             continue
+
         if not text.strip():
             continue
+
+        relative_path = path.relative_to(root_path)
+        document_type = mapping.get(
+            path.suffix.lower(),
+            DocumentType.OTHER,
+        )
+
+        # Corpus directory provenance overrides the filename suffix.
+        if "logs" in relative_path.parts:
+            document_type = DocumentType.LOG
+        elif "requirements" in relative_path.parts:
+            document_type = DocumentType.REQUIREMENT
+        elif "code" in relative_path.parts:
+            document_type = DocumentType.CODE
+
         documents.append(
             SourceDocument(
-                source_path=path.relative_to(root_path).as_posix(),
+                source_path=relative_path.as_posix(),
                 text=text,
-                doc_type=mapping.get(path.suffix, DocumentType.OTHER),
+                doc_type=document_type,
             )
         )
 
     if not documents:
-        raise CorpusInputError(f"No readable documents found under {root_path}")
+        raise CorpusInputError(
+            f"No readable documents found under {root_path}"
+        )
+
     return documents
 
 

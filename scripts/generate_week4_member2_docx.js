@@ -549,7 +549,7 @@ async function main() {
     ]),
     heading("7.1 Known Baseline Failure", 2),
     body(
-      "The repository-wide suite is not claimed as fully passing. Commit 5c39b08 removed tests/fixtures/member2/corpus/logs/test_run_2026_09_15.log while earlier RAG and evaluation expectations still reference it. Those two failures occur outside the Week 4 Member 2 files and have been reported for team resolution.",
+      "The repository-wide suite is not claimed as fully passing. The original test-run log was replaced with a sanitized synthetic .txt fixture because the Week 3 sensitive-data guard blocks committed .log files. The RAG evaluation references and provenance metadata must point to the sanitized fixture consistently. Any remaining failures in this area are fixture-maintenance issues outside the Week 4 Member 2 dispatcher boundary.",
       { after: 0 },
     ),
     pageBreak(),

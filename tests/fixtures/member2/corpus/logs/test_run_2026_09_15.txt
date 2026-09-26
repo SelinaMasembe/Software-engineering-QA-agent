@@ -1,0 +1,19 @@
+==============================
+SYNTHETIC TEST RUN
+Date: 2026-09-15
+==============================
+FAILED TESTS
+test_lockout_reason (tests.test_authentication)
+synthetic fixture failure record
+
+==============================
+TRACEBACK
+==============================
+Traceback (most recent call last):
+synthetic assertion location
+synthetic assertion context
+AssertionError: expected lockout reason, got empty response
+synthetic traceback line
+synthetic traceback detail
+
+FAILED (failures=1)
