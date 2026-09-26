@@ -9,7 +9,7 @@ tuple[str, ...]`` shape (plain source-path strings, not the structured
 ``EvidenceRef`` ``ProposalSet.evidence`` uses) and its ``DraftStatus.DRAFT``
 default -- only a human, elsewhere, may ever move a draft to ``SUBMITTED``.
 
-This is a REQUIRES_APPROVAL tool. orchestrator.tool_dispatcher only calls
+This is a REQUIRES_APPROVAL tool. orchestrator.router only calls
 ``run()`` once its approval gate returns APPROVED; a DENIED or PENDING
 verdict returns a DispatchResult before ``run()`` is ever reached, so this
 file has no approval logic of its own to write.
@@ -47,7 +47,7 @@ class DraftStore:
 
 
 class DraftIssueTool:
-    """Approval-gated tool satisfying orchestrator.tool_dispatcher's Tool Protocol."""
+    """Approval-gated tool satisfying orchestrator.router's Tool Protocol."""
 
     name = "draft_issue"
     risk = ToolRisk.REQUIRES_APPROVAL

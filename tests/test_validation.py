@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 from models.types import Action, Confidence, EvidenceRef, ProposalSet, UntraceableProposalError
-from orchestration.validation import validate_citations
+from orchestrator.validation import validate_citations
 
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
 PROMPT_EVAL_CASES_PATH = FIXTURES_DIR / "prompt_eval_cases.json"

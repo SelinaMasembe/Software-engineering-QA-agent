@@ -23,7 +23,7 @@ from rag import RetrievalPipeline
 
 
 class SearchRepoTool:
-    """Read-only tool satisfying orchestrator.tool_dispatcher's Tool Protocol."""
+    """Read-only tool satisfying orchestrator.router's Tool Protocol."""
 
     name = "search_repo"
     risk = ToolRisk.READ_ONLY

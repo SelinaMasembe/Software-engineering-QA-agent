@@ -1,6 +1,6 @@
 # Week 4 Tool Authorization & Failure Test Evidence
 
-The four REAL tools from src/tools/ (Member 3, feat/tools), dispatched through the real src/orchestrator/tool_dispatcher.py (Member 2). The per-tool `allowed_roles` policy exercised here is Member 4's own proposed default access matrix -- no team-wide role policy is wired into the application yet; the enforcement mechanism is real, this specific role set is illustrative.
+The four REAL tools from src/tools/ (Member 3, feat/tools), dispatched through the real src/orchestrator/router.py (Member 2). The per-tool `allowed_roles` policy exercised here is Member 4's own proposed default access matrix -- no team-wide role policy is wired into the application yet; the enforcement mechanism is real, this specific role set is illustrative.
 
 ## Authorization matrix
 

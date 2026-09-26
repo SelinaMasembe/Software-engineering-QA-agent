@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prove src/orchestration/validation.py actually closes the gap Member 2's
+"""Prove src/orchestrator/validation.py actually closes the gap Member 2's
 Week 4 report left open: "Member 1: confirm citation validation occurs
 before dispatch()."
 
@@ -40,7 +40,7 @@ from models.types import (  # noqa: E402
     ProposalSet,
     UntraceableProposalError,
 )
-from orchestration import (  # noqa: E402
+from orchestrator import (  # noqa: E402
     ApprovalStatus,
     ApprovalVerdict,
     ExecutionContext,
@@ -48,7 +48,7 @@ from orchestration import (  # noqa: E402
     ToolRegistry,
     ToolRisk,
 )
-from orchestration.validation import validate_citations  # noqa: E402
+from orchestrator.validation import validate_citations  # noqa: E402
 
 FIXTURES_PATH = REPO_ROOT / "tests" / "fixtures" / "prompt_eval_cases.json"
 CONTEXT = ExecutionContext(session_id="smoke-1", actor_id="dev-1", role="developer")

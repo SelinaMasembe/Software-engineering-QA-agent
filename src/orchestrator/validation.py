@@ -1,6 +1,6 @@
 """Pre-dispatch citation validation (Week 4 deliverable, Member 1).
 
-Member 2's tool-calling boundary (src/orchestration/tool_dispatcher.py)
+Member 2's tool-calling boundary (src/orchestrator/router.py)
 deliberately does not check citations itself. Its Week 4 report
 (docs/integration/Week4_Member2_ToolCallingOrchestration.docx, Table 1 and
 Section 6.3) lists this as a Member 1 handoff:

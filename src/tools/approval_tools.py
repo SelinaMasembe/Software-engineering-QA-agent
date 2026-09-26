@@ -8,7 +8,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Mapping
 
-from orchestration.tool_dispatcher import ExecutionContext, ToolRisk
+from orchestrator.router import ExecutionContext, ToolRisk
 
 
 class RunTestsTool:

@@ -10,7 +10,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from typing import Any
 
-from orchestration.tool_dispatcher import (
+from orchestrator.router import (
     Action,
     ApprovalStatus,
     ApprovalVerdict,
@@ -113,7 +113,7 @@ class AuditLogger:
 
 
 class JSONApprovalGate:
-    """Concrete implementation of orchestration.tool_dispatcher.ApprovalGate."""
+    """Concrete implementation of orchestrator.router.ApprovalGate."""
 
     def __init__(
         self,

@@ -4,7 +4,7 @@ Tests missing parameters, unauthorized requests, and unexpected tool
 responses for the four real tools Member 3 landed on feat/tools
 (src/tools/search_repo.py, read_file.py, run_tests.py, draft_issue.py),
 dispatched through the real integration boundary at
-src/orchestrator/tool_dispatcher.py (Member 2's Week 4 deliverable).
+src/orchestrator/router.py (Member 2's Week 4 deliverable).
 
 An earlier version of this file used stand-in tool implementations because
 src/tools/ did not exist yet on this branch. Member 3's real tools have
@@ -538,7 +538,7 @@ def render_report(rows: list[MatrixRow]) -> str:
         "# Week 4 Tool Authorization & Failure Test Evidence",
         "",
         "The four REAL tools from src/tools/ (Member 3, feat/tools), dispatched "
-        "through the real src/orchestrator/tool_dispatcher.py (Member 2). The "
+        "through the real src/orchestrator/router.py (Member 2). The "
         "per-tool `allowed_roles` policy exercised here is Member 4's own "
         "proposed default access matrix -- no team-wide role policy is wired "
         "into the application yet; the enforcement mechanism is real, this "

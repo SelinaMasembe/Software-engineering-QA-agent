@@ -38,7 +38,7 @@ Unknown test node IDs are rejected before an approval request is created.
 
 Primary implementation:
 
-- `src/orchestration/approval_gate.py`
+- `src/orchestrator/approval_gate.py`
 - `src/tools/approval_tools.py`
 - `scripts/approve_cli.py`
 - `scripts/member5_approval_demo.py`

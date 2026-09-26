@@ -1,3 +1,9 @@
+"""Focused tests for Member 2's router boundary.
+
+These fake-based checks do not replace Member 4's integrated test_tool_auth.py
+deliverable.
+"""
+
 from __future__ import annotations
 
 import json

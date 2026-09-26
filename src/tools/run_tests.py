@@ -20,7 +20,7 @@ pattern ``SearchRepoTool`` uses for its ``RetrievalPipeline`` and
 ``run()``.
 
 This is a REQUIRES_APPROVAL tool, so ``run()`` is only ever reached after
-approval; orchestrator.tool_dispatcher's ``except Exception`` around
+approval; orchestrator.router's ``except Exception`` around
 ``run()`` converts any exception it raises into a generic
 ``DispatchStatus.TOOL_ERROR`` / ``DispatchCode.EXECUTION_FAILED`` without
 leaking its text to the caller -- confirmed by reading ``dispatch()``
@@ -57,7 +57,7 @@ class ManifestDriftError(RuntimeError):
 
 
 class RunTestsTool:
-    """Approval-gated tool satisfying orchestrator.tool_dispatcher's Tool Protocol."""
+    """Approval-gated tool satisfying orchestrator.router's Tool Protocol."""
 
     name = "run_tests"
     risk = ToolRisk.REQUIRES_APPROVAL

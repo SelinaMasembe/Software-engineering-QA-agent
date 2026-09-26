@@ -26,7 +26,7 @@ _VALID_STATUSES = frozenset({"ok", "path_not_allowed", "not_found"})
 
 
 class ReadFileTool:
-    """Read-only tool satisfying orchestrator.tool_dispatcher's Tool Protocol."""
+    """Read-only tool satisfying orchestrator.router's Tool Protocol."""
 
     name = "read_file"
     risk = ToolRisk.READ_ONLY
