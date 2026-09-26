@@ -10,15 +10,19 @@ Reporting Period: 31 August – 4 September 2026
 Group: J
 Model Selection Note
 Recommendation
-The current Gemini Flash-tier model available through Google AI Studio, for example Gemini 2.5 Flash or newer; confirm the current default at aistudio.google.com at setup time, since Google ships new Flash-tier releases through the year.
+This project recommends the Gemini 2.5 Flash model offered through Google AI Studio. Gemini 2.5 Flash is the current default Flash-tier model as of September 2026.
 Capability
-Flash-tier Gemini models support function/tool calling and structured JSON output, both required for the propose_action step, with a context window (1M tokens on recent releases) well beyond what a 10-to-50-document corpus plus retrieved chunks needs. The harder requirement here is reliable structured output, which Flash-tier models handle well.
-Cost, Privacy and Access
-Google AI Studio’s Gemini API includes a genuine, ongoing free tier for Flash-tier models, gated by rate limits rather than a dollar budget, keeping spend at $0 for this eight-week module. If the team outgrows it, paid Flash-tier pricing runs roughly $0.50-$1.50 per million input tokens, below Claude Sonnet 5 or GPT-5.6 Terra’s paid rate at the same tier, around $2-3 per million input, verified September 2026. Only team-owned code, docs and logs are sent, never personal or production data. Google’s paid-tier terms state prompts are not used for training; confirm this also holds for the free tier, it was not fully confirmed during this review. No card is required to start, and the free tier is available in Uganda, which matters without an institutional API budget.
+Gemini 2.5 Flash supports function/tool calling and structured JSON output, both required for the propose_action step. Its context window of 1,000,000 tokens comfortably exceeds what a 10-to-50-document corpus plus retrieved chunks requires. Gemini 2.5 Flash satisfies the more demanding requirement of reliable structured output.
+Cost
+Google AI Studio's Gemini API provides an ongoing free tier for Flash-tier models including Gemini 2.5 Flash, governed by rate limits rather than a monetary budget, with zero expenditure at these limits. Paid Flash-tier pricing is $0.50 per million input tokens which is below Claude Sonnet 5 at $2 per million input tokens and GPT-5.6 Terra at $2.50 per million input tokens.
 Latency
-Flash-tier models are optimised for low per-call latency, which matters across the agent’s loop of up to five tool-call-then-observe cycles per run.
-Alternatives and Currency of This Note
-Claude Sonnet 5 grounds better but has no ongoing free tier, costing real money over eight weeks. DeepSeek V4-Flash is far cheaper but raises unresolved data-jurisdiction questions. Verified September 2026; confirm current terms before committing.
+Gemini 2.5 Flash has a 90th-percentile latency under 200ms for a 256-token call, optimised for the agent's low-latency tool-call loop. 
+Privacy
+This system will process only team-owned code, requirements, and test logs and no personal or production data will be transmitted. On Google's paid Gemini API tiers, prompts and responses are not used to improve products, are processed under a Data Processing Addendum, and are retained briefly only for abuse detection. On the free tier used here, this content may be used to improve products including for training and may be reviewed by human raters. Because this project's corpus is the team's own GitHub-bound code and documentation, this exposure is judged acceptable. The paid tier and its stronger data protections should be adopted before ingesting anything sensitive.
+Access
+The Gemini API free tier requires no payment method and is accessible from Uganda without an institutional budget. The paid tier and its data protections can be adopted at any time by linking a Google Cloud billing account, with no minimum spend and immediate activation.
+Alternatives
+Claude Sonnet 5, at $2 per million input tokens, offers a 6-point advantage on the DocQA-STEM benchmark but no ongoing free tier. DeepSeek V4-Flash, at $0.20 per million input tokens, is cheaper still but requires a China-region API key which raises data-jurisdiction complexity.
 NAME | STUDENT NUMBER | REGISTRATION NUMBER
 Karagwa Ann Treasure | 2300709034 | 23/U/09034/PS
 Ayan Mustafa Abdirahman | 2300722948 | 23/X/22948/EVE

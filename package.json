@@ -1,0 +1,29 @@
+{
+  "name": "software-engineering-qa-agent",
+  "version": "1.0.0",
+  "description": "The **Software-Engineering QA Agent** is an AI-assisted quality assurance system designed to support software development teams in understanding requirements, proposing relevant tests, executing approved tests in a controlled sandbox environment, analyzing test results, and preparing failure summaries or draft issue/pull-request notes.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SelinaMasembe/Software-engineering-QA-agent.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/SelinaMasembe/Software-engineering-QA-agent/issues"
+  },
+  "homepage": "https://github.com/SelinaMasembe/Software-engineering-QA-agent#readme",
+  "dependencies": {
+    "docx": "^9.7.2",
+    "jszip": "^3.10.2"
+  }
+}

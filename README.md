@@ -79,7 +79,7 @@ This separation helps ensure that the AI provides useful reasoning while determi
 
 The QA Agent is deliberately restricted.
 
-### The agent MAY:
+### The agent MAY
 
 - Read approved requirements and repository documentation.
 - Analyse approved source code and test logs.
@@ -88,7 +88,7 @@ The QA Agent is deliberately restricted.
 - Draft issue or pull-request notes.
 - Execute tests that have been explicitly approved and are available within the controlled sandbox.
 
-### The agent MUST NOT:
+### The agent MUST NOT
 
 - Access production systems.
 - Deploy software to production.
@@ -201,7 +201,7 @@ Software-engineering-QA-agent/
 
 ### Create the virtual environment
 
-```bash
+````bash
 python3 -m venv .venv
 source .venv/bin/activate
 python3 -m pip install -r requirements.txt
@@ -212,7 +212,7 @@ Create a local environment file:
 
 ```bash
 cp .env.example .env
-```
+````
 
 Edit `.env` and add the API key. Never commit `.env` or place the key in a command-line argument.
 
@@ -264,6 +264,71 @@ PYTHONPATH=src python3 -m unittest discover -s tests -v
 
 The offline suite does not require an API key.
 
+## Week 4 Approval Gate
+
+Member 5's approval-gate implementation is integrated through the existing
+`ToolDispatcher` boundary. The `run_tests` tool accepts only test node IDs
+from a fixed manifest and requires an authorized human approval before it
+executes. `draft_issue` creates a local draft only; it does not submit an
+issue or pull request.
+
+Implementation and evidence files:
+
+| File                                                         | Purpose                                                                             |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| `src/orchestration/approval_gate.py`                         | Persistent approval queue, authorization checks, timeout handling and audit logging |
+| `src/tools/approval_tools.py`                                | `RunTestsTool` and `DraftIssueTool` implementations                                 |
+| `scripts/approve_cli.py`                                     | Human approval and denial commands                                                  |
+| `scripts/member5_approval_demo.py`                           | Automated approval-gate demonstration                                               |
+| `tests/integration/test_approval_gate.py`                    | Approval, denial, timeout, authorization and audit tests                            |
+| `docs/requirements/week4/member5-approval-gate-explained.md` | Plain-language implementation walkthrough                                           |
+
+Run the focused approval-gate tests:
+
+```bash
+PYTHONPATH=src python3 -m unittest \
+    tests.integration.test_approval_gate -v
+```
+
+Run the dispatcher contract tests:
+
+```bash
+PYTHONPATH=src python3 -m unittest \
+    tests.integration.test_tool_dispatcher -v
+```
+
+Run the automated approval demonstration:
+
+```bash
+PYTHONPATH=src python3 scripts/member5_approval_demo.py
+```
+
+For a two-terminal manual approval demonstration, configure a runtime-only
+directory and list requests from the second terminal:
+
+```bash
+export QA_AGENT_DATA_DIR="$PWD/data/member5-demo"
+export QA_AGENT_APPROVERS="Alice,Bob"
+PYTHONPATH=src python3 scripts/approve_cli.py list
+```
+
+Approve or deny a real request ID returned by `list`:
+
+```bash
+PYTHONPATH=src python3 scripts/approve_cli.py approve \
+    ACTUAL_REQUEST_ID --by Alice --reason "Approved after review."
+```
+
+Runtime queue, audit and draft files are intentionally ignored by Git. Remove
+the demonstration directory after collecting evidence:
+
+```bash
+rm -rf data/member5-demo
+```
+
+The full walkthrough is in
+`docs/requirements/week4/member5-approval-gate-explained.md`.
+
 ## Running the Live Smoke Test
 
 The smoke test sends one real requirement and source-code example to the configured model:
@@ -293,16 +358,16 @@ The smoke test proposes an action. It does not create files, execute tests, or m
 
 ## Configuration Files
 
-| File | Purpose |
-|---|---|
-| `.env.example` | Safe template showing required environment variables |
-| `.env` | Local secrets and settings; never commit |
-| `src/config/loader.py` | Loads and validates environment settings |
-| `src/config/__init__.py` | Exposes the configuration loader interface |
-| `src/models/client.py` | Calls the configured model provider |
-| `scripts/member2_model_smoke.py` | Runs one live model interaction |
-| `tests/test_config.py` | Tests Member 5 configuration behavior |
-| `tests/integration/test_model_integration.py` | Tests model-client and pipeline behavior |
+| File                                          | Purpose                                              |
+| --------------------------------------------- | ---------------------------------------------------- |
+| `.env.example`                                | Safe template showing required environment variables |
+| `.env`                                        | Local secrets and settings; never commit             |
+| `src/config/loader.py`                        | Loads and validates environment settings             |
+| `src/config/__init__.py`                      | Exposes the configuration loader interface           |
+| `src/models/client.py`                        | Calls the configured model provider                  |
+| `scripts/member2_model_smoke.py`              | Runs one live model interaction                      |
+| `tests/test_config.py`                        | Tests Member 5 configuration behavior                |
+| `tests/integration/test_model_integration.py` | Tests model-client and pipeline behavior             |
 
 ## Troubleshooting
 

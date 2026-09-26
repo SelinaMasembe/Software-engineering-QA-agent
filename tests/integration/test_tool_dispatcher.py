@@ -21,7 +21,7 @@ from orchestrator import (
 CONTEXT = ExecutionContext(
     session_id="session-1", actor_id="dev-1", role="developer"
 )
-SECRET = "db-password=hunter2"
+SECRET = "test-secret-placeholder"
 
 
 class FakeTool:
