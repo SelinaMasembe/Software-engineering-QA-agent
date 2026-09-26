@@ -1,0 +1,9 @@
+# Glob patterns (one per line, # for comments) exempted from
+# scripts/check_sensitive.py's file-type and content scans.
+#
+# *.log files are blocked by default because a real sandbox/model-call run
+# can capture secrets. This is a hand-authored, static test fixture (part
+# of the Week 3 retrieval corpus), never a captured runtime log, and
+# several tests depend on it existing (test_rag_pipeline.py's manifest
+# count, test_rag_eval.py's partially_answerable_log_fragmentation case).
+tests/fixtures/member2/corpus/logs/test_run_2026_09_15.log
