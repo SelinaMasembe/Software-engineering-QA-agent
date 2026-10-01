@@ -1,7 +1,7 @@
 ## Week 5 — Agent Task Contract (`task_contract.yaml`), its loader and dataclass, and the contract-to-loop adapter
 
 **Date:** 1st Oct 2026
-**Deliverable:** `src/agent/task_contract.yaml`, `src/agent/task_contract.py`, `AgentTaskContract` in `src/models/types.py`, `tests/test_task_contract.py`, `pyyaml` in `requirements.txt`, then the follow-on adapter `src/agent/task_adapter.py` with `tests/test_task_adapter.py`. The adapter and its tests were still uncommitted when this entry was written.
+**Deliverable:** `src/agent/task_contract.yaml`, `src/agent/task_contract.py`, `AgentTaskContract` in `src/models/types.py`, `tests/test_task_contract.py`, `pyyaml` in `requirements.txt`, then the follow-on adapter `src/agent/task_adapter.py` with `tests/test_task_adapter.py`, plus a fix for a failing Week 3 fixture test (a duplicate log file I re-added in Week 4, now removed).
 
 **What I asked the AI for:** I used Claude Code (Claude Sonnet 5.5), which has direct read/write access to the repository, in two sessions. Each prompt told it to explore and confirm the current state of the repo before writing anything, because three other members were changing `src/agent/` the same week. Session 1 asked for the contract file. It also asked for a loader and test only if `models/types.py` already reserved a dataclass shape, and otherwise to stop and ask me. Session 2 asked for an adapter between the contract and what `loop.py` consumes (an `AgentTask` plus an injected stop evaluator). It had to build a real evaluator if Member 1's `stop_conditions.py` existed, and otherwise raise a specific error and not fake enforcement.
 
@@ -39,7 +39,10 @@
   - A guard test fails once `stop_conditions.py` exists, so the seam gets revisited.
 - **Full suite, run by me.** I ran `PYTHONPATH=src python -m pytest tests -q` and then `git status --short` in my own terminal, not only through the AI.
 - **Regression check.** The AI also ran the suite on a clean checkout (changes stashed) and got the same single failure, which shows my work didn't cause it.
-- **Final state, confirmed by me today:** `1 failed, 216 passed, 1 warning, 179 subtests passed`. The one failure is `tests/integration/test_rag_pipeline.py::ContractTests::test_manifest_counts_documents_and_chunks`. It also fails without my changes, and I have not investigated why. My brief expected two pre-existing failures, but only this one appears.
+- **First full run, by me.** `1 failed, 216 passed, 1 warning, 179 subtests passed`. The one failure was `tests/integration/test_rag_pipeline.py::ContractTests::test_manifest_counts_documents_and_chunks`. It also failed without my changes. My brief expected two pre-existing failures, but only this one appeared.
+- **Investigating that failure.** I asked the AI to find the cause. The test expects 3 documents in the fixture corpus and the loader found 4. `tests/fixtures/member2/corpus/logs/` held both `test_run_2026_09_15.log` and `test_run_2026_09_15.txt`. Selina's commit f795b75 had renamed the original `.log` to `.txt` so it would pass the `*.log` sensitive-data rule, and my Week 4 commit cfb84b6 re-added the `.log` without noticing the `.txt` already existed. The Week 3 evaluation document cites the `.txt` path.
+- **The fix.** The AI proposed deleting the redundant `.log`, but the delete was blocked by the permission classifier as irreversible. I ran `git rm` on it myself, after the AI had explained the cause.
+- **Final state, confirmed by me today:** `217 passed, 1 warning, 179 subtests passed`, with no failures. I haven't re-run `python scripts/check_sensitive.py` since the delete.
 - **Collection errors.** Running bare `pytest` from the repo root errors at collection. Test files under `knowledge/corpus/code/` share names with files in `tests/`. This was already the case before my changes, so I ran against `tests/` only.
 
 **What I changed or would still change myself:**
@@ -49,7 +52,7 @@
 - **Open items outside the code I wrote.**
   - Wiring `contract.tools` into the tool registry.
   - Generating the session id.
-  - The `test_manifest_counts_documents_and_chunks` failure.
+  - `.sensitive-scan-ignore`, whose only entry exempted the `.log` I just deleted. It is now stale, and I haven't decided whether to remove it.
 - **`SandboxNotImplementedError` precedent.** The AI followed it from my description. The class no longer exists in the repo, so it was not copied from code.
 - **No prose contract document.** I am writing the Agent Task Contract document myself, as agreed.
 
@@ -65,12 +68,11 @@ $ PYTHONPATH=src python -m pytest tests -q 2>&1 | tail -6; git status --short
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 =========================== short test summary info ===========================
-FAILED tests/integration/test_rag_pipeline.py::ContractTests::test_manifest_counts_documents_and_chunks
-1 failed, 216 passed, 1 warning, 179 subtests passed in 15.03s
-?? src/agent/task_adapter.py
-?? tests/test_task_adapter.py
+217 passed, 1 warning, 179 subtests passed in 28.08s
+D  tests/fixtures/member2/corpus/logs/test_run_2026_09_15.log
+?? "docs/weekly reports/week5-member3-contribution-report.md"
 ```
 
-Still to do: save a screenshot of this run to `evidence/screenshots/week5/`, commit the adapter and its tests, and investigate or hand off the failing manifest test.
+Still to do: commit the staged deletion and the two Week 5 documents, save a screenshot of this run to `evidence/screenshots/week5/`, and decide what to do with `.sensitive-scan-ignore`.
 
 ---
