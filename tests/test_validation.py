@@ -88,6 +88,81 @@ class ValidateCitationsTests(unittest.TestCase):
         self.assertEqual(proposal.evidence, original_evidence)
 
 
+class ConfirmedNotInCorpusTests(unittest.TestCase):
+    """The Week 5 narrow exception: propose_action v1.1 requires no_action
+    instead of a fabricated citation when the corpus has no evidence."""
+
+    def test_evidence_free_no_action_passes_for_confirmed_empty_corpus(self) -> None:
+        proposal = make_proposal(action=Action.NO_ACTION, evidence=())
+
+        result = validate_citations(
+            proposal, allowed_source_paths=frozenset(), confirmed_not_in_corpus=True
+        )
+
+        self.assertIs(result, proposal)
+
+    def test_default_keeps_rejecting_evidence_free_no_action(self) -> None:
+        proposal = make_proposal(action=Action.NO_ACTION, evidence=())
+
+        with self.assertRaisesRegex(UntraceableProposalError, "no\\s+evidence"):
+            validate_citations(proposal, allowed_source_paths=frozenset())
+
+    def test_exception_requires_empty_allowed_source_paths(self) -> None:
+        proposal = make_proposal(action=Action.NO_ACTION, evidence=())
+
+        with self.assertRaises(UntraceableProposalError):
+            validate_citations(
+                proposal,
+                allowed_source_paths={"src/app.py"},
+                confirmed_not_in_corpus=True,
+            )
+
+    def test_exception_does_not_cover_any_other_action(self) -> None:
+        for action in (
+            Action.SEARCH_REPO,
+            Action.READ_FILE,
+            Action.RUN_TESTS,
+            Action.DRAFT_ISSUE,
+            Action.PROPOSE_TEST,
+        ):
+            with self.subTest(action=action):
+                proposal = make_proposal(action=action, evidence=())
+                with self.assertRaises(UntraceableProposalError):
+                    validate_citations(
+                        proposal,
+                        allowed_source_paths=frozenset(),
+                        confirmed_not_in_corpus=True,
+                    )
+
+    def test_fabricated_citation_still_fails_for_confirmed_empty_corpus(self) -> None:
+        for action in Action:
+            with self.subTest(action=action):
+                proposal = make_proposal(
+                    action=action,
+                    evidence=(EvidenceRef(source_path="pricing/discount_table.md"),),
+                )
+                with self.assertRaisesRegex(
+                    UntraceableProposalError, "fabricated citation"
+                ):
+                    validate_citations(
+                        proposal,
+                        allowed_source_paths=frozenset(),
+                        confirmed_not_in_corpus=True,
+                    )
+
+    def test_truthy_non_bool_flag_does_not_open_the_exception(self) -> None:
+        proposal = make_proposal(action=Action.NO_ACTION, evidence=())
+
+        for flag in (1, "yes", object()):
+            with self.subTest(flag=flag):
+                with self.assertRaises(UntraceableProposalError):
+                    validate_citations(
+                        proposal,
+                        allowed_source_paths=frozenset(),
+                        confirmed_not_in_corpus=flag,
+                    )
+
+
 class RealFixtureCaseTests(unittest.TestCase):
     """Runs the check against the real red-team fixture the harness already
     uses, instead of only a hand-built example, so this proves something
