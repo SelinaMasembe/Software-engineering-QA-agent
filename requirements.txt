@@ -1,3 +1,4 @@
 certifi    #required by client.py for SSL certificate verification
 pytest     #required for running tests
 python-docx    #required for reading .docx files
+pyyaml    #required for parsing src/agent/task_contract.yaml

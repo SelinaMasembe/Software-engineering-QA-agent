@@ -1,0 +1,28 @@
+# Agent Task Contract: the goal, tools and limits the agent loop is given.
+# Parsed by agent.task_contract.load_task_contract into
+# models.types.AgentTaskContract. Unknown keys are rejected.
+
+# Role and task are taken verbatim from docs/prompts/propose_action/v1.1.md.
+goal: >-
+  You are the reasoning component of a Software-Engineering QA Agent. You read
+  requirements, source code, and test logs for one module at a time, and decide
+  the single next action that moves toward proposing well-grounded tests or
+  diagnosing a failure. You never execute code, never modify files, and never
+  submit anything to GitHub. You only propose. Given the context, decide the
+  ONE next action to take this turn. You may call one tool, or, if you already
+  have enough evidence, propose a test case or a diagnosis directly.
+
+# Exact `name` attributes of the Tool classes in src/tools/.
+tools:
+  - search_repo
+  - read_file
+  - run_tests
+  - draft_issue
+
+# DOCUMENTED INTENT, NOT ENFORCED: src/agent/stop_conditions.py does not exist
+# yet, and src/agent/loop.py does not read this file. The values are the team's
+# agreed starting limits (5-iteration hard cap per Week 1-3 design; the
+# wall-clock figure is a proposed value, no earlier document commits a number).
+limits:
+  max_iterations: 5
+  wall_clock_budget_seconds: 120

@@ -367,6 +367,53 @@ class LoopHaltEvent:
     halted_at: datetime
 
 
+_TOOL_ACTIONS = frozenset(
+    {Action.SEARCH_REPO, Action.READ_FILE, Action.RUN_TESTS, Action.DRAFT_ISSUE}
+)
+
+
+@dataclass(frozen=True)
+class AgentTaskContract:
+    """The config the agent loop reads: goal, permitted tools, and limits
+    (src/agent/task_contract.yaml, parsed by agent.task_contract).
+
+    ``tools`` must be the exact ``name`` strings of the Tool classes in
+    src/tools/, i.e. a subset of the four tool values of ``Action``. The
+    limits are the values US-9's stop conditions are meant to enforce.
+    """
+
+    goal: str
+    tools: tuple[str, ...]
+    max_iterations: int
+    wall_clock_budget_seconds: float
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.goal, str) or not self.goal.strip():
+            raise ValueError("Task contract requires a goal.")
+        if not isinstance(self.tools, tuple) or not self.tools:
+            raise ValueError("Task contract requires at least one tool.")
+        allowed = {action.value for action in _TOOL_ACTIONS}
+        for tool in self.tools:
+            if tool not in allowed:
+                raise ValueError(f"Task contract names an unknown tool: {tool!r}.")
+        if len(set(self.tools)) != len(self.tools):
+            raise ValueError("Task contract lists a tool more than once.")
+        if (
+            isinstance(self.max_iterations, bool)
+            or not isinstance(self.max_iterations, int)
+            or self.max_iterations <= 0
+        ):
+            raise ValueError("Task contract max_iterations must be a positive integer.")
+        if (
+            isinstance(self.wall_clock_budget_seconds, bool)
+            or not isinstance(self.wall_clock_budget_seconds, (int, float))
+            or self.wall_clock_budget_seconds <= 0
+        ):
+            raise ValueError(
+                "Task contract wall_clock_budget_seconds must be greater than zero."
+            )
+
+
 class Actor(str, Enum):
     AI = "ai"
     DETERMINISTIC = "deterministic"
