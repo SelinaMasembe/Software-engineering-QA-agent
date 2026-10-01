@@ -412,4 +412,93 @@
       </root>
     </mxGraphModel>
   </diagram>
+  <diagram id="l5_agent" name="L5 · Agent loop">
+    <mxGraphModel dx="1444" dy="825" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="l5_0" />
+        <mxCell id="l5_1" parent="l5_0" />
+        <mxCell id="l5_title" value="&lt;b&gt;L5 · Agent loop: sense, plan, validate, act, observe, then stop or repeat&lt;/b&gt;" style="text;html=1;fontSize=14;align=left;verticalAlign=middle;fontColor=#16181d;" vertex="1" parent="l5_1">
+          <mxGeometry x="40" y="16" width="1080" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="l5_scope" value="One proposal and at most one tool dispatch per iteration. Solid outlines are Member 2 loop stages; dashed outlines are injected team dependencies." style="rounded=1;whiteSpace=wrap;html=1;arcSize=4;fontSize=10;align=center;verticalAlign=middle;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="l5_1">
+          <mxGeometry x="40" y="54" width="1080" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="l5_boundary" value="&lt;b&gt;AgentLoop · Member 2 · src/agent/loop.py&lt;/b&gt;" style="swimlane;html=1;rounded=1;arcSize=4;startSize=28;fontSize=11;horizontal=1;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="l5_1">
+          <mxGeometry x="250" y="110" width="670" height="730" as="geometry" />
+        </mxCell>
+        <mxCell id="l5_pre" value="&lt;b&gt;1 · Check stop policy&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Before the first turn and after each observation. No further call after halt.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="l5_1">
+          <mxGeometry x="365" y="150" width="440" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="l5_sense" value="&lt;b&gt;2 · Sense&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;ContextSensor returns AssembledContext and the exact source-path allow-list.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="l5_1">
+          <mxGeometry x="365" y="230" width="440" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="l5_plan" value="&lt;b&gt;3 · Plan exactly one action&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Planner returns one ProposalSet. A detached immutable copy enters loop history.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="l5_1">
+          <mxGeometry x="365" y="310" width="440" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="l5_validate" value="&lt;b&gt;4 · Validate citations&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Every cited path must be in this turn's context. Evidence-free NO_ACTION is allowed only after deterministic not_in_corpus with no paths.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="l5_1">
+          <mxGeometry x="365" y="390" width="440" height="66" as="geometry" />
+        </mxCell>
+        <mxCell id="l5_route" value="Action type?" style="rhombus;whiteSpace=wrap;html=1;fontSize=10;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="l5_1">
+          <mxGeometry x="510" y="480" width="150" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="l5_dispatch" value="&lt;b&gt;5 · Act through ToolDispatcher&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Registry, authorization, approval, execution and output validation remain inside the existing boundary.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="l5_1">
+          <mxGeometry x="365" y="580" width="440" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="l5_observe" value="&lt;b&gt;6 · Observe safely&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Freeze bounded output; record EXECUTED, REJECTED, TOOL_ERROR or AWAITING_APPROVAL without raw exceptions.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="l5_1">
+          <mxGeometry x="365" y="670" width="440" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="l5_repeat" value="&lt;b&gt;7 · Stop or repeat&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Stop evaluator decides. A permitted retry returns to Sense with the updated observation history.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=11;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="l5_1">
+          <mxGeometry x="365" y="760" width="440" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="l5_task" value="&lt;b&gt;Validated AgentTask&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Member 3 · task_contract.yaml adapter supplies the goal and caller context; YAML parsing remains outside this file.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=10.5;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="l5_1">
+          <mxGeometry x="40" y="120" width="185" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="l5_rag" value="&lt;b&gt;RAG and context builder&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Existing retrieval pipeline supplies evidence and not_in_corpus.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=10.5;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="l5_1">
+          <mxGeometry x="40" y="225" width="185" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="l5_stop" value="&lt;b&gt;StopEvaluator&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Member 1 · iteration, wall-clock, repetition and no-new-information policy.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=10.5;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="l5_1">
+          <mxGeometry x="40" y="735" width="185" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="l5_model" value="&lt;b&gt;Planner and model client&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Existing prompt/model integration returns one ProposalSet.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=10.5;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="l5_1">
+          <mxGeometry x="945" y="305" width="175" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="l5_citations" value="&lt;b&gt;Citation validator&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;src/orchestrator/validation.py rejects missing or fabricated evidence before dispatch.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=10.5;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="l5_1">
+          <mxGeometry x="945" y="390" width="175" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="l5_tools" value="&lt;b&gt;Dispatcher and approval gate&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Existing Week 4 tool boundary. High-impact actions cannot bypass approval.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=10.5;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="l5_1">
+          <mxGeometry x="945" y="570" width="175" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="l5_trace" value="&lt;b&gt;TraceSink&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Member 5 · persists metadata-only TraceEntry records. Raw values remain out of logs.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=10.5;align=center;verticalAlign=middle;spacing=4;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="l5_1">
+          <mxGeometry x="945" y="690" width="175" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="l5_done" value="&lt;b&gt;COMPLETED / NO_ACTION&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Validated direct action; no dispatcher call.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=10.5;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="l5_1">
+          <mxGeometry x="40" y="875" width="300" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="l5_pause" value="&lt;b&gt;AWAITING_APPROVAL&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Pause and return a resumable result; never auto-resubmit.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=10.5;align=center;verticalAlign=middle;spacing=4;fillColor=#fff8e6;strokeColor=#d9a441;fontColor=#8a6416;" vertex="1" parent="l5_1">
+          <mxGeometry x="430" y="875" width="300" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="l5_halt" value="&lt;b&gt;HALTED / FAILED&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9.5px&quot; color=&quot;#767d8c&quot;&gt;Deterministic stop or sanitized component failure; no further calls.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=10.5;align=center;verticalAlign=middle;spacing=4;fillColor=#ffffff;strokeColor=#454b57;fontColor=#16181d;" vertex="1" parent="l5_1">
+          <mxGeometry x="820" y="875" width="300" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="l5_e1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#767d8c;endArrow=block;endFill=1;" edge="1" parent="l5_1" source="l5_pre" target="l5_sense"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l5_e2" value="AssembledContext" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="l5_1" source="l5_sense" target="l5_plan"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l5_e3" value="ProposalSet" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="l5_1" source="l5_plan" target="l5_validate"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l5_e4" value="validated" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="l5_1" source="l5_validate" target="l5_route"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l5_e5" value="tool action" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="l5_1" source="l5_route" target="l5_dispatch"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l5_e6" value="DispatchResult" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="l5_1" source="l5_dispatch" target="l5_observe"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l5_e7" value="Observation" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="l5_1" source="l5_observe" target="l5_repeat"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l5_e8" value="continue" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;" edge="1" parent="l5_1" source="l5_repeat" target="l5_sense"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="285" y="790" /><mxPoint x="285" y="257" /></Array></mxGeometry></mxCell>
+        <mxCell id="l5_e9" value="propose_test / no_action" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;exitX=0;exitY=0.5;entryX=0.5;entryY=0;labelBackgroundColor=#ffffff;" edge="1" parent="l5_1" source="l5_route" target="l5_done"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="285" y="515" /><mxPoint x="285" y="855" /><mxPoint x="190" y="855" /></Array></mxGeometry></mxCell>
+        <mxCell id="l5_e10" value="approval pending" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;fontColor=#8a6416;strokeColor=#d9a441;endArrow=block;endFill=1;entryX=0.5;entryY=0;labelBackgroundColor=#ffffff;" edge="1" parent="l5_1" source="l5_observe" target="l5_pause"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l5_e11" value="stop / component failure" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;fontColor=#767d8c;strokeColor=#767d8c;endArrow=block;endFill=1;exitX=1;exitY=0.5;entryX=0.5;entryY=0;labelBackgroundColor=#ffffff;" edge="1" parent="l5_1" source="l5_repeat" target="l5_halt"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="885" y="790" /><mxPoint x="885" y="855" /><mxPoint x="970" y="855" /></Array></mxGeometry></mxCell>
+        <mxCell id="l5_d1" value="goal and runtime contract" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=8.5;fontColor=#767d8c;strokeColor=#767d8c;dashed=1;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="l5_1" source="l5_task" target="l5_pre"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l5_d2" value="evidence" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=8.5;fontColor=#767d8c;strokeColor=#767d8c;dashed=1;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="l5_1" source="l5_rag" target="l5_sense"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l5_d3" value="one proposal" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=8.5;fontColor=#767d8c;strokeColor=#767d8c;dashed=1;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="l5_1" source="l5_model" target="l5_plan"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l5_d4" value="source check" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=8.5;fontColor=#767d8c;strokeColor=#767d8c;dashed=1;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="l5_1" source="l5_citations" target="l5_validate"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l5_d5" value="safe dispatch" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=8.5;fontColor=#767d8c;strokeColor=#767d8c;dashed=1;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="l5_1" source="l5_tools" target="l5_dispatch"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l5_d6" value="policy decision" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=8.5;fontColor=#767d8c;strokeColor=#767d8c;dashed=1;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="l5_1" source="l5_stop" target="l5_repeat"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l5_d7" value="metadata-only events" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=8.5;fontColor=#767d8c;strokeColor=#767d8c;dashed=1;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="l5_1" source="l5_observe" target="l5_trace"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
 </mxfile>
