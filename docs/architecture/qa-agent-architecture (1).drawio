@@ -417,7 +417,7 @@
       <root>
         <mxCell id="l5_0" />
         <mxCell id="l5_1" parent="l5_0" />
-        <mxCell id="l5_title" value="&lt;b&gt;L5 · Agent loop — sense, plan, validate, act, observe, then stop or repeat&lt;/b&gt;" style="text;html=1;fontSize=14;align=left;verticalAlign=middle;fontColor=#16181d;" vertex="1" parent="l5_1">
+        <mxCell id="l5_title" value="&lt;b&gt;L5 · Agent loop: sense, plan, validate, act, observe, then stop or repeat&lt;/b&gt;" style="text;html=1;fontSize=14;align=left;verticalAlign=middle;fontColor=#16181d;" vertex="1" parent="l5_1">
           <mxGeometry x="40" y="16" width="1080" height="30" as="geometry" />
         </mxCell>
         <mxCell id="l5_scope" value="One proposal and at most one tool dispatch per iteration. Solid outlines are Member 2 loop stages; dashed outlines are injected team dependencies." style="rounded=1;whiteSpace=wrap;html=1;arcSize=4;fontSize=10;align=center;verticalAlign=middle;fillColor=#eef0f4;strokeColor=#767d8c;dashed=1;fontColor=#454b57;" vertex="1" parent="l5_1">

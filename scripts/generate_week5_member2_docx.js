@@ -20,6 +20,7 @@ const {
   Table,
   TableCell,
   TableLayoutType,
+  TableOfContents,
   TableRow,
   TextRun,
   VerticalAlign,
@@ -213,17 +214,6 @@ function codeBlock(lines) {
   });
 }
 
-function tocLine(title, page, level = 0) {
-  const available = level === 0 ? 75 : 69;
-  const label = level === 0 ? title : `    ${title}`;
-  const dots = ".".repeat(Math.max(5, available - label.length - String(page).length));
-  return new Paragraph({
-    spacing: { after: 90, line: 240 },
-    indent: level ? { left: 360 } : undefined,
-    children: [run(`${label} ${dots} ${page}`, { size: 22, bold: level === 0 })],
-  });
-}
-
 async function extractLetterhead() {
   const archive = await JSZip.loadAsync(fs.readFileSync(REFERENCE_DOCX));
   const entry = archive.file("word/media/image1.png");
@@ -294,7 +284,7 @@ async function main() {
       size: 28,
       after: 150,
     }),
-    body("WEEK 5 — MEMBER 2 DELIVERABLE", {
+    body("WEEK 5: MEMBER 2 DELIVERABLE", {
       alignment: AlignmentType.CENTER,
       bold: true,
       after: 160,
@@ -325,16 +315,29 @@ async function main() {
       spacing: { after: 280 },
       children: [run("CONTENTS", { bold: true, size: 28 })],
     }),
-    tocLine("1 Purpose and Scope", 3),
-    tocLine("2 Ownership and Integration Boundaries", 3),
-    tocLine("3 Agent Loop Architecture", 4),
-    tocLine("4 Execution Lifecycle", 5),
-    tocLine("5 Citation Validator Change", 6),
-    tocLine("6 Dependency Contracts", 7),
-    tocLine("7 Files Implemented", 7),
-    tocLine("8 Verification", 8),
-    tocLine("9 Limitations and Handoffs", 9),
-    tocLine("10 Conclusion", 9),
+    new TableOfContents("Contents", {
+      headingStyleRange: "1-2",
+      hyperlink: true,
+      preserveTabInEntries: true,
+      hideTabAndPageNumbersInWebView: true,
+      useAppliedParagraphOutlineLevel: true,
+      beginDirty: false,
+      cachedEntries: [
+        { title: "1 Purpose and Scope", level: 1, page: 3 },
+        { title: "2 Ownership and Integration Boundaries", level: 1, page: 3 },
+        { title: "3 Agent Loop Architecture", level: 1, page: 4 },
+        { title: "4 Execution Lifecycle", level: 1, page: 5 },
+        { title: "4.1 Safety Invariants", level: 2, page: 5 },
+        { title: "5 Citation Validator Change", level: 1, page: 6 },
+        { title: "6 Dependency Contracts", level: 1, page: 7 },
+        { title: "7 Files Implemented", level: 1, page: 7 },
+        { title: "8 Verification", level: 1, page: 8 },
+        { title: "8.1 Repository-Wide Baseline", level: 2, page: 8 },
+        { title: "9 Limitations and Handoffs", level: 1, page: 9 },
+        { title: "9.1 Team Integration Actions", level: 2, page: 9 },
+        { title: "10 Conclusion", level: 1, page: 9 },
+      ],
+    }),
     pageBreak(),
   );
 
@@ -388,7 +391,7 @@ async function main() {
       ],
     }),
     caption(
-      "Figure 1: L5 agent-loop architecture — solid stages are Member 2; dashed boxes are injected team dependencies.",
+      "Figure 1: L5 agent-loop architecture. Solid stages are Member 2; dashed boxes are injected team dependencies.",
     ),
     body(
       "The action branch is deliberate: PROPOSE_TEST and NO_ACTION complete directly after citation validation; only actions in TOOL_ACTIONS reach ToolDispatcher. Every tool iteration therefore contains one proposal and no more than one dispatch.",
@@ -582,6 +585,7 @@ async function main() {
     creator: "Akanga Andrew",
     description: "Formal Week 5 Member 2 deliverable for the bounded agent loop and citation safety.",
     keywords: "BSE4104, agent loop, orchestration, citation validation, QA agent, Group J",
+    features: { updateFields: true },
     styles: {
       default: {
         document: {
@@ -619,6 +623,29 @@ async function main() {
             spacing: { before: 60, after: 90, line: 276 },
             keepNext: true,
             outlineLevel: 1,
+          },
+        },
+        {
+          id: "TOC1",
+          name: "TOC 1",
+          basedOn: "Normal",
+          next: "Normal",
+          quickFormat: true,
+          run: { font: FONT, size: 22, color: "000000" },
+          paragraph: {
+            spacing: { after: 90, line: 240 },
+          },
+        },
+        {
+          id: "TOC2",
+          name: "TOC 2",
+          basedOn: "Normal",
+          next: "Normal",
+          quickFormat: true,
+          run: { font: FONT, size: 21, color: "000000" },
+          paragraph: {
+            indent: { left: 360 },
+            spacing: { after: 70, line: 240 },
           },
         },
       ],
