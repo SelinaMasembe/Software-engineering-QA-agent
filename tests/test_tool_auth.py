@@ -82,7 +82,7 @@ CONTEXT_BY_ROLE = {
     for role in ALL_ROLES
 }
 
-SECRET = "db-password=hunter2"  # must never appear in a dispatch message
+SECRET = "db-password=hunter2"  # must never appear in a dispatch message  pragma: allowlist secret
 
 AUTHORIZATION_MATRIX: dict[str, tuple[str, ...]] = {
     "search_repo": (ROLE_DEVELOPER, ROLE_QUALITY_LEAD, ROLE_MAINTAINER),
@@ -201,10 +201,10 @@ class AutoApproveGate:
     """Stand-in for Member 5's approval gate: approves everything.
 
     Used where the test is about tool/role authorization, not approval
-    policy, so the two concerns are not conflated in one assertion. There is
-    still no real approval_gate.py on this branch (week4-approval-gate-code
-    is a separate, unmerged branch), so every ApprovalBoundaryTests case
-    below is explicit about which gate policy it is exercising.
+    policy, so the two concerns are not conflated in one assertion. The real
+    gate (src/orchestrator/approval_gate.py) has its own tests in
+    tests/integration/test_approval_gate.py, so every ApprovalBoundaryTests
+    case below is explicit about which gate policy it is exercising.
     """
 
     def check(self, *, action: Action, arguments: dict, context: ExecutionContext) -> ApprovalVerdict:

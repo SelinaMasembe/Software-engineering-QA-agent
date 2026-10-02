@@ -1,14 +1,15 @@
 # Week 4 Explained: The Approval Gate
 
 A plain-language, diagram-first walkthrough of Member 5's approval gate,
-authorization checks, approval-gated test execution, draft creation, audit
-logging, and verification evidence.
+authorization checks, audit logging, and verification evidence. Updated on
+2 October 2026 for the improved gate (non-blocking decisions, single-use
+approvals, cross-process locking) and the switch to Member 3's tools.
 
 ## The Idea in One Line
 
 Some actions are too risky for an agent to perform automatically. The system
-therefore records an approval request, waits for a human decision, and only
-executes the action when the decision is approved.
+records an approval request, a named human decides, and the action runs only
+after an approval, and only once per approval.
 
 ## 1. The Big Picture
 
@@ -17,71 +18,70 @@ flowchart LR
     A["Agent proposes an action"] --> B["ToolDispatcher"]
     B --> C{"Role and argument checks"}
     C -->|"Rejected"| X["No tool execution"]
-    C -->|"Approved for processing"| D{"Tool risk"}
+    C -->|"Passed"| D{"Tool risk"}
     D -->|"Read-only"| E["Tool executes"]
-    D -->|"Requires approval"| F["JSONApprovalGate"]
-    F --> G[("approval_queue.json")]
-    H["Human approver"] -->|"approve / deny"| G
-    F -->|"polls decision"| G
-    F -->|"Approved by authorized approver"| E
-    F -->|"Denied, expired, or unauthorized"| X
+    D -->|"Requires approval"| F["JSONApprovalGate.check()"]
+    F <--> G[("approval_queue.json (locked)")]
+    H["Human at approve_cli.py"] -->|"approve / deny"| G
+    F -->|"approved, consumed once"| E
+    F -->|"pending"| P["awaiting_approval: agent loop pauses"]
+    F -->|"denied or expired"| X
     F --> I[("audit.log")]
+    F -.->|"optional"| R[("run log: actor=human")]
     E --> J["Structured DispatchResult"]
     X --> J
+    P --> J
 ```
 
-The agent and human approver are separate processes. They communicate through
-the shared approval queue file and audit file.
+The agent and the human approver are separate processes. They share the
+approval queue file, which is locked for every change so neither can
+overwrite the other.
 
-The dispatcher remains the central execution boundary. The approval gate is
-injected into the dispatcher through the `ApprovalGate` protocol.
+The dispatcher (`src/orchestrator/router.py`, Member 2) is the execution
+boundary. The gate is injected into it through the `ApprovalGate` protocol.
 
 ## 2. What Happens to One Approval Request
 
 ```mermaid
 stateDiagram-v2
-    [*] --> PENDING: gated tool is dispatched
-    PENDING --> APPROVED: authorized approver approves
+    [*] --> PENDING: first check() for this proposal
+    PENDING --> PENDING: check() again (no duplicate)
+    PENDING --> APPROVED: authorized approver (not the requester) approves
     PENDING --> DENIED: authorized approver denies
-    PENDING --> EXPIRED: timeout occurs
-    PENDING --> REJECTED_UNAUTHORIZED: unauthorized decision attempt
-    APPROVED --> EXECUTED: dispatcher runs the tool
-    DENIED --> BLOCKED: dispatcher returns approval_denied
-    EXPIRED --> BLOCKED: dispatcher returns approval_denied
-    REJECTED_UNAUTHORIZED --> BLOCKED: dispatcher returns approval_denied
-    EXECUTED --> [*]
-    BLOCKED --> [*]
+    PENDING --> EXPIRED: nobody decides before the time limit
+    APPROVED --> [*]: next check() returns APPROVED once, tool runs
+    DENIED --> [*]: next check() returns DENIED once
+    EXPIRED --> [*]: next check() returns DENIED once
 ```
 
-Only the `APPROVED` path allows the high-impact tool to execute.
-
-The gate itself returns an `ApprovalVerdict`. The dispatcher converts that
-verdict into a structured `DispatchResult`.
+- Requests are matched by a **fingerprint**: a SHA-256 of the session ID,
+  the action, and the validated arguments. Re-proposing the same request
+  finds the same entry.
+- Every decision is **delivered once** (`consumed_at` is set). After that, an
+  identical proposal starts a fresh request, so one approval can never run a
+  tool twice.
+- An unauthorized or self-approval attempt is refused and audited, but the
+  request **stays pending** for a real approver.
 
 ## 3. Current Repository Files
 
-| File                                                         | Responsibility                                                                           |
-| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| `src/orchestrator/approval_gate.py`                         | Persistent queue, approval decisions, timeout handling, authorization, and audit logging |
-| `src/orchestrator/router.py`                       | Role checks, argument checks, approval integration, execution, and structured results    |
-| `src/tools/approval_tools.py`                                | `RunTestsTool` and `DraftIssueTool` implementations                                      |
-| `scripts/approve_cli.py`                                     | Human-facing approval and denial commands                                                |
-| `scripts/member5_approval_demo.py`                           | Automated approval-gate demonstration                                                    |
-| `tests/integration/test_approval_gate.py`                    | Approval, denial, timeout, authorization, audit, and draft tests                         |
-| `tests/fixtures/member2/corpus/logs/test_run_2026_09_15.txt` | Sanitized synthetic RAG test fixture                                                     |
-| `src/rag/retrieval.py`                                       | Directory-aware corpus type classification                                               |
-| `src/ingestion/tag_provenance.py`                            | Corpus provenance generation and sanitized test-suite output                             |
+| File                                      | Responsibility                                                              |
+| ----------------------------------------- | --------------------------------------------------------------------------- |
+| `src/orchestrator/approval_gate.py`       | Queue, locking, fingerprints, decisions, expiry, audit log, trace entries  |
+| `src/orchestrator/router.py`              | Member 2's dispatcher: role and argument checks, calls the gate, runs tools |
+| `src/tools/run_tests.py`                  | Member 3's approval-required `run_tests` tool                               |
+| `src/tools/draft_issue.py`                | Member 3's approval-required `draft_issue` tool (local draft only)          |
+| `src/sandbox/executor.py`                 | Runs one pytest node with a stripped environment and a timeout              |
+| `scripts/approve_cli.py`                  | Human-facing `list`, `approve`, `deny` commands                             |
+| `scripts/member5_approval_demo.py`        | Automated demonstration                                                     |
+| `tests/integration/test_approval_gate.py` | 18 tests: blocking mode, non-blocking mode, safety cases                    |
 
-The implementation does not use a folder named `approval_gate/`. The approval
-gate is a module named `approval_gate.py`.
+> **Why there is no `approval_tools.py` any more.** Week 4 also shipped a
+> stand-in `RunTestsTool` and `DraftIssueTool` in `src/tools/approval_tools.py`,
+> written before Member 3's tools were merged. It duplicated Member 3's work
+> and ran tests without stripping environment variables, so it was removed.
 
 ## 4. The Dispatcher Is the Main Safety Boundary
-
-The relevant contract is defined in:
-
-```text
-src/orchestrator/router.py
-```
 
 The dispatcher processes a proposal in this order:
 
@@ -91,16 +91,13 @@ The dispatcher processes a proposal in this order:
 3. Resolve the tool from the fixed registry
 4. Check the caller's role
 5. Validate tool arguments
-6. Request approval when the tool requires it
-7. Execute the tool only after approval
+6. Ask the approval gate when the tool requires it
+7. Execute the tool only after an APPROVED verdict
 8. Validate and size-limit the output
 9. Return DispatchResult
 ```
 
-The model cannot dynamically create tools or execute arbitrary functions. Tools
-must first be registered in `ToolRegistry`.
-
-The approval gate is called through this protocol:
+The gate is called through this protocol:
 
 ```python
 class ApprovalGate(Protocol):
@@ -114,234 +111,96 @@ class ApprovalGate(Protocol):
         ...
 ```
 
+The verdict is `APPROVED`, `DENIED` or `PENDING`. The dispatcher turns
+`PENDING` into `awaiting_approval`, which makes Member 2's agent loop pause.
+
 ## 5. `approval_gate.py`
-
-The implementation is in:
-
-```text
-src/orchestrator/approval_gate.py
-```
 
 ### `ApprovalRequest`
 
-`ApprovalRequest` stores:
-
-- request ID;
-- action name;
-- action payload;
-- requesting actor;
-- request timestamp;
-- current status;
-- deciding approver;
-- decision timestamp;
-- decision reason.
+Stores the request ID, action, payload (the validated arguments), requester,
+session, fingerprint, request time, expiry time, status, approver, decision
+time, reason, and `consumed_at`.
 
 ### `JSONApprovalStore`
 
-`JSONApprovalStore` persists requests in:
+Persists requests in `data/approval_queue.json`.
 
-```text
-data/approval_queue.json
-```
-
-It supports:
-
-- `create()`;
-- `get()`;
-- `update()`;
-- `list_pending()`.
-
-Atomic file replacement is used when writing the queue so a partially written
-JSON file is less likely during concurrent access.
+- Every read-modify-write goes through `mutate()`, which holds an exclusive
+  lock on `approval_queue.json.lock` (`fcntl` on macOS/Linux, `msvcrt` on
+  Windows) and writes the file atomically.
+- A corrupt or malformed file raises `ApprovalStoreError`. The dispatcher
+  reports that as `approval_unavailable`, so nothing runs.
+- `list_pending()` returns only requests that can still be decided.
 
 ### `AuditLogger`
 
-`AuditLogger` writes one JSON object per line to:
-
-```text
-data/audit.log
-```
-
-The audit file records events such as:
+Writes one JSON object per line to `data/audit.log`:
 
 ```text
 approval_requested
 decision_recorded
+decision_rejected_unauthorized
+decision_rejected_self_approval
 approval_expired
+approval_consumed
 approval_rejected_unauthorized
 action_blocked
-action_executed_after_approval
 ```
 
-Runtime queue and audit files are evidence artifacts only. They must not be
-committed because the repository sensitive-data check blocks `.log` files and
-runtime files may contain prompts or payloads.
+The queue and the audit file are runtime files. They are ignored by Git, and
+the sensitive-data check blocks `.log` files, because they hold payloads.
 
 ### `JSONApprovalGate.check()`
 
-`JSONApprovalGate.check()`:
+1. Fingerprints the request.
+2. Under the lock, expires any pending request past its time limit.
+3. If a decided, undelivered request matches, it delivers it once:
+   - `APPROVED`, but only if the approver is in this gate's allow-list
+     (a hand-edited queue is denied);
+   - `DENIED` for a denial or an expiry.
+4. If a pending request matches, it returns `PENDING`.
+5. Otherwise it creates a pending request and returns `PENDING`.
 
-1. Creates a pending request.
-2. Stores it in the shared JSON queue.
-3. Records an `approval_requested` audit event.
-4. Polls until a decision or timeout.
-5. Re-checks the deciding approver against the allow-list.
-6. Returns `APPROVED` only for an authorized approval.
-7. Returns `DENIED` for denial, timeout, or unauthorized decisions.
+With `wait_seconds > 0`, `check()` keeps asking until a decision arrives or
+the wait runs out, and then expires the request. The default `0` returns at
+once so the agent loop can pause and resume.
 
-Timeout never auto-approves an action.
+When a `trace_sink` (such as the Week 5 `RunLogger`) is supplied, the
+delivered decision is also recorded as an `approval_granted` or
+`approval_denied` trace entry with `actor=human`.
 
 ### `JSONApprovalGate.decide()`
 
-`decide()` is used by the CLI or another human-facing process.
+Used by the CLI. It refuses:
 
-It:
+- unknown request IDs;
+- requests already decided or expired;
+- approvers outside the allow-list (`UnauthorizedApprover`);
+- the requester approving their own request (`SelfApprovalError`).
 
-- rejects unknown request IDs;
-- rejects decisions on already-decided requests;
-- rejects approvers outside the allow-list;
-- records the decision and reason;
-- writes a `decision_recorded` or `decision_rejected_unauthorized` event.
+Otherwise it records the decision, approver, time and reason.
 
-## 6. `approval_tools.py`
-
-The implementation is in:
-
-```text
-src/tools/approval_tools.py
-```
-
-### `RunTestsTool`
-
-`RunTestsTool` is declared as:
-
-```python
-name = "run_tests"
-risk = ToolRisk.REQUIRES_APPROVAL
-```
-
-It accepts:
-
-```python
-{
-    "test_node_ids": ["dispatcher_tests"],
-    "session_id": "session-1"
-}
-```
-
-The tool rejects missing or empty test node IDs, non-string IDs, missing
-session IDs, and unknown test node IDs.
-
-The actual commands come from a fixed manifest supplied when the tool is
-constructed. The model cannot supply an arbitrary shell command or filesystem
-path. Execution uses `shell=False`.
-
-The result contains:
-
-```python
-{
-    "status": "pass" | "fail" | "error",
-    "per_test": [
-        {
-            "id": "...",
-            "result": "pass" | "fail",
-            "duration_ms": 0,
-            "stdout": "...",
-            "stderr": "..."
-        }
-    ]
-}
-```
-
-### `DraftIssueTool`
-
-`DraftIssueTool` is declared as:
-
-```python
-name = "draft_issue"
-risk = ToolRisk.READ_ONLY
-```
-
-It accepts:
-
-```python
-{
-    "title": "...",
-    "body": "...",
-    "evidence_refs": ["tests/example.py"]
-}
-```
-
-It writes a local draft to:
-
-```text
-data/issue_drafts.json
-```
-
-The output is:
-
-```python
-{
-    "draft_id": "...",
-    "status": "draft"
-}
-```
-
-It does not submit a GitHub issue or pull request. Human review remains
-necessary before any external submission.
-
-## 7. Human Approval CLI
-
-The CLI is:
-
-```text
-scripts/approve_cli.py
-```
-
-Set the shared runtime directory and authorized approvers:
+## 6. Human Approval CLI
 
 ```bash
 export QA_AGENT_DATA_DIR="$PWD/data/member5-demo"
-export QA_AGENT_APPROVERS="Alice,Bob"
-```
+export QA_AGENT_APPROVERS="Alice,Bob"     # required; there is no default
 
-List pending requests:
-
-```bash
 PYTHONPATH=src python3 scripts/approve_cli.py list
+PYTHONPATH=src python3 scripts/approve_cli.py approve ACTUAL_REQUEST_ID --by Alice --reason "Approved after review."
+PYTHONPATH=src python3 scripts/approve_cli.py deny ACTUAL_REQUEST_ID --by Alice --reason "Not approved."
 ```
 
-Approve a real request:
+`list` shows each request's action, session, requester, age, fingerprint and
+payload. `ACTUAL_REQUEST_ID` is copied from that output.
 
-```bash
-PYTHONPATH=src python3 scripts/approve_cli.py approve \
-  ACTUAL_REQUEST_ID \
-  --by Alice \
-  --reason "Approved after review."
-```
+## 7. Two-Terminal Manual Demonstration
 
-Deny a real request:
-
-```bash
-PYTHONPATH=src python3 scripts/approve_cli.py deny \
-  ACTUAL_REQUEST_ID \
-  --by Alice \
-  --reason "Not approved."
-```
-
-`ACTUAL_REQUEST_ID` must be copied from the output of the `list` command. It
-is not a literal value.
-
-## 8. Two-Terminal Manual Demonstration
-
-The automated demo uses a temporary directory and approves its request
-internally. It is not connected to the CLI's persistent directory.
-
-For a genuine two-terminal demonstration, use the following in Terminal 1:
+Terminal 1 asks for approval, waiting up to two minutes:
 
 ```bash
 export QA_AGENT_DATA_DIR="$PWD/data/member5-demo"
-export QA_AGENT_APPROVERS="Alice,Bob"
 
 PYTHONPATH=src python3 -c '
 from orchestrator.approval_gate import AuditLogger, JSONApprovalGate, JSONApprovalStore
@@ -351,193 +210,128 @@ gate = JSONApprovalGate(
     store=JSONApprovalStore("data/member5-demo/approval_queue.json"),
     audit=AuditLogger("data/member5-demo/audit.log"),
     authorized_approvers={"Alice", "Bob"},
-    timeout_seconds=120,
-    poll_interval_seconds=0.5,
+    wait_seconds=120,
 )
-
-result = gate.check(
+print(gate.check(
     action=Action.RUN_TESTS,
     arguments={
-        "test_node_ids": ["dispatcher_tests"],
+        "test_node_ids": ["tests/fixtures/sandbox/sample_cases.py::test_addition_passes"],
         "session_id": "manual-session",
     },
-    context=ExecutionContext(
-        session_id="manual-session",
-        actor_id="qa-agent",
-        role="qa_engineer",
-    ),
-)
-
-print(result)
+    context=ExecutionContext(session_id="manual-session", actor_id="qa-agent", role="developer"),
+))
 '
 ```
 
-This terminal waits for a decision.
-
-In Terminal 2, from the repository root, run:
+Terminal 2 lists the request and approves it:
 
 ```bash
 export QA_AGENT_DATA_DIR="$PWD/data/member5-demo"
 export QA_AGENT_APPROVERS="Alice,Bob"
-
 PYTHONPATH=src python3 scripts/approve_cli.py list
+PYTHONPATH=src python3 scripts/approve_cli.py approve ACTUAL_REQUEST_ID --by Alice --reason "Approved after review."
 ```
 
-Copy the displayed request ID and approve it:
+Terminal 1 then prints an approved verdict. Remove the runtime folder
+afterwards with `rm -rf data/member5-demo`.
+
+## 8. Automated Evidence
 
 ```bash
-PYTHONPATH=src python3 scripts/approve_cli.py approve \
-  ACTUAL_REQUEST_ID \
-  --by Alice \
-  --reason "Approved after review."
-```
-
-Terminal 1 should then return an approved verdict.
-
-After the demonstration, remove the runtime evidence directory:
-
-```bash
-rm -rf data/member5-demo
-```
-
-Do not commit runtime files such as:
-
-```text
-data/member5-demo/approval_queue.json
-data/member5-demo/audit.log
-```
-
-## 9. Automated Evidence
-
-The integration tests are in:
-
-```text
-tests/integration/test_approval_gate.py
-```
-
-They cover pending approval, authorized approval, denial, timeout, unknown
-test node IDs, unauthorized approvers, audit events, and local draft-only
-issue creation.
-
-Run them with:
-
-```bash
-PYTHONPATH=src python3 -m unittest \
-  tests.integration.test_approval_gate -v
-```
-
-Run the dispatcher contract tests:
-
-```bash
-PYTHONPATH=src python3 -m unittest \
-  tests.integration.test_tool_dispatcher -v
-```
-
-Run the automated demo:
-
-```bash
+PYTHONPATH=src python3 -m unittest tests.integration.test_approval_gate -v
+PYTHONPATH=src python3 -m unittest tests.integration.test_router -v
 PYTHONPATH=src python3 scripts/member5_approval_demo.py
-```
-
-Run the RAG evaluation:
-
-```bash
-PYTHONPATH=src python3 -m unittest \
-  tests.test_rag_eval -v
-```
-
-Run the sensitive-data scan:
-
-```bash
 python3 scripts/check_sensitive.py --all
 ```
 
-The sensitive-data scan must exit with code `0`.
+The 18 gate tests cover:
 
-## 10. Sanitized RAG Evidence
+- **Blocking mode:** pending does not run, approval runs, timeout denies and
+  expires, unknown test IDs are rejected before approval, an unauthorized
+  attempt does not cancel the request, audit events, and `draft_issue` needing
+  approval.
+- **Non-blocking mode:** first check is pending, no duplicates, run exactly
+  once with no replay, denial delivered once, self-approval rejected, expiry,
+  corrupt queue fails closed, hand-edited approval denied, concurrent
+  decisions from two processes cannot both win, human decisions reach the
+  trace sink, and a trace failure fails closed without losing the approval.
 
-The original test-run fixture used a `.log` filename. The repository security
-scanner blocks all committed `.log` files because logs may contain secrets,
-prompts, credentials, or personal data.
+The end-to-end pause, approve and resume path with the real agent loop is
+covered in `tests/integration/test_run_logger_agent_loop.py`.
 
-The replacement fixture is:
+## 9. Sanitized RAG Evidence
 
-```text
-tests/fixtures/member2/corpus/logs/test_run_2026_09_15.txt
-```
+The original test-run fixture used a `.log` filename, which the sensitive-data
+check blocks. The replacement is the synthetic
+`tests/fixtures/member2/corpus/logs/test_run_2026_09_15.txt`, and the loader
+classifies anything under `logs/` as `DocumentType.LOG`. The provenance
+generator writes `knowledge/corpus/logs/offline-test-suite.txt` instead of a
+`.log`. See `docs/requirements/week3/sensitive-data-check.md` for why the
+re-added `.log` and its exemption were removed on 2 October 2026.
 
-It contains synthetic test-run data only.
-
-The loader classifies files under a `logs/` corpus directory as
-`DocumentType.LOG`, even when the safe materialized filename uses `.txt`.
-
-The provenance generator writes:
-
-```text
-knowledge/corpus/logs/offline-test-suite.txt
-```
-
-instead of a blocked `.log` file.
-
-This preserves the RAG evaluation while respecting the Week 3
-sensitive-data-control requirement.
-
-## 11. Likely Viva Questions
+## 10. Likely Viva Questions
 
 ### Why use a shared file?
 
-The agent and human approver are separate processes. A shared queue represents
-the persistent coordination boundary that could later be implemented with a
-database or approval service.
+The agent and the human approver are separate processes. A locked queue file
+is the simplest persistent coordination point, and could later be replaced by
+a database or approval service behind the same `ApprovalGate` protocol.
+
+### Why not just wait inside `check()`?
+
+Waiting freezes the whole agent. Returning `PENDING` lets Member 2's loop
+pause cleanly and resume after the human decides; `wait_seconds` is still
+available for demos.
+
+### What stops one approval being used twice?
+
+Each decision is delivered once and marked `consumed_at`. A second identical
+proposal creates a new request that needs a new approval.
 
 ### Why check authorization in both places?
 
-`decide()` checks the approver before recording a decision. `check()` checks the
-stored decision again before returning approval. This is defense in depth
-against a manually edited or incorrectly written queue entry.
+`decide()` checks the approver before recording a decision. `check()` checks
+it again before returning `APPROVED`, so a hand-edited queue entry, or a CLI
+started with a different approver list, cannot approve anything.
 
-### What happens if two people decide the same request?
+### Can the agent approve its own request?
 
-The first decision changes the request from `PENDING`. A second decision raises
-an error because the request is no longer pending.
+No. `decide()` rejects a decision whose approver is the requester.
+
+### What happens if two people decide at the same moment?
+
+Both decisions go through the file lock. The first changes the request from
+pending; the second is refused because it is no longer pending. A test runs
+ten simultaneous decisions from two store instances and checks exactly one
+succeeds.
 
 ### What happens on timeout?
 
-The request is marked expired and the gate returns a denied verdict. Timeout
-never results in automatic approval.
-
-### Why keep an audit file?
-
-The queue shows the current state of each request. The audit file preserves the
-sequence of requests and decisions, which supports later observability and
-review.
+The request is marked expired and delivered as `DENIED`. Timeout never
+approves anything.
 
 ### Does `draft_issue` require approval?
 
-The current implementation only creates a local draft and does not submit an
-external issue. External issue or pull-request submission remains outside the
-tool and must require a separate explicit human approval step.
+Yes. Member 3's `draft_issue` is `REQUIRES_APPROVAL`, and it only stores a
+local draft. Submitting an issue or pull request is outside the system.
 
 ### Does the gate itself execute tools?
 
-No. The dispatcher calls the gate, receives a verdict, and only then invokes
-the registered tool.
+No. The dispatcher asks the gate, receives a verdict, and only then calls the
+registered tool.
 
-## 12. Final Safety Property
-
-The important guarantee is:
+## 11. Final Safety Property
 
 ```text
 No approval -> no high-impact tool execution
+One approval -> at most one execution
 ```
-
-More precisely:
 
 ```text
 ToolDispatcher
   -> role authorization
   -> argument validation
-  -> approval gate
+  -> approval gate (fingerprint, lock, single use)
   -> approved verdict
   -> tool execution
   -> output validation

@@ -71,13 +71,13 @@ This Week 2 baseline does not search the repository automatically. The requireme
 
 ## Files Implemented
 
-### `src/qa_agent/__init__.py`
+### `src/models/__init__.py` (originally `src/qa_agent/__init__.py`)
 
-This file defines the public surface of the `qa_agent` package. It re-exports the main model-client and pipeline types so other application modules can import them from one stable location.
+This file defines the public surface of the `models` package. It re-exports the main model-client and pipeline types so other application modules can import them from one stable location.
 
 It does not contain application logic. Its purpose is to make the integration package easier to use and to prevent other members from depending on internal file locations.
 
-### `src/qa_agent/model_integration.py`
+### `src/models/client.py` (originally `src/qa_agent/model_integration.py`)
 
 This file combines the provider-neutral types, integration errors, and HTTP adapter because they form one small integration unit. This reduces navigation and avoids several one-purpose files while keeping the pipeline separate.
 
@@ -119,7 +119,7 @@ The adapter:
 
 The endpoint and model are configurable, so this adapter does not choose the team model. Member 3 retains that decision. If the selected provider does not support the chat-completions format, a second adapter can be added that implements the same `ModelClient` contract without changing the pipeline.
 
-### `src/qa_agent/pipeline.py`
+### `src/rag/pipeline.py` (originally `src/qa_agent/pipeline.py`)
 
 This file coordinates the baseline model interaction.
 
@@ -241,9 +241,7 @@ The baseline interaction is then executed with:
 ```bash
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src \
   python3 scripts/member2_model_smoke.py \
-  --endpoint "CHOSEN_CHAT_COMPLETIONS_ENDPOINT" \
-  --model "CHOSEN_MODEL_ID" \
-  --prompt-file "prompts/CHOSEN_PROMPT_FILE" \
+  --prompt-file "docs/prompts/propose_action/v1.0.md" \
   --prompt-version "v1.0" \
   --requirement-id "REQ-AUTH-01" \
   --requirement-file "tests/fixtures/member2/login_requirement.txt" \
