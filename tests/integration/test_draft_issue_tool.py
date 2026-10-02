@@ -26,8 +26,8 @@ VALID_ARGUMENTS = {
 
 class FakeGate:
     """Minimal stand-in for Member 5's approval gate, matching
-    test_tool_dispatcher.py's FakeGate exactly -- there is no real
-    approval_gate.py yet to use instead.
+    test_router.py's FakeGate exactly, so these tests isolate the tool from
+    approval policy (the real gate is src/orchestrator/approval_gate.py).
     """
 
     def __init__(self, verdict) -> None:

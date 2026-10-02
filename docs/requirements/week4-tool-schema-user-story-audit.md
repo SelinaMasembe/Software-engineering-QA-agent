@@ -16,8 +16,9 @@ amendment recorded in Section 4 below, applied to
 ## 1. Scope and a repo-structure note
 
 The task sheet names the code deliverable `src/orchestrator/validation.py`.
-The repository has no `src/orchestrator/` folder; the module that owns
-tool dispatch is `src/orchestrator/` (see `src/orchestrator/__init__.py`
+At the time of this audit the repository had no `src/orchestrator/` folder;
+the module that owned tool dispatch was `src/orchestration/`, since renamed to
+`src/orchestrator/` (see `src/orchestrator/__init__.py`
 and `src/orchestrator/router.py`, both Member 2's Week 4
 deliverable). This mirrors the same task-sheet-versus-repository
 discrepancy already resolved for Week 3 (`docs/knowledge/` on the task

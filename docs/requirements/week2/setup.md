@@ -88,10 +88,10 @@ Run model integration tests:
 PYTHONPATH=src python3 -m unittest tests.integration.test_model_integration -v
 ```
 
-Run all offline tests:
+Run all offline tests (pytest.ini sets `testpaths` and `pythonpath`):
 
 ```bash
-PYTHONPATH=src python3 -m unittest discover -s tests -v
+python3 -m pytest -q
 ```
 
 These tests use mocks or scripted responses. They do not require a live API key.

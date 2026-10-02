@@ -1,474 +1,222 @@
 # Software-Engineering QA Agent
 
-## Project Overview
+An AI-native QA assistant for a software team, built by Group J for BSE4104
+Emerging Trends in Software Engineering (Makerere University, 2026/2027).
 
-The **Software-Engineering QA Agent** is an AI-assisted quality assurance system designed to support software development teams in understanding requirements, proposing relevant tests, executing approved tests in a controlled sandbox environment, analyzing test results, and preparing failure summaries or draft issue/pull-request notes.
-
-The project is being developed as an **AI-native engineering workflow**, where artificial intelligence is used for tasks that require interpretation, reasoning, and analysis, while deterministic software controls permissions, validation, execution, and security boundaries.
-
-The system is intended to assist developers and QA engineers without replacing human responsibility for important engineering decisions.
-
----
-
-## Target Users
-
-The primary users of the QA Agent are:
-
-- Software developers
-- QA engineers
-- Software engineering teams
-- Technical project teams working with automated tests
-
-The system is intended to assist these users with test preparation, test-result analysis, and documentation.
-
----
-
-## Key Capabilities
-
-The QA Agent is expected to support the following capabilities:
-
-1. Read and interpret approved software requirements.
-2. Use repository documentation and team-owned project information as context.
-3. Identify behaviours that should be tested.
-4. Propose relevant test cases.
-5. Validate proposed test information against predefined formats and rules.
-6. Request or respect human approval before controlled test execution.
-7. Run approved tests in a sandbox environment.
-8. Inspect test output and logs.
-9. Identify and summarize test failures.
-10. Draft an issue or pull-request note for human review.
-
----
-
-## Why Use AI?
-
-AI is appropriate for parts of this workflow because several tasks require interpretation rather than simple fixed rules.
-
-For example, the agent can assist with:
-
-- Understanding natural-language requirements.
-- Identifying testable behaviours.
-- Generating candidate test cases.
-- Connecting test failures with relevant requirements.
-- Summarising technical logs.
-- Drafting human-readable issue reports.
-
-However, AI will **not** be responsible for unrestricted system control.
-
-Deterministic software and human approval will remain responsible for security-sensitive and potentially destructive actions.
-
----
-
-## AI and System Responsibilities
-
-| AI Agent                    | Deterministic Software / Human          |
-| --------------------------- | --------------------------------------- |
-| Interpret requirements      | Enforce permissions                     |
-| Identify testable behaviour | Validate data and schemas               |
-| Generate test proposals     | Control available tools                 |
-| Analyse test output         | Enforce sandbox restrictions            |
-| Summarise failures          | Restrict executable commands            |
-| Draft issue/PR notes        | Human reviews important actions         |
-| Suggest possible causes     | Human makes final engineering decisions |
-
-This separation helps ensure that the AI provides useful reasoning while deterministic controls enforce the project's safety boundaries.
-
----
-
-## Safety and Security Boundaries
-
-The QA Agent is deliberately restricted.
-
-### The agent MAY
-
-- Read approved requirements and repository documentation.
-- Analyse approved source code and test logs.
-- Propose test cases.
-- Analyse test results.
-- Draft issue or pull-request notes.
-- Execute tests that have been explicitly approved and are available within the controlled sandbox.
-
-### The agent MUST NOT
-
-- Access production systems.
-- Deploy software to production.
-- Automatically merge pull requests.
-- Access or expose secrets.
-- Execute arbitrary unrestricted shell commands.
-- Directly control infrastructure.
-- Make changes outside the approved sandbox.
-- Make final engineering or security decisions without appropriate human review.
-
-These boundaries are based on the selected Software-Engineering QA Agent use case and its stated safety requirements.
-
----
-
-## Project Scope
-
-### In Scope
-
-- Requirement interpretation
-- Test-case proposal
-- Test planning
-- Controlled test execution
-- Test-result analysis
-- Failure summarisation
-- Issue/PR note drafting
-- Controlled access to project documentation
-- Sandbox-based testing
-
-### Out of Scope
-
-- Production deployment
-- Automatic pull-request merging
-- Direct infrastructure control
-- Secret management
-- Autonomous financial or business decisions
-- Unrestricted command execution
-- Fully autonomous software development
-
----
-
-## Data Sources
-
-The project will use approved and team-owned information, including:
-
-- Software requirements
-- Repository documentation
-- Team-owned source code
-- Test cases
-- Test logs
-- Synthetic or controlled project data where required
-
-Sensitive credentials and restricted information will not be committed to this repository.
-
----
-
-## Repository Structure
+The agent reads team-owned requirements, source code and test logs, proposes
+grounded tests, runs only human-approved tests in a sandbox, and drafts
+failure notes for human review. The model interprets and proposes;
+deterministic code and people control permissions, validation, execution and
+anything with side effects.
 
 ```text
-Software-engineering-QA-agent/
-├── .env.example
-├── .gitignore
-├── README.md
-├── .githooks/
-    ├── precommit
-├── requirements.txt
-├── docs/
-│   ├── architecture/
-│   ├── evaluation/
-│   ├── integration/
-│   ├── prompts/
-│   ├── requirements/
-│   ├── weekly reports/
-│   └── setup.md
-├── evidence/
-│   ├── demo/
-│   ├── screenshots/
-│   └── traces/
-├── knowledge/
-├── scripts/
-    └── check_sensitive.py
-│   └── member1_types_smoke.py
-    └── member2_model_smoke.py
-├── src/
-│   ├── config/
-│        ├── __init__.py
-│        └── loader.py
-│   ├── models/
-│   │   ├── __init__.py
-│   │   └── client.py
-│   ├── prompts/
-│   │   └── loader.py
-│   └── rag/
-│       └── pipeline.py
-└── tests/
-    ├── fixtures/
-    ├── integration/
-    │   └── test_model_integration.py
-    ├── test_config.py
-    └── test_prompt_harness.py
-    └── test_check_sensitive.py
+requirements / code / logs
+  -> retrieve evidence (RAG) -> model proposes ONE next action
+  -> citation check -> dispatcher (role + arguments) -> human approval
+  -> sandboxed tool -> observe -> repeat or stop -> draft for human review
+```
+
+## Safety Boundaries
+
+| The agent may                                       | The agent must not                                   |
+| --------------------------------------------------- | ---------------------------------------------------- |
+| Read approved requirements, code and test logs      | Access production systems or deploy                  |
+| Propose tests and diagnoses that cite evidence      | Merge pull requests or submit issues                 |
+| Call four registered tools through the dispatcher   | Run arbitrary shell commands or unlisted tests       |
+| Run manifest-listed tests after human approval      | Read or expose secrets                               |
+| Prepare local issue drafts                          | Make final engineering decisions without a human     |
+
+How these are enforced in code:
+
+- **Citation validation:** every proposal must cite a source it was actually given.
+- **Fixed tool registry with role checks.**
+- **Human approval gate** for `run_tests` and `draft_issue`.
+- **Sandbox:** tests run with a stripped environment and a timeout.
+- **Bounded agent loop:** an iteration cap, a time budget, repeat detection and a no-progress check.
+- **Run log:** every run is saved to `evidence/traces/runs/`.
+- **Pre-commit secret scanner.**
+
+## Architecture
+
+| Step              | Component                                                  | Code                                                                |
+| ----------------- | ---------------------------------------------------------- | ------------------------------------------------------------------- |
+| 1. Corpus         | Curated, provenance-tagged documents                       | `src/ingestion/tag_provenance.py`, `knowledge/`                     |
+| 2. Retrieval      | Boundary-aware chunks, local BM25, `not_in_corpus` decision | `src/rag/chunking.py`, `retriever.py`, `retrieval.py`               |
+| 3. Context        | Evidence block plus the sources it is safe to cite         | `src/rag/context_builder.py`                                        |
+| 4. Planning       | Model proposes one action (`propose_action` v1.1)          | `src/models/client.py`, `docs/prompts/propose_action/`              |
+| 5. Validation     | Reject untraceable or fabricated citations                 | `src/orchestrator/validation.py`                                    |
+| 6. Dispatch       | Registry, role and argument checks, approval, output limits | `src/orchestrator/router.py`, `src/orchestrator/approval_gate.py`   |
+| 7. Tools          | `search_repo`, `read_file`, `run_tests`, `draft_issue`     | `src/tools/`, `src/sandbox/executor.py`                             |
+| 8. Agent loop     | Sense, plan, validate, act, observe, stop or pause         | `src/agent/loop.py`, `stop_conditions.py`, `task_contract.yaml`     |
+| 9. Observability  | Every run saved as JSON Lines evidence                     | `src/observability/run_logger.py`                                   |
+
+Diagrams:
+
+- `docs/architecture/l3-retrieval-pipeline.png`
+- `docs/architecture/l4-tool-calling.png`
+- `docs/architecture/l5-agent-loop.png`
+- source: `docs/architecture/qa-agent-architecture (1).drawio`
+
+## Progress by Week
+
+Roles: M1 Project/Requirements, M2 Application/Integration, M3 AI Engineering,
+M4 Quality/Security, M5 DevOps/Documentation.
+
+| Week | Focus | Delivered | Key paths |
+| --- | --- | --- | --- |
+| 1 | Charter and boundaries | Charter, 12 user stories, AI boundary matrix, architecture, GitHub and ClickUp setup (M1–M5) | `docs/requirements/`, `docs/architecture/`, `evidence/screenshots/week1/` |
+| 2 | Model integration and prompts | Domain types (M1); model client and baseline pipeline (M2); `propose_action` prompt v1.0/v1.1, prompt loader, model selection (M3); 10-case prompt evaluation (M4); environment config and `.env.example` (M5) | `src/models/`, `src/prompts/`, `src/config/`, `docs/evaluation/week2-ten-case-evaluation.md` |
+| 3 | Retrieval and provenance | Curated corpus and source register (M1); chunking, BM25 retrieval, `not_in_corpus` (M2); context builder (M3); 15-case RAG evaluation (M4); pre-commit sensitive-data scanner (M5) | `src/ingestion/`, `src/rag/`, `docs/evaluation/week3-fifteen-case-rag-evaluation.md`, `scripts/check_sensitive.py` |
+| 4 | Tools and approval | Tool-schema audit and citation validation (M1); tool dispatcher (M2); four tools and sandbox (M3); authorization and failure tests (M4); human approval gate and CLI (M5) | `src/orchestrator/`, `src/tools/`, `src/sandbox/`, `docs/evaluation/week4-tool-authorization-evaluation.md` |
+| 5 | Bounded agent | Stop conditions and charter audit (M1); agent loop (M2); agent task contract (M3); stop-condition tests and three execution traces (M4); run logger saving every run (M5) | `src/agent/`, `src/observability/`, `evidence/traces/` |
+| 6 | Memory, state, interoperability | Upcoming | |
+| 7 | Evaluation, observability, guardrails | Upcoming: 30-scenario evaluation, failure catalogue | |
+| 8 | Final integration and presentation | Upcoming | |
+
+Weekly progress reports are in `docs/weekly reports/`. AI-assistance records
+are in `docs/ai-assistance credit/`.
+
+## Repository Layout
+
+```text
+src/                      application code (run with pytest.ini or PYTHONPATH=src)
+  agent/                  agent loop, stop conditions, task contract (YAML + loader + adapter)
+  config/                 environment settings loader
+  ingestion/              corpus collection and provenance register
+  models/                 model client and shared domain types
+  observability/          run logger (trace sink) for evidence/traces/runs/
+  orchestrator/           tool dispatcher, citation validation, approval gate
+  prompts/                versioned prompt loader
+  rag/                    chunking, retrieval, context builder, baseline pipeline
+  sandbox/                sandboxed pytest executor
+  tools/                  search_repo, read_file, run_tests, draft_issue
+scripts/                  smoke tests, demos, approval CLI, secret scanner, docx generators
+tests/                    unit tests; tests/integration/ end-to-end tests; tests/fixtures/
+docs/                     requirements, architecture, prompts, evaluation, integration, reports
+knowledge/                curated corpus (corpus/) and source-register.json/.md
+evidence/                 screenshots, demo captures, execution traces
+.githooks/pre-commit      runs scripts/check_sensitive.py on staged files
 ```
 
 ## Setup
 
-### Requirements
+Requirements: Python 3.10+, and a Google AI Studio API key for live model
+calls only. Everything else runs offline. Node.js is needed only to rebuild
+the Member 2 `.docx` deliverables (`scripts/generate_week*_member2_docx.js`).
 
-- Python 3.10 or newer
-- A Google AI Studio API key
-- Internet access for live model requests
-
-### Create the virtual environment
-
-````bash
+```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python3 -m pip install -r requirements.txt
-
-### Configure local environment variables
-
-Create a local environment file:
-
-```bash
-cp .env.example .env
-````
-
-Edit `.env` and add the API key. Never commit `.env` or place the key in a command-line argument.
-
-Load the variables into the current terminal session:
-
-```bash
-set -a
-source .env
-set +a
+git config core.hooksPath .githooks        # enable the secret scanner once per clone
 ```
 
-Activating `.venv` does not automatically load `.env`.
+For live model calls, create a local `.env` from the template and load it:
+
+```bash
+cp .env.example .env                        # then add your key; never commit .env
+set -a; source .env; set +a
+```
 
 ## Running Tests
 
-### Member 5 configuration tests
-
 ```bash
-PYTHONPATH=src python3 -m unittest tests.test_config -v
+python3 -m pytest -q                        # full offline suite (pytest.ini sets paths)
+python3 scripts/check_sensitive.py --all    # secret / personal-data scan, must exit 0
 ```
 
-### Member 5 sensitive data tests
+To run one area:
 
 ```bash
-python -m pip install -r requirements.txt
-python -m pytest -q
-python scripts/check_sensitive.py --all
+PYTHONPATH=src python3 -m unittest tests.test_rag_eval -v                       # 15-case RAG evaluation
+PYTHONPATH=src python3 -m unittest tests.integration.test_router -v             # dispatcher
+PYTHONPATH=src python3 -m unittest tests.integration.test_approval_gate -v      # approval gate
+PYTHONPATH=src python3 -m unittest tests.integration.test_agent_loop -v         # agent loop
+PYTHONPATH=src python3 -m pytest -q tests/test_stop_conditions.py               # stop conditions
+PYTHONPATH=src python3 -m unittest tests.test_run_logger tests.integration.test_run_logger_agent_loop -v
 ```
 
-exit code 0 means the sensitive-data scan passed;
-exit code 1 blocks the commit;
-.log, .env, key, database, and credential files must not be committed;
-test placeholders such as test-key are allowed;
-real API keys must never be added to tests or documentation.
+No test needs an API key. `tests/integration/test_model_integration.py` uses mocks.
 
-### Model integration tests
+## Demos and Smoke Tests
 
-These tests use mocks and do not contact Google:
+Run these from the repository root with `PYTHONPATH=src python3 <script>`.
 
-```bash
-PYTHONPATH=src python3 -m unittest tests.integration.test_model_integration -v
-```
+| Script | Shows | Needs API key |
+| --- | --- | --- |
+| `scripts/member1_types_smoke.py` | Domain types against the 10 evaluation cases | No |
+| `scripts/member1_corpus_smoke.py` | Source register and retrieval | No |
+| `scripts/member1_validation_smoke.py` | Parse, validate citations, dispatch | No |
+| `scripts/member1_stop_conditions_smoke.py` | The four stop conditions | No |
+| `scripts/member2_model_smoke.py` | One live `propose_action` model call (see its `--help`) | **Yes** |
+| `scripts/member2_tool_dispatch_demo.py` | Four dispatcher scenarios | No |
+| `scripts/member5_approval_demo.py` | Pending, approved once, approval consumed | No |
+| `scripts/member5_run_log_demo.py` | Three saved runs, including a human approval pause and resume | No |
+| `scripts/show_run_log.py` | Lists saved runs or prints one as a timeline (`--last`) | No |
 
-### Full offline test suite
-
-```bash
-PYTHONPATH=src python3 -m unittest discover -s tests -v
-```
-
-The offline suite does not require an API key.
-
-## Week 4 Approval Gate
-
-Member 5's approval-gate implementation is integrated through the existing
-`ToolDispatcher` boundary. The `run_tests` tool accepts only test node IDs
-from a fixed manifest and requires an authorized human approval before it
-executes. `draft_issue` creates a local draft only; it does not submit an
-issue or pull request.
-
-Implementation and evidence files:
-
-| File                                                         | Purpose                                                                             |
-| ------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| `src/orchestration/approval_gate.py`                         | Persistent approval queue, authorization checks, timeout handling and audit logging |
-| `src/tools/approval_tools.py`                                | `RunTestsTool` and `DraftIssueTool` implementations                                 |
-| `scripts/approve_cli.py`                                     | Human approval and denial commands                                                  |
-| `scripts/member5_approval_demo.py`                           | Automated approval-gate demonstration                                               |
-| `tests/integration/test_approval_gate.py`                    | Approval, denial, timeout, authorization and audit tests                            |
-| `docs/requirements/week4/member5-approval-gate-explained.md` | Plain-language implementation walkthrough                                           |
-
-Run the focused approval-gate tests:
+Human approval uses a second terminal:
 
 ```bash
-PYTHONPATH=src python3 -m unittest \
-    tests.integration.test_approval_gate -v
-```
-
-Run the dispatcher contract tests:
-
-```bash
-PYTHONPATH=src python3 -m unittest \
-    tests.integration.test_tool_dispatcher -v
-```
-
-Run the automated approval demonstration:
-
-```bash
-PYTHONPATH=src python3 scripts/member5_approval_demo.py
-```
-
-For a two-terminal manual approval demonstration, configure a runtime-only
-directory and list requests from the second terminal:
-
-```bash
-export QA_AGENT_DATA_DIR="$PWD/data/member5-demo"
-export QA_AGENT_APPROVERS="Alice,Bob"
+export QA_AGENT_DATA_DIR="$PWD/data/member5-demo" QA_AGENT_APPROVERS="Alice,Bob"
 PYTHONPATH=src python3 scripts/approve_cli.py list
+PYTHONPATH=src python3 scripts/approve_cli.py approve REQUEST_ID --by Alice --reason "Reviewed."
 ```
 
-Approve or deny a real request ID returned by `list`:
+## Runtime Data and Evidence
 
-```bash
-PYTHONPATH=src python3 scripts/approve_cli.py approve \
-    ACTUAL_REQUEST_ID --by Alice --reason "Approved after review."
-```
+| Location | Contents | In Git |
+| --- | --- | --- |
+| `data/` | Approval queue, its lock file, approval audit log | No (`.gitignore`) |
+| `evidence/traces/runs/` | One `.jsonl` file per agent run plus `index.jsonl` | Yes, after review |
+| `evidence/traces/week5-run-*.json` | Week 5 execution traces (M4) | Yes |
+| `evidence/screenshots/`, `evidence/demo/` | Test and demo screenshots per week | Yes |
 
-Runtime queue, audit and draft files are intentionally ignored by Git. Remove
-the demonstration directory after collecting evidence:
-
-```bash
-rm -rf data/member5-demo
-```
-
-The full walkthrough is in
-`docs/requirements/week4/member5-approval-gate-explained.md`.
-
-## Running the Live Smoke Test
-
-The smoke test sends one real requirement and source-code example to the configured model:
-
-```bash
-set -a
-source .env
-set +a
-
-PYTHONPATH=src python3 scripts/member2_model_smoke.py \
-  --prompt-file docs/prompts/propose_action/v1.0.md \
-  --prompt-version v1.0 \
-  --requirement-id REQ-AUTH-01 \
-  --requirement-file tests/fixtures/member2/login_requirement.txt \
-  --source-file tests/fixtures/member2/login_service.py
-```
-
-A successful result includes:
-
-- Model name
-- Prompt version
-- Request latency
-- Token usage
-- Structured model output
-
-The smoke test proposes an action. It does not create files, execute tests, or modify the repository.
-
-## Configuration Files
-
-| File                                          | Purpose                                              |
-| --------------------------------------------- | ---------------------------------------------------- |
-| `.env.example`                                | Safe template showing required environment variables |
-| `.env`                                        | Local secrets and settings; never commit             |
-| `src/config/loader.py`                        | Loads and validates environment settings             |
-| `src/config/__init__.py`                      | Exposes the configuration loader interface           |
-| `src/models/client.py`                        | Calls the configured model provider                  |
-| `scripts/member2_model_smoke.py`              | Runs one live model interaction                      |
-| `tests/test_config.py`                        | Tests Member 5 configuration behavior                |
-| `tests/integration/test_model_integration.py` | Tests model-client and pipeline behavior             |
-
-## Troubleshooting
-
-### Missing environment variable
-
-Reload the environment:
-
-```bash
-set -a
-source .env
-set +a
-```
+| Variable | Default | Used by |
+| --- | --- | --- |
+| `MODEL_ENDPOINT`, `MODEL_NAME`, `MODEL_API_KEY`, `MODEL_TIMEOUT_SECONDS`, `MODEL_MAX_TOKENS`, `MODEL_JSON_MODE` | see `.env.example` | `src/config/loader.py` |
+| `QA_AGENT_DATA_DIR` | `data` | `scripts/approve_cli.py` |
+| `QA_AGENT_APPROVERS` | none (required) | `scripts/approve_cli.py` |
+| `QA_AGENT_TRACE_DIR` | `evidence/traces/runs` | `src/observability/run_logger.py` |
 
 ## Security Rules
 
-- Never commit `.env`.
-- Never place a real API key in source code, screenshots, tests, or command history.
-- Revoke any key accidentally exposed in chat, logs, or screenshots.
-- Use synthetic or team-owned project data only.
-- Do not use production credentials or production data.
-- Review model-proposed actions before execution.
-- Keep provider errors free from API keys and other secrets.
+- Never commit `.env`, keys, databases or `.log` files. The pre-commit hook blocks them.
+- Never put a real key in code, tests, screenshots, documentation or command history. Rotate any key that leaks.
+- Use synthetic or team-owned data only. No production credentials or data.
+- Do not bypass the hook with `git commit --no-verify`.
+- Review run logs before committing them as evidence.
 
-## Team Roles
+Details: `docs/requirements/week3/sensitive-data-check.md`.
 
-The project follows the recommended five-role team structure:
+## Team and Project Management
 
-| Role                         | Responsibility                                  |
-| ---------------------------- | ----------------------------------------------- |
-| Project/Requirements Lead    | Requirements, project charter and user stories  |
-| Application/Integration Lead | System architecture and integrations            |
-| AI Engineering Lead          | AI workflow, prompts and agent behaviour        |
-| Quality/Security Lead        | Testing, security and AI boundaries             |
-| DevOps/Documentation Lead    | Repository, ClickUp, evidence and documentation |
+| Member | Role |
+| --- | --- |
+| Member 1 | Project/Requirements Lead |
+| Member 2 | Application/Integration Lead |
+| Member 3 | AI Engineering Lead |
+| Member 4 | Quality/Security Lead |
+| Member 5 | DevOps/Documentation Lead |
 
-The team members will be listed below:
+Tasks, owners, deadlines and evidence links are tracked weekly in ClickUp.
+Each member's weekly work is linked to repository evidence.
 
-| Team Member | Role                         |
-| ----------- | ---------------------------- |
-| Member 1    | Project/Requirements Lead    |
-| Member 2    | Application/Integration Lead |
-| Member 3    | AI Engineering Lead          |
-| Member 4    | Quality/Security Lead        |
-| Member 5    | DevOps/Documentation Lead    |
+## Documentation Index
 
----
-
-## Project Management
-
-**ClickUp** is used to manage project tasks, weekly activities, task ownership, deadlines and evidence.
-
-Each weekly activity is assigned to a specific team member to ensure that individual contributions are identifiable.
-
-Repository evidence and relevant deliverables will be linked to the corresponding ClickUp tasks.
-
----
-
-## Development Principles
-
-The project will follow these principles:
-
-1. **Human oversight** — important or risky actions require appropriate human approval.
-2. **Least privilege** — the agent receives only the access required for its task.
-3. **Sandbox execution** — approved tests are executed in a controlled environment.
-4. **Traceability** — important agent actions and test results should be recorded.
-5. **Deterministic controls** — permissions, validation and execution restrictions are enforced outside the language model.
-6. **No production access** — the agent will not directly control production systems.
-7. **Evidence-based development** — project decisions and evaluation results will be documented.
-
----
-
-## Safety Notice
-
-This project is an academic/software-engineering prototype.
-
-The QA Agent is designed to operate only within explicitly defined permissions and controlled environments. It is not intended to autonomously control production systems or make irreversible engineering decisions.
-
----
-
-## Documentation
-
-Project documentation is maintained under:
-
-```text
-docs/
-```
-
-Evidence is maintained under:
-
-```text
-evidence/
-```
-
-Weekly progress documentation is maintained under:
-
-```text
-docs/weekly-reports/
-```
-
----
+| Topic | Location |
+| --- | --- |
+| Charter, user stories, traceability, audits | `docs/requirements/` |
+| Architecture and diagrams | `docs/architecture/` |
+| Prompts and model selection | `docs/prompts/` |
+| Evaluations (Weeks 2–4) | `docs/evaluation/` |
+| Member 2 integration documents | `docs/integration/` |
+| Grounding design note | `docs/context/` |
+| Approval gate walkthrough | `docs/requirements/week4/member5-approval-gate-explained.md` |
+| Run logger | `docs/requirements/week5/member5-run-log.md` |
+| Environment setup | `docs/requirements/week2/setup.md` |
+| Weekly progress reports | `docs/weekly reports/` |
+| AI-assistance records | `docs/ai-assistance credit/` |
 
 ## License
 
-This project is developed for academic purposes as part of a university software engineering project.
+Academic project for BSE4104 at Makerere University.
