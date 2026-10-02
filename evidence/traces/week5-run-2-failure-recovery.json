@@ -1,0 +1,140 @@
+{
+  "run": "week5-run-2-failure-recovery",
+  "task": {
+    "goal": "Propose tests for the login lockout requirement.",
+    "session_id": "session-1"
+  },
+  "result": {
+    "status": "completed",
+    "iterations": 3,
+    "message": "A validated test proposal is ready for human review.",
+    "halt": null,
+    "failure": null,
+    "final_proposal": {
+      "action": "propose_test",
+      "arguments": {
+        "title": "Lock account after five failures"
+      },
+      "rationale": "Grounded in the supplied context.",
+      "evidence": [
+        {
+          "source_path": "tests/fixtures/member2/corpus/src/login_service.py",
+          "note": ""
+        }
+      ],
+      "confidence": "high"
+    }
+  },
+  "trace": [
+    {
+      "session_id": "session-1",
+      "actor": "deterministic",
+      "action": "loop_started",
+      "detail": "iterations_completed=0",
+      "timestamp": "2026-10-02T09:05:00+00:00",
+      "tool_invocation": null
+    },
+    {
+      "session_id": "session-1",
+      "actor": "deterministic",
+      "action": "context_sensed",
+      "detail": "iteration=1; not_in_corpus=False; allowed_sources=1",
+      "timestamp": "2026-10-02T09:05:00+00:00",
+      "tool_invocation": null
+    },
+    {
+      "session_id": "session-1",
+      "actor": "ai",
+      "action": "action_planned",
+      "detail": "iteration=1; action=search_repo; confidence=high; evidence=1",
+      "timestamp": "2026-10-02T09:05:00+00:00",
+      "tool_invocation": null
+    },
+    {
+      "session_id": "session-1",
+      "actor": "deterministic",
+      "action": "tool_dispatched",
+      "detail": "iteration=1; kind=tool_error; code=execution_failed",
+      "timestamp": "2026-10-02T09:05:00+00:00",
+      "tool_invocation": {
+        "tool_name": "search_repo",
+        "input": {
+          "argument_keys": [
+            "query"
+          ]
+        },
+        "output": {
+          "kind": "tool_error",
+          "code": "execution_failed",
+          "output_keys": null,
+          "output_bytes": null
+        },
+        "called_at": "2026-10-02T09:05:00+00:00"
+      }
+    },
+    {
+      "session_id": "session-1",
+      "actor": "deterministic",
+      "action": "context_sensed",
+      "detail": "iteration=2; not_in_corpus=False; allowed_sources=1",
+      "timestamp": "2026-10-02T09:05:00+00:00",
+      "tool_invocation": null
+    },
+    {
+      "session_id": "session-1",
+      "actor": "ai",
+      "action": "action_planned",
+      "detail": "iteration=2; action=search_repo; confidence=high; evidence=1",
+      "timestamp": "2026-10-02T09:05:00+00:00",
+      "tool_invocation": null
+    },
+    {
+      "session_id": "session-1",
+      "actor": "deterministic",
+      "action": "tool_dispatched",
+      "detail": "iteration=2; kind=tool_executed; code=none",
+      "timestamp": "2026-10-02T09:05:00+00:00",
+      "tool_invocation": {
+        "tool_name": "search_repo",
+        "input": {
+          "argument_keys": [
+            "query"
+          ]
+        },
+        "output": {
+          "kind": "tool_executed",
+          "code": null,
+          "output_keys": [
+            "matches"
+          ],
+          "output_bytes": 66
+        },
+        "called_at": "2026-10-02T09:05:00+00:00"
+      }
+    },
+    {
+      "session_id": "session-1",
+      "actor": "deterministic",
+      "action": "context_sensed",
+      "detail": "iteration=3; not_in_corpus=False; allowed_sources=1",
+      "timestamp": "2026-10-02T09:05:00+00:00",
+      "tool_invocation": null
+    },
+    {
+      "session_id": "session-1",
+      "actor": "ai",
+      "action": "action_planned",
+      "detail": "iteration=3; action=propose_test; confidence=high; evidence=1",
+      "timestamp": "2026-10-02T09:05:00+00:00",
+      "tool_invocation": null
+    },
+    {
+      "session_id": "session-1",
+      "actor": "deterministic",
+      "action": "loop_completed",
+      "detail": "iteration=3; status=completed; action=propose_test",
+      "timestamp": "2026-10-02T09:05:00+00:00",
+      "tool_invocation": null
+    }
+  ]
+}
