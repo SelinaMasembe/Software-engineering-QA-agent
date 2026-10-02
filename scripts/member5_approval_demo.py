@@ -8,12 +8,12 @@ import time
 from pathlib import Path
 
 from models.types import Action, Confidence, EvidenceRef, ProposalSet
-from orchestration.approval_gate import (
+from orchestrator.approval_gate import (
     AuditLogger,
     JSONApprovalGate,
     JSONApprovalStore,
 )
-from orchestration.tool_dispatcher import (
+from orchestrator.router import (
     ExecutionContext,
     ToolDispatcher,
     ToolRegistry,

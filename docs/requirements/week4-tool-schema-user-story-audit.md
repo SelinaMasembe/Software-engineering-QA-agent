@@ -9,7 +9,7 @@ rejects a proposal missing a required citation.
 **Deliverables:** Updated acceptance criteria (this document plus the
 amendment recorded in Section 4 below, applied to
 `docs/requirements/Project_charter and user stories.docx`);
-`src/orchestration/validation.py`.
+`src/orchestrator/validation.py`.
 
 ---
 
@@ -17,13 +17,13 @@ amendment recorded in Section 4 below, applied to
 
 The task sheet names the code deliverable `src/orchestrator/validation.py`.
 The repository has no `src/orchestrator/` folder; the module that owns
-tool dispatch is `src/orchestration/` (see `src/orchestration/__init__.py`
-and `src/orchestration/tool_dispatcher.py`, both Member 2's Week 4
+tool dispatch is `src/orchestrator/` (see `src/orchestrator/__init__.py`
+and `src/orchestrator/router.py`, both Member 2's Week 4
 deliverable). This mirrors the same task-sheet-versus-repository
 discrepancy already resolved for Week 3 (`docs/knowledge/` on the task
 sheet versus the repository's actual top-level `knowledge/` folder): the
 existing, real folder was used rather than creating a second, unused one.
-`validation.py` was therefore added inside `src/orchestration/`, next to
+`validation.py` was therefore added inside `src/orchestrator/`, next to
 the dispatcher it validates for.
 
 ## 2. What "the actual tool schemas" means here
@@ -33,7 +33,7 @@ Four tools are named consistently everywhere in the project: `search_repo`,
 all three were checked against each other and against the twelve user
 stories, not just one:
 
-- `src/models/types.py`'s `Action` enum and `src/orchestration/tool_dispatcher.py`'s
+- `src/models/types.py`'s `Action` enum and `src/orchestrator/router.py`'s
   `TOOL_ACTIONS` frozenset — the actual, code-level list of dispatchable
   tools.
 - `docs/architecture/Member3_AIEngineering_Deliverables.docx`, "Tool
@@ -86,7 +86,7 @@ validation is a pre-dispatch boundary check ("Caller must validate before
 missing citation was, before this week, no more blocked than a
 `propose_test` one — the code enforcing the rule
 (`TestProposal.validate_sources` in `src/models/types.py`, Week 2) was
-written against `TestProposal` specifically. `src/orchestration/validation.py`
+written against `TestProposal` specifically. `src/orchestrator/validation.py`
 closes that gap by checking `ProposalSet.evidence` directly, so the AC
 now describes what is actually enforced.
 

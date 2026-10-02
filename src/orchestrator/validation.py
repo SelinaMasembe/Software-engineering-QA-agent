@@ -1,6 +1,6 @@
 """Pre-dispatch citation validation (Week 4 deliverable, Member 1).
 
-Member 2's tool-calling boundary (src/orchestration/tool_dispatcher.py)
+Member 2's tool-calling boundary (src/orchestrator/router.py)
 deliberately does not check citations itself. Its Week 4 report
 (docs/integration/Week4_Member2_ToolCallingOrchestration.docx, Table 1 and
 Section 6.3) lists this as a Member 1 handoff:
@@ -27,18 +27,33 @@ rule TestProposal.validate_sources already enforces for propose_test
 outputs (Week 2) so it also covers search_repo, read_file, run_tests and
 draft_issue proposals, which carry citations through ProposalSet.evidence
 directly rather than through a TestProposal.
+
+Week 5 adds one narrow exception for the agent loop (src/agent/loop.py).
+propose_action v1.1's FAILURE BEHAVIOR tells the model to return
+"no_action" instead of fabricating a citation when the context holds no
+usable source. When retrieval has deterministically decided the query is
+not in the corpus, the context contains no source_path at all, so the only
+honest response the prompt allows is an evidence-free no_action. Rejecting
+that response would punish the model for following its instructions.
+The exception is therefore limited to Action.NO_ACTION, only applies when
+the caller passes ``confirmed_not_in_corpus=True`` (a deterministic
+retrieval result, never the model's own claim), and only when
+``allowed_source_paths`` is empty. Every other evidence-free proposal, and
+every fabricated citation for any action, is still rejected.
 """
 
 from __future__ import annotations
 
 from typing import Collection
 
-from models.types import ProposalSet, UntraceableProposalError
+from models.types import Action, ProposalSet, UntraceableProposalError
 
 
 def validate_citations(
     proposal: ProposalSet,
     allowed_source_paths: Collection[str],
+    *,
+    confirmed_not_in_corpus: bool = False,
 ) -> ProposalSet:
     """Reject ``proposal`` if it has no evidence, or cites a source_path
     that was not actually supplied to the model this turn.
@@ -54,31 +69,58 @@ def validate_citations(
     the retrieved chunks placed in the context bundle). Passing a wider
     set than that defeats the check.
 
+    Narrow no-evidence exception: an evidence-free ``Action.NO_ACTION``
+    proposal is accepted only when ``confirmed_not_in_corpus`` is exactly
+    ``True`` and ``allowed_source_paths`` is empty. This mirrors
+    propose_action v1.1's FAILURE BEHAVIOR, which requires "no_action"
+    rather than a fabricated citation when the corpus has no evidence. The
+    flag must come from deterministic retrieval (for example
+    ``AssembledContext.not_in_corpus``), never from the model's output. An
+    evidence-free proposal for any other action is still rejected, and so
+    is a no_action proposal that cites anything, since no citation can be
+    traceable when nothing was supplied.
+
     Args:
         proposal: The structurally validated propose_action response to
             check.
         allowed_source_paths: The source paths that were genuinely
             supplied to the model this turn.
+        confirmed_not_in_corpus: Set to ``True`` only when deterministic
+            retrieval has confirmed the corpus holds no evidence for this
+            turn. Defaults to ``False``, which keeps the original rule that
+            every proposal needs evidence.
 
     Returns:
         The same ``proposal``, unchanged, when every evidence entry is
-        traceable. Nothing is mutated or copied; this function either
-        returns the input or raises.
+        traceable, or when the narrow no-evidence exception applies.
+        Nothing is mutated or copied; this function either returns the
+        input or raises.
 
     Raises:
-        UntraceableProposalError: ``proposal.evidence`` is empty, or at
-            least one evidence entry cites a ``source_path`` outside
+        UntraceableProposalError: ``proposal.evidence`` is empty and the
+            narrow no-evidence exception does not apply, or at least one
+            evidence entry cites a ``source_path`` outside
             ``allowed_source_paths`` (US-8's negative case: a fabricated
             or missing citation).
     """
+    allowed = set(allowed_source_paths)
+
     if not proposal.evidence:
+        # The only evidence-free proposal that may pass: an honest
+        # no_action after deterministic retrieval found nothing to cite.
+        # ``is True`` keeps a truthy non-bool from opening the exception.
+        if (
+            confirmed_not_in_corpus is True
+            and not allowed
+            and proposal.action is Action.NO_ACTION
+        ):
+            return proposal
         raise UntraceableProposalError(
             f"Proposal for action {proposal.action.value!r} has no "
             "evidence and must be rejected before dispatch, not passed "
             "through with a missing citation."
         )
 
-    allowed = set(allowed_source_paths)
     for ref in proposal.evidence:
         if ref.source_path not in allowed:
             raise UntraceableProposalError(

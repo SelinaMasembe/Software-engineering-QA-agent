@@ -62,8 +62,8 @@ verdict into a structured `DispatchResult`.
 
 | File                                                         | Responsibility                                                                           |
 | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| `src/orchestration/approval_gate.py`                         | Persistent queue, approval decisions, timeout handling, authorization, and audit logging |
-| `src/orchestration/tool_dispatcher.py`                       | Role checks, argument checks, approval integration, execution, and structured results    |
+| `src/orchestrator/approval_gate.py`                         | Persistent queue, approval decisions, timeout handling, authorization, and audit logging |
+| `src/orchestrator/router.py`                       | Role checks, argument checks, approval integration, execution, and structured results    |
 | `src/tools/approval_tools.py`                                | `RunTestsTool` and `DraftIssueTool` implementations                                      |
 | `scripts/approve_cli.py`                                     | Human-facing approval and denial commands                                                |
 | `scripts/member5_approval_demo.py`                           | Automated approval-gate demonstration                                                    |
@@ -80,7 +80,7 @@ gate is a module named `approval_gate.py`.
 The relevant contract is defined in:
 
 ```text
-src/orchestration/tool_dispatcher.py
+src/orchestrator/router.py
 ```
 
 The dispatcher processes a proposal in this order:
@@ -119,7 +119,7 @@ class ApprovalGate(Protocol):
 The implementation is in:
 
 ```text
-src/orchestration/approval_gate.py
+src/orchestrator/approval_gate.py
 ```
 
 ### `ApprovalRequest`
@@ -344,8 +344,8 @@ export QA_AGENT_DATA_DIR="$PWD/data/member5-demo"
 export QA_AGENT_APPROVERS="Alice,Bob"
 
 PYTHONPATH=src python3 -c '
-from orchestration.approval_gate import AuditLogger, JSONApprovalGate, JSONApprovalStore
-from orchestration.tool_dispatcher import Action, ExecutionContext
+from orchestrator.approval_gate import AuditLogger, JSONApprovalGate, JSONApprovalStore
+from orchestrator.router import Action, ExecutionContext
 
 gate = JSONApprovalGate(
     store=JSONApprovalStore("data/member5-demo/approval_queue.json"),

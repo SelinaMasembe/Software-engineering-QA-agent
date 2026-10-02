@@ -1,3 +1,9 @@
+"""Focused tests for Member 2's router boundary.
+
+These fake-based checks do not replace Member 4's integrated test_tool_auth.py
+deliverable.
+"""
+
 from __future__ import annotations
 
 import json
@@ -5,7 +11,7 @@ import unittest
 from types import SimpleNamespace
 
 from models.types import Action, Confidence, EvidenceRef, ProposalSet
-from orchestration import (
+from orchestrator import (
     ApprovalStatus,
     ApprovalVerdict,
     DispatchCode,

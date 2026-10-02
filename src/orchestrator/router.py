@@ -1,6 +1,6 @@
-"""Safe, single-turn dispatch of model-proposed tool requests.
+"""Route one model-proposed tool request through the application boundary.
 
-This module is the Week 4 integration boundary.  It does not implement tools,
+This module is the Week 4 Member 2 integration boundary. It does not implement tools,
 tool schemas, approval policy, or an agent loop.  Instead, it connects those
 separate contributions through small protocols and denies execution whenever a
 required dependency is missing.

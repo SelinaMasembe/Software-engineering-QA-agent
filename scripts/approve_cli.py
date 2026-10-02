@@ -6,7 +6,7 @@ import argparse
 import os
 import sys
 
-from orchestration.approval_gate import (
+from orchestrator.approval_gate import (
     AuditLogger,
     JSONApprovalGate,
     JSONApprovalStore,
