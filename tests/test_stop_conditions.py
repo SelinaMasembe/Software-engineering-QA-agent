@@ -6,14 +6,19 @@ agent, including one where it fails and recovers, and write a test that
 checks the stop conditions actually work." -> tests/test_stop_conditions.py
 plus three execution traces under evidence/traces/.
 
-STAND-IN POLICY, REAL LOOP
----------------------------
-src/agent/stop_conditions.py (Member 1's Week 5 deliverable) does not exist
-on this branch yet. agent.loop.StopEvaluator is already a defined,
-documented Protocol ("Member 1's stop policy (iterations, time, repetition,
-no new information)"), so this file implements a stand-in,
-StopConditionPolicy, that satisfies it with real decision logic for all four
-conditions named in US-9 and the AI engineering design notes:
+REAL POLICY, REAL LOOP
+-----------------------
+This file originally shipped its own stand-in StopConditionPolicy, because
+src/agent/stop_conditions.py (Member 1's Week 5 deliverable) did not exist
+yet when this suite was first written. It has since landed, and its own
+docstring says it was deliberately built as "a behavioural drop-in" for the
+stand-in this file used to define -- same constructor shape, same
+precedence order, same interpretation of "repeated call" and "no new
+information." This file now imports and tests the real
+agent.stop_conditions.StopConditionPolicy directly; nothing below is
+simulated.
+
+Four conditions, named in US-9 and the AI engineering design notes:
 
   - ITERATION_CAP            a hard maximum number of completed turns.
   - WALL_CLOCK_BUDGET        a maximum elapsed wall-clock time for the run.
@@ -21,15 +26,17 @@ conditions named in US-9 and the AI engineering design notes:
   - NO_NEW_INFORMATION       a tool executed twice in a row returning the
                               exact same output.
 
-Every test below runs this policy through the REAL agent.AgentLoop (Member
-2's Week 5 deliverable), the same way Weeks 3 and 4 tested real
-infrastructure with one clearly-labelled stand-in for the piece that had not
-landed yet. tests/integration/test_agent_loop.py already covers the loop's
-own mechanics against an injected stop evaluator in the abstract (its
-docstring says explicitly: "these checks ... do not replace Member 4's
-stop-condition or execution-trace tests"); this file is that replacement --
-it tests whether a real stop POLICY actually decides correctly, not just
-whether the loop obeys whatever an evaluator says.
+Every test below runs the real policy through the REAL agent.AgentLoop
+(Member 2's Week 5 deliverable). tests/integration/test_agent_loop.py
+already covers the loop's own mechanics against an injected stop evaluator
+in the abstract (its docstring says explicitly: "these checks ... do not
+replace Member 4's stop-condition or execution-trace tests"); this file is
+that replacement -- it tests whether the real stop POLICY actually decides
+correctly, not just whether the loop obeys whatever an evaluator says.
+tests/test_stop_conditions_unit.py (Member 1) separately unit-tests the
+policy's own internals; this file additionally wires it into the real loop
+and generates the three required execution traces, which is specifically
+this week's Member 4 deliverable.
 
 Usage:
     PYTHONPATH=src python3 tests/test_stop_conditions.py
@@ -63,6 +70,7 @@ from agent import (  # noqa: E402
     ObservationKind,
     PlannedAction,
 )
+from agent.stop_conditions import StopConditionPolicy  # noqa: E402
 from models.types import (  # noqa: E402
     Action,
     Confidence,
@@ -83,93 +91,6 @@ from rag import AssembledContext  # noqa: E402
 
 EVIDENCE_DIR = REPO_ROOT / "evidence" / "traces"
 SOURCE = "tests/fixtures/member2/corpus/src/login_service.py"
-
-
-def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
-
-
-# ---------------------------------------------------------------------------
-# Stand-in stop policy, pending src/agent/stop_conditions.py.
-# ---------------------------------------------------------------------------
-
-
-class StopConditionPolicy:
-    """Stand-in for Member 1's StopEvaluator: all four US-9 conditions.
-
-    Checked in a fixed order every call, so a state that satisfies more than
-    one condition at once has one deterministic, documented reason rather
-    than an arbitrary one: ITERATION_CAP, then WALL_CLOCK_BUDGET, then
-    REPEATED_CALL_DETECTED, then NO_NEW_INFORMATION. The iteration cap goes
-    first because it is the hard ceiling nothing may exceed regardless of
-    why; the wall-clock budget goes next for the same reason, ahead of the
-    two conditions that only describe the agent going in circles.
-
-    The wall-clock budget is measured from this policy instance's first
-    ``evaluate`` call, using an injectable clock -- the same testability
-    seam ``agent.AgentLoop`` itself uses -- rather than wall time at
-    construction, since a policy may be built before a session starts.
-    """
-
-    def __init__(
-        self,
-        *,
-        max_iterations: int,
-        wall_clock_budget_seconds: float,
-        clock: Callable[[], datetime] = _utc_now,
-    ) -> None:
-        if max_iterations <= 0:
-            raise ValueError("max_iterations must be greater than zero.")
-        if wall_clock_budget_seconds <= 0:
-            raise ValueError("wall_clock_budget_seconds must be greater than zero.")
-        self.max_iterations = max_iterations
-        self.wall_clock_budget_seconds = wall_clock_budget_seconds
-        self._clock = clock
-        self._started_at: datetime | None = None
-
-    def evaluate(self, state: LoopState) -> StopReason | None:
-        if self._started_at is None:
-            self._started_at = self._clock()
-
-        if state.iterations_completed >= self.max_iterations:
-            return StopReason.ITERATION_CAP
-
-        elapsed = (self._clock() - self._started_at).total_seconds()
-        if elapsed >= self.wall_clock_budget_seconds:
-            return StopReason.WALL_CLOCK_BUDGET
-
-        if _is_repeated_call(state.history):
-            return StopReason.REPEATED_CALL_DETECTED
-
-        if _yields_no_new_information(state.history):
-            return StopReason.NO_NEW_INFORMATION
-
-        return None
-
-
-def _is_repeated_call(history: tuple[Observation, ...]) -> bool:
-    """The identical action+arguments was just requested again."""
-
-    if len(history) < 2:
-        return False
-    latest, previous = history[-1], history[-2]
-    return (
-        latest.proposal.action == previous.proposal.action
-        and latest.proposal.arguments == previous.proposal.arguments
-    )
-
-
-def _yields_no_new_information(history: tuple[Observation, ...]) -> bool:
-    """The last two executed tool calls returned the exact same output."""
-
-    if len(history) < 2:
-        return False
-    latest, previous = history[-1], history[-2]
-    if latest.kind is not ObservationKind.TOOL_EXECUTED:
-        return False
-    if previous.kind is not ObservationKind.TOOL_EXECUTED:
-        return False
-    return latest.output == previous.output
 
 
 # ---------------------------------------------------------------------------
