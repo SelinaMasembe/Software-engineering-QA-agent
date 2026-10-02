@@ -2,19 +2,30 @@
 
 ``build_agent_task`` supplies the goal from the static contract and the
 identity from the caller; the contract never carries session, actor or role.
-``build_stop_evaluator`` is an open seam: Member 1's ``stop_conditions.py``
-does not exist yet, so it raises instead of faking enforcement.
+
+``build_stop_evaluator`` was an open seam through Week 4: Member 1's
+``stop_conditions.py`` did not exist yet, so it raised
+``StopEvaluatorNotImplementedError`` instead of faking enforcement. Week 5
+closes that seam: it now builds and returns a real
+``agent.stop_conditions.StopConditionPolicy`` from the contract's
+``max_iterations`` and ``wall_clock_budget_seconds``, the exact construction
+the previous version's error message already described.
+
+One caller responsibility this function cannot enforce by itself: the
+returned policy is stateful (it tracks its own wall-clock start time once
+``evaluate()`` is first called). The same instance must be reused across a
+``run()`` and any later ``resume()`` of the same session; calling
+``build_stop_evaluator`` again at resume time builds a fresh policy whose
+clock restarts from that moment, which silently gives the session a new
+wall-clock budget rather than continuing the original one.
 """
 
 from __future__ import annotations
 
 from agent.loop import AgentTask, StopEvaluator
+from agent.stop_conditions import StopConditionPolicy
 from models.types import AgentTaskContract
 from orchestrator import ExecutionContext
-
-
-class StopEvaluatorNotImplementedError(NotImplementedError):
-    """Member 1's stop evaluator (src/agent/stop_conditions.py) is not built yet."""
 
 
 def build_agent_task(
@@ -36,22 +47,17 @@ def build_agent_task(
 
 
 def build_stop_evaluator(contract: AgentTaskContract) -> StopEvaluator:
-    """Build the stop evaluator from the contract's limits (not available yet).
+    """Build the stop evaluator from the contract's limits.
 
-    When stop_conditions.py lands, this must return an object satisfying
-    ``agent.loop.StopEvaluator``::
-
-        def evaluate(self, state: LoopState) -> StopReason | None
-
+    Returns a new ``StopConditionPolicy`` (``agent.stop_conditions``)
     constructed from ``contract.max_iterations`` and
-    ``contract.wall_clock_budget_seconds``. It returns a ``StopReason`` to halt
-    or ``None`` to allow another turn, and the loop calls it before the first
-    turn and after every observation.
+    ``contract.wall_clock_budget_seconds``. It satisfies
+    ``agent.loop.StopEvaluator``: ``evaluate(state: LoopState) -> StopReason |
+    None``, returning a ``StopReason`` to halt or ``None`` to allow another
+    turn. The loop calls it before the first turn of a session and after
+    every recorded observation, never anywhere else.
     """
 
-    raise StopEvaluatorNotImplementedError(
-        "src/agent/stop_conditions.py does not exist yet. The stop evaluator "
-        "must implement evaluate(state: LoopState) -> StopReason | None and be "
-        f"built from max_iterations={contract.max_iterations} and "
-        f"wall_clock_budget_seconds={contract.wall_clock_budget_seconds}."
-    )
+    if not isinstance(contract, AgentTaskContract):
+        raise TypeError("build_stop_evaluator requires an AgentTaskContract.")
+    return StopConditionPolicy.from_contract(contract)
