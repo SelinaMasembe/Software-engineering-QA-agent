@@ -20,7 +20,8 @@ The agent loop (Member 2) has no configuration of its own. This week I built the
 | Contract-to-loop adapter | `src/agent/task_adapter.py` | Committed |
 | Adapter tests | `tests/test_task_adapter.py` | Committed; rewritten by Member 1 when the seam closed |
 | Session runner (`build_agent_session`) | `src/agent/runner.py` | Committed on branch `agent-runner-contract-wiring` |
-| Runner integration tests (5) | `tests/integration/test_agent_runner.py` | Committed on the same branch |
+| Runner integration tests (10) | `tests/integration/test_agent_runner.py` | Committed on the same branch |
+| Tool-registry check (`ToolContractMismatchError`) | `src/agent/runner.py` | Committed on the same branch (cca76a7) |
 | Fixture fix: delete duplicate `test_run_2026_09_15.log` | `tests/fixtures/member2/corpus/logs/` | Committed |
 | AI-assistance entry | `docs/ai-assistance credit/week5/member3-AI-assistance.md` | Written |
 
@@ -42,6 +43,7 @@ I had the AI re-explore the repo before each step and report what was actually t
 - Session id, actor id and role are runtime values, so `build_agent_task` takes them from the caller and builds `ExecutionContext` with keyword arguments, as every existing test and script does.
 - `build_stop_evaluator` now returns `StopConditionPolicy.from_contract(contract)`. Until Member 1's module landed it raised `StopEvaluatorNotImplementedError`, naming the interface to build against.
 - The stop policy is stateful: it starts its wall-clock on its first `evaluate()` call. `AgentSession` keeps the single evaluator inside the loop, so `resume` reuses it and the budget does not reset.
+- `build_agent_session` rejects a dispatcher whose `ToolRegistry` does not hold exactly `contract.tools`. I chose an exact match over "at least these four". `ToolRegistry` only accepts the four executable tools and no registry in the repo holds any other, so there is no legitimate extra to allow. A contract can grant fewer than four tools, though, and a registry holding a tool the contract never granted would widen the agent's permissions. The original runner tests registered only `search_repo`, so I changed only how they build the registry. Their assertions are untouched.
 - The runner is a new module, `src/agent/runner.py`. `loop.py` already exposed `AgentLoop(...).run(task)` and `.resume(result)`, so no change to it was needed. The sensor, planner, dispatcher and trace sink are passed in by the caller.
 
 ## Verification
@@ -56,16 +58,23 @@ I had the AI re-explore the repo before each step and report what was actually t
   - Empty, padded and `None` identity values are rejected.
   - Before `stop_conditions.py` landed, the seam raised the specific error and a guard test failed when the file appeared.
   - Member 1 then replaced those tests: the evaluator is built from the real contract values and actually halts at the contract's iteration cap.
-- **Runner integration tests**, using the real YAML, adapter, stop policy, `AgentLoop`, `ToolDispatcher` and `ToolRegistry`:
+- **Runner integration tests (5 of the 10)**, using the real YAML, adapter, stop policy, `AgentLoop`, `ToolDispatcher` and `ToolRegistry`:
   - The session is built from the contract values.
   - Bad identity and a non-contract are rejected.
   - A grounded proposal completes in one turn.
   - The contract's goal reaches the planner.
   - A planner that never finishes is halted with `ITERATION_CAP` at exactly 5 iterations, and the tool ran exactly 5 times.
   - The sensor, planner and trace sink are scripted. No model or network call is made.
+- **Tool-registry check tests (the other 5)**, in the same file:
+  - A registry that matches `contract.tools` exactly succeeds.
+  - A registry missing a contract tool is rejected, with the tool's name in the error.
+  - A registry holding a tool the contract doesn't declare is rejected, with the tool's name in the error.
+  - Missing and extra tools are both named together.
+  - A dispatcher with no `ToolRegistry` fails closed instead of skipping the check.
 - **First full run**, in my own terminal: `1 failed, 216 passed`. The one failure also failed on a clean checkout with my changes stashed, so my work did not cause it.
 - **Run after the fixture fix**, in my own terminal: `217 passed, 1 warning, 179 subtests passed`, no failures.
-- **Final full run**, after pulling Member 1's work and adding the runner: `258 passed, 1 warning, 188 subtests passed`, no failures.
+- **Run after adding the runner**, with Member 1's work pulled in: `258 passed, 1 warning, 188 subtests passed`, no failures.
+- **Final full run**, after adding the tool-registry check: `263 passed, 1 warning, 188 subtests passed in 16.09s`, no failures, from my own terminal (screenshot in `evidence/screenshots/week5/`).
 
 ## The failing test: cause and fix
 
@@ -77,8 +86,8 @@ I had the AI re-explore the repo before each step and report what was actually t
 2. **Collection errors.** A bare `pytest` from the repo root errors at collection, because files under `knowledge/corpus/code/` share names with files in `tests/`. Running against `tests/` avoids it. This was already the case before my changes.
 3. **Limits to confirm.** The 120s wall-clock budget is my proposed number and needs confirming with Member 1. The iteration cap of 5 needs confirming against their stop-condition work.
 4. **Not yet end to end.** There is no real `ContextSensor` or `Planner` wrapping retrieval and the propose_action model call, and Member 5's trace sink does not exist yet. The runner tests use scripted stand-ins, so the real model call and retrieval were not run.
-5. **Tools not enforced by the runner.** `contract.tools` is not checked against the `ToolRegistry`. Session id and role come from whoever calls `build_agent_session`.
-6. **Housekeeping.** Open the PR from `agent-runner-contract-wiring`. I removed the Claude co-author line by amending the commit (now bce1f52) after the original (188aba6) had been pushed, so the remote needs a force-push (`git push --force-with-lease origin agent-runner-contract-wiring`). Also save a screenshot of the green run to `evidence/screenshots/week5/`.
+5. **Caller responsibilities.** Session id and role come from whoever calls `build_agent_session`. A custom dispatcher must expose a `.registry`, otherwise the runner refuses it.
+6. **Housekeeping.** Open the PR from `agent-runner-contract-wiring`. The Claude co-author line was removed by amending the commit. The original (188aba6) had already been pushed, and I have since force-pushed, so the remote head has no co-author line. Also keep the screenshot of the 263-pass run in `evidence/screenshots/week5/`.
 
 ## Constraints respected
 
