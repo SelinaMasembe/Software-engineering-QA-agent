@@ -1,4 +1,6 @@
-"""Load and validate application configuration from environment variables."""
+"""Load and validate application configuration from environment variables.
+    This file loads configuration for an AI model from environment variables, checks that the values are valid, stores them in a ModelSettings object, and uses those settings to create a ChatCompletionsClient.
+"""
 
 from __future__ import annotations
 

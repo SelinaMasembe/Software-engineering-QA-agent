@@ -104,7 +104,7 @@
     "expected_not_in_corpus": false,
     "required_source_paths": ["requirements/authentication.md"],
     "ideal_top_source_path": "requirements/authentication.md",
-    "known_limitation": "The authoritative requirement (REQ-AUTH-02: 'return a lockout reason') is retrieved but ranks 3rd of the 5 returned chunks, behind two test-log chunks that only share surface vocabulary ('account', 'locks', 'service') without stating the rule. BM25 scores literal term overlap, and the log's incidental phrasing happens to overlap the question's wording more than the requirement's own wording does. A consumer reading only the top-ranked chunk would miss the actual answer.",
+    "known_limitation": "The authoritative requirement (REQ-AUTH-02: 'return a lockout reason') is retrieved but ranks 3rd of the 5 returned chunks, behind two test-log chunks that only share surface vocabulary ('account', 'locks', 'service') without stating the rule. BM25 scores literal term overlap, and the log's incidental phrasing happens to overlap the question's wording more than the requirement's own wording does. A consumer reading only the top-ranked chunk would miss the actual answer. Re-test 2 October 2026: this inversion was produced by the duplicate test_run_2026_09_15.log fixture. After that file was removed for the sensitive-data policy, the requirement ranks 1st (score 4.33, coverage 0.75), so the failure no longer reproduces on this corpus; the case is kept as a regression watch because lexical ranking can still favour incidental log wording when new logs are added.",
     "notes": "Documented retrieval failure #2: correct source present but not ranked first."
   },
   {
@@ -114,7 +114,7 @@
     "expected_not_in_corpus": false,
     "required_source_paths": ["requirements/authentication.md"],
     "ideal_source_paths": ["requirements/authentication.md", "logs/test_run_2026_09_15.txt", "src/login_service.py"],
-    "known_limitation": "This question genuinely spans three documents: the requirement, the failing test's log entry, and the code under test. The coverage floor is applied per chunk independently. Only the requirement chunk clears 0.34 coverage; the log chunk that explains the actual failure (0.30) and the code chunk (about 0.10) both fall just under the floor and are silently dropped. The pipeline reports full groundedness (not_in_corpus=False) while citing only one of the three relevant sources, so the answer looks complete but is not.",
+    "known_limitation": "This question genuinely spans three documents: the requirement, the failing test's log entry, and the code under test. The coverage floor is applied per chunk independently. Only the requirement chunk clears 0.34 coverage; the log chunk that explains the actual failure (0.27) and the code chunk (about 0.09) both fall just under the floor and are silently dropped. The pipeline reports full groundedness (not_in_corpus=False) while citing only one of the three relevant sources, so the answer looks complete but is not.",
     "notes": "Documented retrieval failure #3: confident-but-incomplete grounding on a cross-document question."
   },
   {
