@@ -9,6 +9,17 @@ from .schema import (
     normalize_module,
     normalize_text,
 )
+"""Public memory and persistent-state boundary for the QA agent."""
+
+from .store import (
+    MemoryStore,
+    SessionPhase,
+    SessionState,
+    StateTransitionError,
+    StoreClosedError,
+    StoreConflictError,
+    StoredMemory,
+)
 
 __all__ = [
     "MAX_TEXT_CHARS",
@@ -18,4 +29,11 @@ __all__ = [
     "make_proposal_key",
     "normalize_module",
     "normalize_text",
+    "MemoryStore",
+    "SessionPhase",
+    "SessionState",
+    "StateTransitionError",
+    "StoreClosedError",
+    "StoreConflictError",
+    "StoredMemory",
 ]
