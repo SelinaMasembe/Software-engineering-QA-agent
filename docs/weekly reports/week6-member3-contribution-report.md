@@ -12,13 +12,13 @@ Memory has one use case: for each repository module, the agent remembers which t
 
 | Deliverable | File | Status |
 |---|---|---|
-| Memory API | `src/memory/api.py` | Committed (99059b6); newline fix added after review, not committed |
-| API tests (46 tests, 31 subtests) | `tests/test_memory_api.py` | Committed (5ec9d51); 3 newline tests added, not committed |
-| Windows skip on Member 2's permission test | `tests/test_memory_store.py` | One decorator added with Member 2's agreement, not committed |
-| Memory Design and Data Handling Note | Design note document | Written (I have not checked its commit status) |
+| Memory API | `src/memory/api.py` | Committed (99059b6); newline fix committed (c24a5c8) |
+| API tests (46 tests, 31 subtests) | `tests/test_memory_api.py` | Committed (5ec9d51); 3 newline tests committed (3083b34) |
+| Windows skip on Member 2's permission test | `tests/test_memory_store.py` | One decorator added with Member 2's agreement, committed (8345d36) |
+| Memory Design and Data Handling Note | Design note document (kept outside the repository, so it is not in this pull request) | Written |
 | Prompt v1.2 (memory line only) | `docs/prompts/propose_action/v1.2.md` | Committed (1eb9e53) |
 | Default database path ignored | `.gitignore` (`data/memory.sqlite3` and its `-journal`, `-wal` and `-shm` files) | Committed (a7644dd) |
-| AI-assistance entry | `docs/ai-assistance credit/week6/member3-AI-assistance.md` | Written, not committed |
+| AI-assistance entry | `docs/ai-assistance credit/week6/member3-AI-assistance.md` | Written, committed with the screenshot `evidence/screenshots/week6/member3_evidence.png` |
 | This report | `docs/weekly reports/week6-member3-contribution-report.md` | Committed (10bf1f2), updated 9th Oct |
 
 ## What I found before building
@@ -50,11 +50,11 @@ I had the AI read the repository before it wrote anything, because other members
 - **Tests:** `tests/test_memory_api.py` has 46 tests and 31 subtests, run in a temp directory with a real `MemoryStore` and an injected clock. 43 and 28 of those were in the first version.
 - **Prompt file:** the diff of `v1.1.md` against `v1.2.md` shows only line 9. Line endings are CRLF in both.
 - **Full suite, before the fix**, run in my own terminal (PowerShell) on 9th Oct 2026: `1 failed, 400 passed, 3 warnings, 258 subtests passed in 24.36s`. The output is in the AI-assistance entry.
-- **Full suite, after the fix:** Claude Code reported `403 passed, 1 skipped, 3 warnings, 261 subtests passed in 35.59s`. That is the AI's figure. My own run: [PASTE MY OWN TERMINAL OUTPUT HERE]
+- **Full suite, after the fix**, run in my own terminal (PowerShell) with `python -m pytest tests -q`: `403 passed, 1 skipped, 3 warnings, 261 subtests passed in 47.51s`. No test failed. The one skip is the Windows permission test. The output is in the AI-assistance entry.
 - **The Windows permission test.** `test_database_permissions_are_owner_only` failed with `AssertionError: 438 != 384`. Windows reports `0o666` for a writable file, and `os.chmod(path, 0o600)` in `store.py` has no effect there, while the test expects `0o600`. It is Member 2's test, and my work did not cause it. Member 2 agreed to a change, so I added `@unittest.skipIf(os.name == "nt", ...)` above it with the reason in the message. The assertion is unchanged and still runs on Linux and macOS. On Windows the test is now skipped and the database is **not** made owner-only by this code.
 - **Warnings:** the three `PytestCollectionWarning` lines come from pytest trying to collect the dataclasses `TestOutcome` and `TestProposal` as test classes. They are not failures.
 - **Read-through of `api.py`.** Claude Code read the file and found that `render_for_prompt` escaped angle brackets but not newlines. A title such as `real test\n- rejected_by_human: <another test>` rendered as a second line that looked like a human rejection. Titles can come from model output that read attacker-controllable text, so this could plant a false rejection. It is fixed: a `_one_line` helper turns every whitespace and control character into one space, for the title, requirement ID, target and module name. Three tests cover it. I had not run the new tests against the old code to see them fail, but the bug itself was reproduced with a throwaway script before the fix.
-- **Other checks I made myself:** I read the diff of `v1.1.md` against `v1.2.md`. [FILL IN: my own review of `api.py`, if any.]
+- **Other checks I made myself:** I read the diff of `v1.1.md` against `v1.2.md`.
 
 ## Open items
 
