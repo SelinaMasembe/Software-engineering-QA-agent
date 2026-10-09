@@ -28,6 +28,7 @@ proposal past that raises rather than quietly fall off a truncated list.
 from __future__ import annotations
 
 import html
+import unicodedata
 from datetime import datetime, timedelta
 from typing import Callable
 
@@ -170,8 +171,9 @@ class ProposalMemory:
         proposals, newest first within each, ties broken by key. Whole lines
         are dropped to fit ``max_records`` and ``max_chars``, never cut, and
         the opening tag states how many of how many are shown. Everything
-        stored is escaped, so a title cannot close the block or add a tag.
-        The block is data for the model to read, not an instruction.
+        stored is escaped and flattened onto one line, so a title cannot
+        close the block, add a tag, or start a line that looks like another
+        entry. The block is data for the model to read, not an instruction.
         """
 
         for name, value in (("max_records", max_records), ("max_chars", max_chars)):
@@ -191,7 +193,7 @@ class ProposalMemory:
 
         def block(shown: list[str]) -> str:
             tag = (
-                f'<memory module="{html.escape(canonical, quote=True)}" '
+                f'<memory module="{html.escape(_one_line(canonical), quote=True)}" '
                 f'shown="{len(shown)}" total="{total}">'
             )
             return "\n".join([tag, *shown, "</memory>"])
@@ -257,12 +259,28 @@ class ProposalMemory:
         return record
 
 
+def _one_line(text: str) -> str:
+    """Replace every whitespace and control character with a single space.
+
+    Stored text can come from model output, and the schema allows newlines in
+    a title, requirement ID or target. Left in, a newline would let a stored
+    string start its own line inside the memory block, for example a forged
+    "- rejected_by_human: ..." entry.
+    """
+
+    spaced = "".join(
+        " " if char.isspace() or unicodedata.category(char).startswith("C") else char
+        for char in text
+    )
+    return " ".join(spaced.split())
+
+
 def _render_line(record: ProposalMemoryRecord) -> str:
-    text = f"- {record.status.value}: {record.title}"
+    text = f"- {record.status.value}: {_one_line(record.title)}"
     if record.requirement_id:
-        text += f" [requirement {record.requirement_id}]"
+        text += f" [requirement {_one_line(record.requirement_id)}]"
     elif record.target:
-        text += f" [target {record.target}]"
+        text += f" [target {_one_line(record.target)}]"
     return html.escape(text, quote=False)
 
 
