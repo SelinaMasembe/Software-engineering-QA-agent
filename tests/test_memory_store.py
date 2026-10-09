@@ -128,6 +128,11 @@ class MemoryDocumentTests(MemoryStoreTestCase):
                 "history", "two", {"bad": float("nan")}, expires_at=None
             )
 
+    @unittest.skipIf(
+        os.name == "nt",
+        "Windows has no POSIX file modes: os.chmod cannot set 0o600 there, "
+        "so file ownership is governed by ACLs instead.",
+    )
     def test_database_permissions_are_owner_only(self) -> None:
         self.assertEqual(os.stat(self.database).st_mode & 0o777, 0o600)
 
