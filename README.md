@@ -49,6 +49,7 @@ How these are enforced in code:
 | 7. Tools          | `search_repo`, `read_file`, `run_tests`, `draft_issue`     | `src/tools/`, `src/sandbox/executor.py`                             |
 | 8. Agent loop     | Sense, plan, validate, act, observe, stop or pause         | `src/agent/loop.py`, `stop_conditions.py`, `task_contract.yaml`     |
 | 9. Observability  | Every run saved as JSON Lines evidence                     | `src/observability/run_logger.py`                                   |
+| 10. Memory        | Per-module record of proposed, run and human-rejected tests; session state | `src/memory/`, `src/integration/mcp_interface.py`        |
 
 Diagrams:
 
@@ -69,7 +70,7 @@ M4 Quality/Security, M5 DevOps/Documentation.
 | 3 | Retrieval and provenance | Curated corpus and source register (M1); chunking, BM25 retrieval, `not_in_corpus` (M2); context builder (M3); 15-case RAG evaluation (M4); pre-commit sensitive-data scanner (M5) | `src/ingestion/`, `src/rag/`, `docs/evaluation/week3-fifteen-case-rag-evaluation.md`, `scripts/check_sensitive.py` |
 | 4 | Tools and approval | Tool-schema audit and citation validation (M1); tool dispatcher (M2); four tools and sandbox (M3); authorization and failure tests (M4); human approval gate and CLI (M5) | `src/orchestrator/`, `src/tools/`, `src/sandbox/`, `docs/evaluation/week4-tool-authorization-evaluation.md` |
 | 5 | Bounded agent | Stop conditions and charter audit (M1); agent loop (M2); agent task contract (M3); stop-condition tests and three execution traces (M4); run logger saving every run (M5) | `src/agent/`, `src/observability/`, `evidence/traces/` |
-| 6 | Memory, state, interoperability | Upcoming | |
+| 6 | Memory, state, interoperability | Memory description audit and record schema (M1); session state model, SQLite memory store and MCP-style interface (M2); memory API, design note and prompt v1.2 (M3); memory-cannot-bypass-approval guard tests (M4); retention job, human clear command and proposal-rejection path (M5). Retention: kept until a human clears it | `src/memory/`, `src/integration/`, `docs/integration/week6-member2-mcp-interface.md`, `docs/requirements/week6/` |
 | 7 | Evaluation, observability, guardrails | Upcoming: 30-scenario evaluation, failure catalogue | |
 | 8 | Final integration and presentation | Upcoming | |
 
@@ -83,6 +84,8 @@ src/                      application code (run with pytest.ini or PYTHONPATH=sr
   agent/                  agent loop, stop conditions, task contract (YAML + loader + adapter)
   config/                 environment settings loader
   ingestion/              corpus collection and provenance register
+  integration/            MCP-style memory/state interface contract
+  memory/                 memory schema, store and session state, memory API, retention
   models/                 model client and shared domain types
   observability/          run logger (trace sink) for evidence/traces/runs/
   orchestrator/           tool dispatcher, citation validation, approval gate
@@ -134,6 +137,7 @@ PYTHONPATH=src python3 -m unittest tests.integration.test_approval_gate -v      
 PYTHONPATH=src python3 -m unittest tests.integration.test_agent_loop -v         # agent loop
 PYTHONPATH=src python3 -m pytest -q tests/test_stop_conditions.py               # stop conditions
 PYTHONPATH=src python3 -m unittest tests.test_run_logger tests.integration.test_run_logger_agent_loop -v
+PYTHONPATH=src python3 -m pytest -q tests/test_memory_*.py                       # memory (schema, store, API, guard, retention)
 ```
 
 No test needs an API key. `tests/integration/test_model_integration.py` uses mocks.
@@ -153,20 +157,31 @@ Run these from the repository root with `PYTHONPATH=src python3 <script>`.
 | `scripts/member5_approval_demo.py` | Pending, approved once, approval consumed | No |
 | `scripts/member5_run_log_demo.py` | Three saved runs, including a human approval pause and resume | No |
 | `scripts/show_run_log.py` | Lists saved runs or prints one as a timeline (`--last`) | No |
+| `scripts/member1_memory_smoke.py` | Memory record schema | No |
+| `scripts/member5_retention_demo.py` | Retention job, human rejection and module clear | No |
 
 Human approval uses a second terminal:
 
 ```bash
-export QA_AGENT_DATA_DIR="$PWD/data/member5-demo" QA_AGENT_APPROVERS="Alice,Bob"
+export QA_AGENT_DATA_DIR="$PWD/data/member5-demo" QA_AGENT_APPROVERS="qa-lead,team-j"
 PYTHONPATH=src python3 scripts/approve_cli.py list
-PYTHONPATH=src python3 scripts/approve_cli.py approve REQUEST_ID --by Alice --reason "Reviewed."
+PYTHONPATH=src python3 scripts/approve_cli.py approve REQUEST_ID --by qa-lead --reason "Reviewed."
+```
+
+Memory is kept until a human clears it. Humans manage it with:
+
+```bash
+PYTHONPATH=src python3 scripts/approve_cli.py proposals src/auth/login.py
+PYTHONPATH=src python3 scripts/approve_cli.py reject-proposal src/auth/login.py PROPOSAL_KEY --by qa-lead --reason "Duplicate."
+PYTHONPATH=src python3 -m memory.retention clear-module src/auth/login.py --by qa-lead --reason "Rewritten." [--confirm]
+PYTHONPATH=src python3 -m memory.retention run          # scheduled expiry job (schedule with cron/launchd)
 ```
 
 ## Runtime Data and Evidence
 
 | Location | Contents | In Git |
 | --- | --- | --- |
-| `data/` | Approval queue, its lock file, approval audit log | No (`.gitignore`) |
+| `data/` | Approval queue and lock, approval audit log, memory database (`memory.sqlite3`), retention audit (`memory_audit.jsonl`) | No (`.gitignore`) |
 | `evidence/traces/runs/` | One `.jsonl` file per agent run plus `index.jsonl` | Yes, after review |
 | `evidence/traces/week5-run-*.json` | Week 5 execution traces (M4) | Yes |
 | `evidence/screenshots/`, `evidence/demo/` | Test and demo screenshots per week | Yes |
@@ -175,7 +190,9 @@ PYTHONPATH=src python3 scripts/approve_cli.py approve REQUEST_ID --by Alice --re
 | --- | --- | --- |
 | `MODEL_ENDPOINT`, `MODEL_NAME`, `MODEL_API_KEY`, `MODEL_TIMEOUT_SECONDS`, `MODEL_MAX_TOKENS`, `MODEL_JSON_MODE` | see `.env.example` | `src/config/loader.py` |
 | `QA_AGENT_DATA_DIR` | `data` | `scripts/approve_cli.py` |
-| `QA_AGENT_APPROVERS` | none (required) | `scripts/approve_cli.py` |
+| `QA_AGENT_APPROVERS` | none (required) | `scripts/approve_cli.py`, `memory.retention clear-module` (role handles, e.g. `qa-lead`) |
+| `QA_AGENT_MEMORY_PATH` | `data/memory.sqlite3` | `src/memory/retention.py`, `scripts/approve_cli.py` |
+| `QA_AGENT_MEMORY_AUDIT_PATH` | `data/memory_audit.jsonl` | `src/memory/retention.py` |
 | `QA_AGENT_TRACE_DIR` | `evidence/traces/runs` | `src/observability/run_logger.py` |
 
 ## Security Rules
@@ -213,6 +230,9 @@ Each member's weekly work is linked to repository evidence.
 | Grounding design note | `docs/context/` |
 | Approval gate walkthrough | `docs/requirements/week4/member5-approval-gate-explained.md` |
 | Run logger | `docs/requirements/week5/member5-run-log.md` |
+| Memory interface (MCP-style) | `docs/integration/week6-member2-mcp-interface.md` |
+| Memory Design and Data Handling Note | `docs/requirements/week6/memory-design-and-data-handling-note.md` |
+| Memory retention and human controls | `docs/requirements/week6/member5-memory-retention.md` |
 | Environment setup | `docs/requirements/week2/setup.md` |
 | Weekly progress reports | `docs/weekly reports/` |
 | AI-assistance records | `docs/ai-assistance credit/` |
