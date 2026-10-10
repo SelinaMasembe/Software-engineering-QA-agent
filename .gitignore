@@ -57,3 +57,4 @@ data/memory.sqlite3
 data/memory.sqlite3-journal
 data/memory.sqlite3-wal
 data/memory.sqlite3-shm
+data/memory_audit.jsonl
