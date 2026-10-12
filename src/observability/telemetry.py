@@ -284,11 +284,14 @@ class ObservabilityRecorder:
                 attributes=scope.snapshot(),
             )
             self._records.append(record)
-            for sink in self._sinks:
-                try:
-                    sink.write(record)
-                except Exception:
-                    # Telemetry must never change what the agent does.
+        # Sinks are called outside the lock so a slow file write does not
+        # block other steps and a sink may read ``records`` or ``summary``.
+        for sink in self._sinks:
+            try:
+                sink.write(record)
+            except Exception:
+                # Telemetry must never change what the agent does.
+                with self._lock:
                     self._dropped_writes += 1
 
     def summary(self) -> dict[str, Any]:

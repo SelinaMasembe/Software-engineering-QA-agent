@@ -173,6 +173,20 @@ class SinkTests(unittest.TestCase):
         self.assertEqual(len(rec.records), 2)
         self.assertEqual(rec.summary()["dropped_writes"], 2)
 
+    def test_sink_may_read_the_recorder_while_writing(self) -> None:
+        seen: list[int] = []
+
+        class SummarizingSink:
+            def write(self, record) -> None:
+                seen.append(rec.summary()["steps"])
+
+        rec = recorder(SummarizingSink())
+        with rec.step(StepKind.SENSE):
+            pass
+        with rec.step(StepKind.PLAN):
+            pass
+        self.assertEqual(seen, [1, 2])
+
     def test_jsonl_sink_writes_one_line_per_record_per_session(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             sink = JsonlStepSink(Path(tmp) / "telemetry")
