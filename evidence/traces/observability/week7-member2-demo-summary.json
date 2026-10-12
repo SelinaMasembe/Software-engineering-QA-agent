@@ -1,0 +1,316 @@
+{
+  "prompt_version": "v1.2",
+  "runs": [
+    {
+      "scenario": "grounded-proposal",
+      "status": "completed",
+      "telemetry_file": "evidence/traces/observability/20261012T215731317930Z_week7-demo-grounded-proposal_972bd9aa.jsonl",
+      "summary": {
+        "schema": "qa-agent.step-telemetry/v1",
+        "session_id": "week7-demo-grounded-proposal",
+        "steps": 19,
+        "errors": 0,
+        "dropped_writes": 0,
+        "elapsed_ms": 1.966,
+        "by_kind": {
+          "retrieval": {
+            "count": 3,
+            "errors": 0,
+            "total_ms": 0.354,
+            "mean_ms": 0.118,
+            "max_ms": 0.155
+          },
+          "sense": {
+            "count": 2,
+            "errors": 0,
+            "total_ms": 0.478,
+            "mean_ms": 0.239,
+            "max_ms": 0.265
+          },
+          "model_call": {
+            "count": 2,
+            "errors": 0,
+            "total_ms": 0.054,
+            "mean_ms": 0.027,
+            "max_ms": 0.027
+          },
+          "plan": {
+            "count": 2,
+            "errors": 0,
+            "total_ms": 0.258,
+            "mean_ms": 0.129,
+            "max_ms": 0.142
+          },
+          "tool_call": {
+            "count": 1,
+            "errors": 0,
+            "total_ms": 0.276,
+            "mean_ms": 0.276,
+            "max_ms": 0.276
+          },
+          "stop_check": {
+            "count": 2,
+            "errors": 0,
+            "total_ms": 0.035,
+            "mean_ms": 0.017,
+            "max_ms": 0.022
+          },
+          "loop_event": {
+            "count": 7,
+            "errors": 0,
+            "total_ms": 0.059,
+            "mean_ms": 0.008,
+            "max_ms": 0.023
+          }
+        },
+        "model": {
+          "calls": 2,
+          "models": [
+            "demo-offline-model"
+          ],
+          "prompt_versions": [
+            "v1.2"
+          ],
+          "input_tokens": 1938,
+          "output_tokens": 135,
+          "total_tokens": 2073,
+          "provider_latency_ms": 0,
+          "planned_actions": [
+            "search_repo",
+            "propose_test"
+          ]
+        },
+        "retrieval": {
+          "calls": 3,
+          "not_in_corpus": 0,
+          "chunks_returned": 9,
+          "sources": [
+            "logs/test_run_2026_09_15.txt",
+            "requirements/authentication.md",
+            "src/login_service.py"
+          ]
+        },
+        "tools": {
+          "calls": 1,
+          "by_tool": {
+            "search_repo": 1
+          },
+          "by_status": {
+            "executed": 1
+          }
+        },
+        "loop_events": [
+          "loop_started",
+          "context_sensed",
+          "action_planned",
+          "tool_dispatched",
+          "context_sensed",
+          "action_planned",
+          "loop_completed"
+        ],
+        "outcome": "loop_completed"
+      }
+    },
+    {
+      "scenario": "not-in-corpus",
+      "status": "no_action",
+      "telemetry_file": "evidence/traces/observability/20261012T215731320226Z_week7-demo-not-in-corpus_e9baa465.jsonl",
+      "summary": {
+        "schema": "qa-agent.step-telemetry/v1",
+        "session_id": "week7-demo-not-in-corpus",
+        "steps": 9,
+        "errors": 0,
+        "dropped_writes": 0,
+        "elapsed_ms": 0.571,
+        "by_kind": {
+          "retrieval": {
+            "count": 1,
+            "errors": 0,
+            "total_ms": 0.06,
+            "mean_ms": 0.06,
+            "max_ms": 0.06
+          },
+          "sense": {
+            "count": 1,
+            "errors": 0,
+            "total_ms": 0.133,
+            "mean_ms": 0.133,
+            "max_ms": 0.133
+          },
+          "model_call": {
+            "count": 1,
+            "errors": 0,
+            "total_ms": 0.027,
+            "mean_ms": 0.027,
+            "max_ms": 0.027
+          },
+          "plan": {
+            "count": 1,
+            "errors": 0,
+            "total_ms": 0.089,
+            "mean_ms": 0.089,
+            "max_ms": 0.089
+          },
+          "stop_check": {
+            "count": 1,
+            "errors": 0,
+            "total_ms": 0.011,
+            "mean_ms": 0.011,
+            "max_ms": 0.011
+          },
+          "loop_event": {
+            "count": 4,
+            "errors": 0,
+            "total_ms": 0.028,
+            "mean_ms": 0.007,
+            "max_ms": 0.011
+          }
+        },
+        "model": {
+          "calls": 1,
+          "models": [
+            "demo-offline-model"
+          ],
+          "prompt_versions": [
+            "v1.2"
+          ],
+          "input_tokens": 607,
+          "output_tokens": 35,
+          "total_tokens": 642,
+          "provider_latency_ms": 0,
+          "planned_actions": [
+            "no_action"
+          ]
+        },
+        "retrieval": {
+          "calls": 1,
+          "not_in_corpus": 1,
+          "chunks_returned": 0,
+          "sources": []
+        },
+        "tools": {
+          "calls": 0,
+          "by_tool": {},
+          "by_status": {}
+        },
+        "loop_events": [
+          "loop_started",
+          "context_sensed",
+          "action_planned",
+          "loop_completed"
+        ],
+        "outcome": "loop_completed"
+      }
+    },
+    {
+      "scenario": "rejected-tool-recovery",
+      "status": "completed",
+      "telemetry_file": "evidence/traces/observability/20261012T215731321039Z_week7-demo-rejected-tool-recovery_306abd72.jsonl",
+      "summary": {
+        "schema": "qa-agent.step-telemetry/v1",
+        "session_id": "week7-demo-rejected-tool-recovery",
+        "steps": 18,
+        "errors": 0,
+        "dropped_writes": 0,
+        "elapsed_ms": 1.231,
+        "by_kind": {
+          "retrieval": {
+            "count": 2,
+            "errors": 0,
+            "total_ms": 0.214,
+            "mean_ms": 0.107,
+            "max_ms": 0.112
+          },
+          "sense": {
+            "count": 2,
+            "errors": 0,
+            "total_ms": 0.369,
+            "mean_ms": 0.184,
+            "max_ms": 0.193
+          },
+          "model_call": {
+            "count": 2,
+            "errors": 0,
+            "total_ms": 0.046,
+            "mean_ms": 0.023,
+            "max_ms": 0.023
+          },
+          "plan": {
+            "count": 2,
+            "errors": 0,
+            "total_ms": 0.198,
+            "mean_ms": 0.099,
+            "max_ms": 0.109
+          },
+          "tool_call": {
+            "count": 1,
+            "errors": 0,
+            "total_ms": 0.042,
+            "mean_ms": 0.042,
+            "max_ms": 0.042
+          },
+          "stop_check": {
+            "count": 2,
+            "errors": 0,
+            "total_ms": 0.018,
+            "mean_ms": 0.009,
+            "max_ms": 0.009
+          },
+          "loop_event": {
+            "count": 7,
+            "errors": 0,
+            "total_ms": 0.036,
+            "mean_ms": 0.005,
+            "max_ms": 0.007
+          }
+        },
+        "model": {
+          "calls": 2,
+          "models": [
+            "demo-offline-model"
+          ],
+          "prompt_versions": [
+            "v1.2"
+          ],
+          "input_tokens": 1938,
+          "output_tokens": 124,
+          "total_tokens": 2062,
+          "provider_latency_ms": 0,
+          "planned_actions": [
+            "search_repo",
+            "propose_test"
+          ]
+        },
+        "retrieval": {
+          "calls": 2,
+          "not_in_corpus": 0,
+          "chunks_returned": 6,
+          "sources": [
+            "logs/test_run_2026_09_15.txt",
+            "requirements/authentication.md",
+            "src/login_service.py"
+          ]
+        },
+        "tools": {
+          "calls": 1,
+          "by_tool": {
+            "search_repo": 1
+          },
+          "by_status": {
+            "rejected": 1
+          }
+        },
+        "loop_events": [
+          "loop_started",
+          "context_sensed",
+          "action_planned",
+          "tool_dispatched",
+          "context_sensed",
+          "action_planned",
+          "loop_completed"
+        ],
+        "outcome": "loop_completed"
+      }
+    }
+  ]
+}
