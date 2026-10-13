@@ -1,4 +1,8 @@
-"""Week 6: the agent's single, bounded memory use case (see schema.py)."""
+"""Week 6 memory and persistent-state boundary for the QA agent.
+
+The agent's single, bounded memory use case is defined in ``schema.py``;
+storage and explicit session state are in ``store.py``.
+"""
 
 from .schema import (
     MAX_TEXT_CHARS,
@@ -9,8 +13,6 @@ from .schema import (
     normalize_module,
     normalize_text,
 )
-"""Public memory and persistent-state boundary for the QA agent."""
-
 from .store import (
     MemoryStore,
     SessionPhase,
