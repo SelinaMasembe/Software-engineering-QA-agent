@@ -1,0 +1,49 @@
+--- week7-demo-grounded-proposal
+  1  loop_event      0.023 ms  ok     loop_started
+  2  stop_check      0.022 ms  ok     continue
+  3  retrieval       0.155 ms  ok     3 chunks; not_in_corpus=False
+  4  sense           0.265 ms  ok     allowed_sources=3
+  5  loop_event      0.007 ms  ok     context_sensed
+  6  model_call      0.027 ms  ok     demo-offline-model v1.2 tokens=1024
+  7  plan            0.142 ms  ok     search_repo cites=1
+  8  loop_event      0.005 ms  ok     action_planned
+  9  retrieval       0.086 ms  ok     3 chunks; not_in_corpus=False
+ 10  tool_call       0.276 ms  ok     search_repo -> executed
+ 11  loop_event      0.005 ms  ok     tool_dispatched
+ 12  stop_check      0.013 ms  ok     continue
+ 13  retrieval       0.113 ms  ok     3 chunks; not_in_corpus=False
+ 14  sense           0.213 ms  ok     allowed_sources=3
+ 15  loop_event      0.010 ms  ok     context_sensed
+ 16  model_call      0.027 ms  ok     demo-offline-model v1.2 tokens=1049
+ 17  plan            0.116 ms  ok     propose_test cites=2
+ 18  loop_event      0.005 ms  ok     action_planned
+ 19  loop_event      0.004 ms  ok     loop_completed
+--- week7-demo-not-in-corpus
+  1  loop_event      0.008 ms  ok     loop_started
+  2  stop_check      0.011 ms  ok     continue
+  3  retrieval       0.060 ms  ok     0 chunks; not_in_corpus=True
+  4  sense           0.133 ms  ok     allowed_sources=0
+  5  loop_event      0.011 ms  ok     context_sensed
+  6  model_call      0.027 ms  ok     demo-offline-model v1.2 tokens=642
+  7  plan            0.089 ms  ok     no_action cites=0
+  8  loop_event      0.005 ms  ok     action_planned
+  9  loop_event      0.004 ms  ok     loop_completed
+--- week7-demo-rejected-tool-recovery
+  1  loop_event      0.007 ms  ok     loop_started
+  2  stop_check      0.009 ms  ok     continue
+  3  retrieval       0.112 ms  ok     3 chunks; not_in_corpus=False
+  4  sense           0.193 ms  ok     allowed_sources=3
+  5  loop_event      0.005 ms  ok     context_sensed
+  6  model_call      0.023 ms  ok     demo-offline-model v1.2 tokens=1025
+  7  plan            0.109 ms  ok     search_repo cites=1
+  8  loop_event      0.005 ms  ok     action_planned
+  9  tool_call       0.042 ms  ok     search_repo -> rejected (invalid_arguments)
+ 10  loop_event      0.005 ms  ok     tool_dispatched
+ 11  stop_check      0.009 ms  ok     continue
+ 12  retrieval       0.102 ms  ok     3 chunks; not_in_corpus=False
+ 13  sense           0.176 ms  ok     allowed_sources=3
+ 14  loop_event      0.005 ms  ok     context_sensed
+ 15  model_call      0.023 ms  ok     demo-offline-model v1.2 tokens=1037
+ 16  plan            0.089 ms  ok     propose_test cites=1
+ 17  loop_event      0.005 ms  ok     action_planned
+ 18  loop_event      0.004 ms  ok     loop_completed
