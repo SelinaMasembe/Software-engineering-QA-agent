@@ -14,9 +14,9 @@ evidence, and the deliverable document
 | --- | --- | --- |
 | Claude Opus 5.5 (`claude-opus-5-5`) | Claude Code | Reading the assignment, allocation plan and earlier Codex sessions; implementing each milestone; writing tests; generating the demonstration evidence and the Word deliverable. |
 
-Earlier Member 2 weeks used OpenAI Codex and Claude Code. Their session
-history was read at the start of Week 7 so the same workflow, file layout and
-ownership boundaries were followed.
+In earlier weeks I used OpenAI Codex and Claude Code for my Member 2 work. At
+the start of Week 7 I had the agent read that session history, so it followed
+the same workflow, file layout and ownership boundaries I had used before.
 
 ## How I Used It
 
@@ -24,11 +24,12 @@ I asked the AI for the work I had to do specifically as Member 2. Then I
 created the gates and milestones and let the agent implement them, while I
 tested at each gate and milestone to make sure it was doing the correct thing.
 
-A milestone was one reviewable increment. A gate was the set of checks that
-had to pass before the next milestone started. Each passed milestone was
-committed separately on the `week7-observability-logging` branch.
+For me, a milestone was one reviewable increment. A gate was the set of
+checks that had to pass before I let the agent start the next milestone. I had
+the agent commit each milestone separately on the
+`week7-observability-logging` branch once it passed its gate.
 
-| Milestone | What the agent implemented | Gate check | Commit |
+| Milestone | What I had the agent implement | Gate check I ran | Commit |
 | --- | --- | --- | --- |
 | M1 Core recorder | `src/observability/telemetry.py` and unit tests | Unit tests pass; sensitive-data scan clean | `2b0205b` |
 | M2 Instrumentation | `src/observability/instrumentation.py` and 16 integration tests | Same loop result and trace entries with and without wrappers; whole suite passes; three deliberate defects caught | `2624783`, `7a1da33` |
@@ -38,32 +39,32 @@ committed separately on the `week7-observability-logging` branch.
 
 ## Examples
 
-- **Scope.** I asked the agent to respect the work boundaries and do only
-  Member 2's work. It took Member 2's row from the Team Task Allocation Plan
-  and did not touch Member 1's coverage script, Member 3's scorer, Member 4's
-  Failure Catalogue or Member 5's scenario runner.
+- **Scope.** I told the agent to respect the work boundaries and do only
+  Member 2's work. It picked out my row from the Team Task Allocation Plan, and
+  I checked that it did not touch Member 1's coverage script, Member 3's
+  scorer, Member 4's Failure Catalogue or Member 5's scenario runner.
 - **Path decision.** The plan names `src/logging/observability.py`. The agent
-  reported that a `src/logging` package would shadow Python's standard
+  warned me that a `src/logging` package would shadow Python's standard
   `logging` module and proposed `src/observability/`, which Member 5 already
-  used for the same reason in Week 5. The decision is recorded in Section 3
-  of the report.
+  used for the same reason in Week 5. I accepted this and recorded the
+  decision in Section 3 of the report.
 - **Gate 2 failures.** Three integration tests failed on the first run because
   the fixture corpus also returned its test-log file and a shortened goal
-  found no evidence. The test expectations were corrected to match real
-  retrieval; the code did not change.
+  found no evidence. I had the agent correct the test expectations to match
+  real retrieval; the code did not change.
 - **Review gate defect.** Sinks were written while the recorder lock was held,
-  so a sink that read the summary would deadlock. A new test reproduced the
-  hang on the old code before the fix was accepted.
-- **Rejected option.** Recording the source paths the model cites verbatim was
-  rejected because model output is untrusted. Paths outside the turn's allowed
-  set are counted instead of copied.
+  so a sink that read the summary would deadlock. Before I accepted the fix, I
+  required a new test that reproduced the hang on the old code.
+- **Rejected option.** I did not let the recorder copy the source paths the
+  model cites, because model output is untrusted. Paths outside the turn's
+  allowed set are counted instead of copied.
 - **Branch and commits.** I asked for a branch name without "claude" or "ai"
   and for incremental commits.
 
 ## Design Decisions
 
-- The agent loop, dispatcher, retrieval, model client, stop policy and
-  Member 5's `RunLogger` are wrapped, never edited.
+- I wrapped the agent loop, dispatcher, retrieval, model client, stop policy
+  and Member 5's `RunLogger`; I never edited them.
 - Wrappers return the same result and re-raise the same exception, so the loop
   reaches the same outcome with or without telemetry.
 - A telemetry write failure is counted, never raised; the fail-closed audit
@@ -78,7 +79,7 @@ committed separately on the `week7-observability-logging` branch.
 - The README command `unittest discover -s tests` ran 229 tests, OK.
 - The demonstration reached the expected outcome in all three scenarios.
 - `scripts/check_sensitive.py` reported no findings on the new files.
-- The Word document was rendered and every page was checked.
+- I rendered the Word document and checked every page.
 
 No API keys, credentials, confidential data or personal data were sent to the
 model. The demonstration uses the team's fixture corpus and an offline model
