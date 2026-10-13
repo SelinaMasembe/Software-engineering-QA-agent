@@ -380,20 +380,20 @@ async function main() {
   children.push(
     heading("1 Purpose and Scope"),
     body(
-      "This report records Member 2's Week 7 contribution to the Software-Engineering QA Agent. The Team Task Allocation Plan assigns Member 2 to build the logging system that records what the model did, what it retrieved, which tools it called, and how long each step took. The Week 7 brief asks for logs and traces that capture useful model, prompt, retrieval, tool, latency, error and outcome evidence.",
+      "This report records my Week 7 contribution, as Member 2, to the Software-Engineering QA Agent. The Team Task Allocation Plan assigned me to build the logging system that records what the model did, what it retrieved, which tools it called, and how long each step took. The Week 7 brief asks for logs and traces that capture useful model, prompt, retrieval, tool, latency, error and outcome evidence.",
     ),
     body(
-      "The deliverable meets both with a step-telemetry recorder and a set of transparent wrappers around the components the agent already uses. One timed record is produced for every retrieval, context assembly, model call, planned action, tool dispatch, stop check and loop event. The records are written as JSON Lines evidence and summarised per session.",
+      "I met both by building a step-telemetry recorder and a set of transparent wrappers around the components the agent already uses. My code produces one timed record for every retrieval, context assembly, model call, planned action, tool dispatch, stop check and loop event. It writes the records as JSON Lines evidence and summarises them per session.",
     ),
     body(
-      "The plan notes that Member 2 builds the layer that connects the pieces rather than every piece, so this work adds no new agent behaviour. It does not change the agent loop, the dispatcher, retrieval, the model client, Member 1's stop policy or Member 5's run logger. It does not create the evaluation scenarios, the scorer, the Failure Catalogue or the scenario runner, which belong to other members this week.",
+      "The plan notes that Member 2 builds the layer that connects the pieces rather than every piece, so I added no new agent behaviour. I did not change the agent loop, the dispatcher, retrieval, the model client, Member 1's stop policy or Member 5's run logger. I also left the evaluation scenarios, the scorer, the Failure Catalogue and the scenario runner to the members who own them this week.",
     ),
     heading("2 Ownership and Integration Boundaries"),
     makeTable(
       ["Member", "Week 7 task", "Relationship to this deliverable"],
       [
         ["Member 1", "Traceability matrix; tests/test_scenario_coverage.py", "Not modified. Scenario IDs can be used as session IDs so each telemetry file maps to one scenario."],
-        ["Member 2", "Logging system for model, retrieval, tool and timing evidence", "This deliverable."],
+        ["Member 2", "Logging system for model, retrieval, tool and timing evidence", "This deliverable (my work)."],
         ["Member 3", "Evaluation criteria; tests/adversarial/fixtures.py; src/evaluation/scorer.py", "Not modified. Plan and tool records provide inputs for groundedness and tool-use scoring."],
         ["Member 4", "Failure Catalogue; tests/test_failure_retest.py", "Not modified. Failed steps record where a failure happened and its exception type."],
         ["Member 5", "tests/run_scenarios.py; Week 7 progress report", "Not modified. recorder.summary() returns one JSON summary per run, and RunLogger still receives every trace entry."],
@@ -401,7 +401,7 @@ async function main() {
       [1500, 3600, 4647],
       { alternate: true },
     ),
-    caption("Table 1: Week 7 ownership. Only the Member 2 row is implemented here."),
+    caption("Table 1: Week 7 ownership. I implemented only the Member 2 row."),
     pageBreak(),
   );
 
@@ -409,7 +409,7 @@ async function main() {
   children.push(
     heading("3 Deliverable Location"),
     body(
-      "The plan names src/logging/observability.py. pytest.ini sets pythonpath = src and the README runs tests with PYTHONPATH=src, so a package called logging under src would be imported in place of Python's standard-library logging module and break any code that logs. Member 5 met the same issue in Week 5, when the plan's src/logging/tracer.py was delivered as src/observability/run_logger.py. This deliverable follows that precedent. It adds two new modules to the observability package and does not edit Member 5's files.",
+      "The plan names src/logging/observability.py. pytest.ini sets pythonpath = src and the README runs tests with PYTHONPATH=src, so a package called logging under src would be imported in place of Python's standard-library logging module and break any code that logs. Member 5 met the same issue in Week 5, when the plan's src/logging/tracer.py was delivered as src/observability/run_logger.py. I followed that precedent: I added two new modules to the observability package and did not edit Member 5's files.",
     ),
     makeTable(
       ["Planned path", "Implemented as", "Contents"],
@@ -422,7 +422,7 @@ async function main() {
     caption("Table 2: Mapping from the planned path to the implemented modules."),
     heading("4 Observability Architecture"),
     body(
-      "Each wrapper sits on a seam that already exists. The Week 5 AgentLoop receives its sensor, planner, dispatcher, stop evaluator and trace sink by dependency injection, so the loop is observed by passing wrapped collaborators to it, with no change to src/agent/loop.py. The model client and the retrieval pipeline are wrapped the same way because the planner and the sensor call them. All wrappers for one session share one ObservabilityRecorder, which numbers the records, times them and sends them to its sinks.",
+      "I placed each wrapper on a seam that already exists. The Week 5 AgentLoop receives its sensor, planner, dispatcher, stop evaluator and trace sink by dependency injection, so I observe the loop by passing wrapped collaborators to it, with no change to src/agent/loop.py. I wrapped the model client and the retrieval pipeline the same way because the planner and the sensor call them. All wrappers for one session share one ObservabilityRecorder, which numbers the records, times them and sends them to its sinks.",
     ),
     codeBlock([
       "AgentLoop (unchanged, Week 5)",
@@ -485,15 +485,15 @@ async function main() {
   children.push(
     heading("5.1 Metadata-Only Rule", 2),
     body(
-      "The records are designed to be committed as evidence, so they follow the metadata-only rule the Week 5 loop already applies to its trace entries.",
+      "I designed the records to be committed as evidence, so they follow the metadata-only rule the Week 5 loop already applies to its trace entries.",
     ),
     bullet("Prompt text, retrieved text, tool argument values, tool output values and exception messages are never stored. A prompt is identified by its version and a SHA-256 fingerprint; a tool output by its key names and byte size."),
     bullet("Source paths are recorded when they come from deterministic retrieval. A path the model cites is copied only if it is in the turn's allowed set; any other cited path is only counted in evidence_untraceable, because model output is untrusted."),
     bullet("A failed step records the exception class name only."),
-    bullet("Telemetry files use the .jsonl extension because scripts/check_sensitive.py blocks *.log files. Every evidence file passed that scan."),
+    bullet("Telemetry files use the .jsonl extension because scripts/check_sensitive.py blocks *.log files. I ran that scan on every evidence file and it reported no findings."),
     heading("6 Behaviour-Preservation Guarantees"),
     body(
-      "Observability must not change what the agent decides. Each guarantee below is enforced in code and covered by a named test.",
+      "Observability must not change what the agent decides. I enforced each guarantee below in code and covered it with a named test.",
     ),
     makeTable(
       ["Guarantee", "How it is enforced", "Test"],
@@ -535,7 +535,7 @@ async function main() {
     ),
     heading("8 Evidence from the Offline Demonstration"),
     body(
-      `scripts/member2_observability_demo.py runs three sessions. Everything except the model is a real project component: retrieval and the context builder over the Member 2 fixture corpus, Member 3's search_repo tool, the Week 4 ToolDispatcher, the Week 5 AgentLoop, Member 1's stop policy built by Member 3's task adapter, and the propose_action ${evidence.report.prompt_version} prompt file. A labelled DemoModelClient returns canned JSON, so no API key or network is needed. The script asserts each expected outcome and exits with an error if one is not reached.`,
+      `I wrote scripts/member2_observability_demo.py to run three sessions. Everything except the model is a real project component: retrieval and the context builder over the Member 2 fixture corpus, Member 3's search_repo tool, the Week 4 ToolDispatcher, the Week 5 AgentLoop, Member 1's stop policy built by Member 3's task adapter, and the propose_action ${evidence.report.prompt_version} prompt file. In place of the model I used a labelled DemoModelClient that returns canned JSON, so no API key or network is needed. The script asserts each expected outcome and exits with an error if one is not reached.`,
     ),
     makeTable(
       ["Scenario", "Outcome", "Steps", "Model calls / tokens", "Retrievals", "Tool calls"],
@@ -580,12 +580,12 @@ async function main() {
         ["scripts/member2_observability_demo.py", "Offline three-scenario demonstration that writes the evidence files."],
         ["evidence/traces/observability/", "Three telemetry files, the demonstration summary and the step timeline."],
         ["scripts/generate_week7_member2_docx.js", "Generates this report from the committed evidence."],
-        ["docs/ai-assistance credit/week7/member2-observability.md", "AI Engineering Log entry for this deliverable."],
+        ["docs/ai-assistance credit/week7/member2-observability.md", "My AI Engineering Log entry for this work."],
       ],
       [4300, 5447],
       { alternate: true },
     ),
-    caption("Table 7: Week 7 Member 2 files."),
+    caption("Table 7: The files I added for Week 7."),
     pageBreak(),
   );
 
@@ -604,26 +604,26 @@ async function main() {
       [5600, 4147],
       { alternate: true },
     ),
-    caption("Table 8: Verification commands and results."),
+    caption("Table 8: The verification commands I ran and their results."),
     body(
-      "The integration tests use the real agent loop, retrieval over the fixture corpus, the real context builder, the real citation validator, the real ToolDispatcher, agent.runner.build_agent_session and Member 5's RunLogger. Only the model, the tools and the stop policy are deterministic fakes in those tests.",
+      "My integration tests use the real agent loop, retrieval over the fixture corpus, the real context builder, the real citation validator, the real ToolDispatcher, agent.runner.build_agent_session and Member 5's RunLogger. Only the model, the tools and the stop policy are deterministic fakes in those tests.",
     ),
     heading("10.1 Regression Checks", 2),
     body(
-      "To confirm that the tests detect real mistakes, the code was deliberately broken in four ways and the tests were run against each broken version.",
+      "To confirm that my tests detect real mistakes, I ran them against four broken versions of the code: three defects I introduced on purpose, and the first version of the recorder, which had a deadlock.",
     ),
     makeTable(
-      ["Deliberate defect", "Test that failed"],
+      ["Defect", "Test that failed"],
       [
         ["Model-cited source paths copied verbatim", "test_fabricated_citation_is_counted_not_copied"],
         ["Tool output values copied into the record", "test_tool_call_records_name_status_and_output_size; test_secret_values_never_reach_the_telemetry_file"],
         ["Attribute delegation removed from the wrappers", "test_runner_accepts_an_instrumented_dispatcher"],
-        ["Sinks written while the recorder lock is held (first version)", "test_sink_may_read_the_recorder_while_writing timed out (deadlock); fixed before submission"],
+        ["Sinks written while the recorder lock is held (first version)", "test_sink_may_read_the_recorder_while_writing timed out (deadlock); I fixed it before submission"],
       ],
       [4300, 5447],
       { alternate: true },
     ),
-    caption("Table 9: Each deliberate defect was caught by at least one test."),
+    caption("Table 9: At least one test caught each defect."),
     pageBreak(),
   );
 
@@ -633,27 +633,21 @@ async function main() {
     body([
       run("Model and tool. ", { bold: true }),
       run(
-        "Claude Opus 5.5 (model ID claude-opus-5-5), used through Claude Code in this repository on the week7-observability-logging branch. Earlier Member 2 weeks used OpenAI Codex and Claude Code. Their session history was read at the start of Week 7 so that the same workflow, file layout and ownership boundaries were followed.",
+        "I used Claude Opus 5.5 (model ID claude-opus-5-5) through Claude Code, working in this repository on the week7-observability-logging branch. In earlier weeks I used OpenAI Codex and Claude Code for my Member 2 work. At the start of Week 7 I had the agent read that session history, so it followed the same workflow, file layout and ownership boundaries I had used before.",
       ),
     ]),
-    body([run("How it was used (Member 2's account). ", { bold: true })], { after: 60 }),
-    new Paragraph({
-      alignment: AlignmentType.JUSTIFIED,
-      indent: { left: 567, right: 567 },
-      spacing: { after: 160, line: 276 },
-      children: [
-        run(
-          "“I asked the AI for the work I had to do specifically as Member 2. Then I created the gates and milestones and let the agent implement them, while I tested at each gate and milestone to make sure it was doing the correct thing.”",
-          { italics: true },
-        ),
-      ],
-    }),
+    body([
+      run("How I used it. ", { bold: true }),
+      run(
+        "I asked the AI for the work I had to do specifically as Member 2. Then I created the gates and milestones and let the agent implement them, while I tested at each gate and milestone to make sure it was doing the correct thing.",
+      ),
+    ]),
     body(
-      "In practice, a milestone was one reviewable increment of code, tests or documentation, and a gate was the set of checks that had to pass before the next milestone started. Each passed milestone was committed separately, so the branch history shows every step.",
+      "For me, a milestone was one reviewable increment of code, tests or documentation, and a gate was the set of checks that had to pass before I let the agent start the next milestone. I had the agent commit each milestone separately once it passed its gate, so the branch history shows every step.",
     ),
     heading("11.1 Gates and Milestones", 2),
     makeTable(
-      ["Milestone", "What the agent implemented", "Gate check before moving on", "Commit"],
+      ["Milestone", "What I had the agent implement", "Gate check I ran before moving on", "Commit"],
       [
         ["M1 Core recorder", "telemetry.py and its unit tests", "Unit tests pass; sensitive-data scan clean", "2b0205b"],
         ["M2 Instrumentation", "instrumentation.py and 16 integration tests", "Same loop result and trace entries with and without wrappers; whole suite passes; three deliberate defects caught", "2624783, 7a1da33"],
@@ -664,21 +658,21 @@ async function main() {
       [1800, 2700, 3847, 1400],
       { alternate: true },
     ),
-    caption("Table 10: Milestones, gate checks and the commits that passed them."),
+    caption("Table 10: My milestones, the gate checks I ran and the commits that passed them."),
     pageBreak(),
   );
 
   children.push(
     heading("11.2 Examples", 2),
-    bullet("Scope instruction. Member 2 asked the agent to respect the work boundaries and do only Member 2's work. The agent read the Team Task Allocation Plan and the Week 7 brief, picked out Member 2's row, and left Member 1's coverage script, Member 3's scorer and adversarial fixtures, Member 4's Failure Catalogue and Member 5's scenario runner untouched."),
-    bullet("Following the earlier workflow. The agent read the Week 5 and Week 6 Codex sessions and reused their pattern: implementation first, focused tests, a review round, then a generated Word deliverable and an AI log."),
-    bullet("Path decision. Before writing code, the agent reported that src/logging would shadow the standard-library logging module and proposed the src/observability package Member 5 used in Week 5. The decision is recorded in Section 3."),
-    bullet("Test expectations corrected at Gate 2. Three integration tests failed on the first run because the fixture corpus also returned its test-log file and a shortened goal found no evidence. The tests were corrected to match real retrieval; the code did not change."),
-    bullet("Defect found at the review gate. Sinks were written while the recorder lock was held, so a sink that read the summary would deadlock. A new test reproduced the hang on the old code before the fix was accepted."),
-    bullet("Option rejected. Recording model-cited source paths verbatim was rejected because model output is untrusted; cited paths outside the allowed set are counted instead."),
-    bullet("Branch and commits. Member 2 asked for a branch name without the words claude or ai, and for incremental commits. The work landed as small commits on week7-observability-logging."),
+    bullet("Setting the scope. I told the agent to respect the work boundaries and do only Member 2's work. It read the Team Task Allocation Plan and the Week 7 brief and picked out my row. I checked that it left Member 1's coverage script, Member 3's scorer and adversarial fixtures, Member 4's Failure Catalogue and Member 5's scenario runner untouched."),
+    bullet("Following my earlier workflow. I asked the agent to follow what I had been doing with Codex. It read my Week 5 and Week 6 Codex sessions and reused their pattern: implementation first, focused tests, a review round, then a generated Word deliverable and an AI log."),
+    bullet("Path decision. Before writing any code, the agent warned me that src/logging would shadow Python's standard-library logging module and proposed the src/observability package Member 5 used in Week 5. I accepted this and recorded the decision in Section 3."),
+    bullet("Failures at Gate 2. Three integration tests failed on the first run because the fixture corpus also returned its test-log file and a shortened goal found no evidence. I had the agent correct the test expectations to match real retrieval; the code did not change."),
+    bullet("Defect at the review gate. Sinks were written while the recorder lock was held, so a sink that read the summary would deadlock. Before I accepted the fix, I required a new test that reproduced the hang on the old code."),
+    bullet("An option I rejected. I did not let the recorder copy the source paths the model cites, because model output is untrusted. Cited paths outside the allowed set are counted instead."),
+    bullet("Branch and commits. I asked for a branch name without the words claude or ai, and for incremental commits, so the work landed as small commits on week7-observability-logging."),
     body(
-      "All generated code was reviewed and tested before it was committed. No API keys, credentials or personal data were sent to the model; the demonstration uses the team's fixture corpus and an offline model adapter. Responsibility for the submitted code, tests and documentation remains with Member 2.",
+      "I reviewed and tested all generated code before it was committed. I did not send any API keys, credentials or personal data to the model; the demonstration uses the team's fixture corpus and an offline model adapter. I remain responsible for the submitted code, tests and documentation.",
       { after: 0 },
     ),
     pageBreak(),
@@ -694,7 +688,7 @@ async function main() {
     bullet("ToolDispatcher.dispatch_raw is reachable through attribute delegation but is not timed; the agent loop calls dispatch only."),
     bullet("Create one recorder per session and reuse it when resuming a paused session; JsonlStepSink then continues the same file."),
     makeTable(
-      ["Owner", "Suggested use of this deliverable"],
+      ["Owner", "How I suggest they use my deliverable"],
       [
         ["Member 5 (tests/run_scenarios.py)", "Create one ObservabilityRecorder per scenario, using the scenario ID as the session ID, and collect summary() into the aggregated results."],
         ["Member 3 (src/evaluation/scorer.py)", "Use evidence_traceable and evidence_untraceable for groundedness, and tool_call status and code for tool-use scoring."],
@@ -704,10 +698,10 @@ async function main() {
       [3300, 6447],
       { alternate: true },
     ),
-    caption("Table 11: Handoffs to the other Week 7 owners."),
+    caption("Table 11: My handoffs to the other Week 7 owners."),
     heading("13 Conclusion"),
     body(
-      "The Week 7 Member 2 deliverable records, for every agent session, what the model did, what was retrieved, which tools were called and how long each step took, as metadata-only JSON Lines evidence with a per-session summary. It wraps existing seams instead of changing them, and tests show the agent reaches the same outcomes with or without it. The recorder and its summary are ready for the scenario runner, scorer and failure re-tests that the other members are building this week.",
+      "My Week 7 deliverable records, for every agent session, what the model did, what the agent retrieved, which tools it called and how long each step took, as metadata-only JSON Lines evidence with a per-session summary. It wraps existing seams instead of changing them, and my tests show the agent reaches the same outcomes with or without it. The recorder and its summary are ready for the scenario runner, scorer and failure re-tests that the other members are building this week.",
       { after: 0 },
     ),
   );
