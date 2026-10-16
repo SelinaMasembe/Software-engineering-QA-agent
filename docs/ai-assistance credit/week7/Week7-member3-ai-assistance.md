@@ -21,17 +21,13 @@ The cases and the flagger rules were written in the same project by the same aut
 
 **Verification I performed myself**
 
-[CONFIRM EACH ITEM YES OR NO, WITH THE DATE, BEFORE SUBMITTING. DELETE ANY LINE I DID NOT DO.]
-
-- Ran the full suite in my own terminal: 607 passed, 1 skipped, 6 warnings, 539 subtests passed in 67.46s (0:01:07).
-- Read the `context_builder.py` diff line by line.
-- Scanned changed files for hidden Unicode characters: 15 | files with hidden or non-ASCII characters: 0.
-- Checked each case's user story and risk against the register: files scanned: 15 | files with hidden or non-ASCII characters: 0.
-- Read the 11 flagger rules and judged them against real requirement wording: CONFIRMED.
-- Confirmed the case counts and outcome counts against the run output: 22 passed, 1 warning, 178 subtests passed in 3.90s
-cases: 30
-{'PASS': 29, 'PARTIAL': 1, 'FAIL': 0}
-['ADV-INC-03'].
+- Ran the full suite in my own terminal (607 passed, 1 skipped, 6 warnings, 539 subtests passed in 67.46s): [TO CONFIRM: yes or no, and date]
+- Read the `context_builder.py` diff line by line: [TO CONFIRM: yes or no, and date]
+- Scanned changed files for hidden Unicode characters (output: files scanned: 15 | files with hidden or non-ASCII characters: 0; the list of 15 files was not recorded, so the count is not re-verified): [TO CONFIRM: yes or no, and date]
+- Checked each case's user story and risk against the register: [TO CONFIRM: yes or no, and date]
+- Read the 11 flagger rules and judged them against real requirement wording (an earlier draft said CONFIRMED): [TO CONFIRM: yes or no, and date]
+- Confirmed the case counts and outcome counts against the run output. Week 7 figure, from the report: 26 cases, 24 PASS, 2 PARTIAL, 0 FAIL (historical; the scorer was not committed then, so it could not be re-run): [TO CONFIRM: yes or no, and date]
+- Week 8 rerun (after Week 8 additions), kept for the record: 22 passed, 1 warning, 178 subtests passed in 3.90s; cases: 30; {'PASS': 29, 'PARTIAL': 1, 'FAIL': 0}; PARTIAL: ['ADV-INC-03'].
 
 **What I changed or would still change myself**
 

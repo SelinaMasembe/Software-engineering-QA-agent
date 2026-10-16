@@ -12,15 +12,15 @@ This week I defined how the agent's behaviour is measured, built the scorer that
 
 | Deliverable | File | Status |
 |---|---|---|
-| AI-behaviour evaluation criteria | `AI_Behaviour_Evaluation_Criteria.docx` (place under `docs/evaluation/`) | Written |
+| AI-behaviour evaluation criteria | `AI_Behaviour_Evaluation_Criteria.docx` | Written; to be added under `docs/evaluation/` |
 | Scorer | `src/evaluation/scorer.py`, `src/evaluation/__init__.py` | Written |
-| Scorer tests (39) | `tests/test_evaluation_scorer.py` | Written |
+| Scorer tests (46 as of Week 8; the end-of-Week-7 count was not recorded) | `tests/test_evaluation_scorer.py` | Written |
 | Adversarial cases (26 at end of week) | `tests/adversarial/fixtures.py`, `tests/adversarial/__init__.py` | Written |
 | Case tests | `tests/adversarial/test_adversarial_cases.py` | Written |
 | Evidence wrapper fix | `src/rag/context_builder.py` (my Week 3 file) | Modified |
 | Wrapper regression tests | `tests/test_context_builder_wrapper.py` | Written |
-| Injection flagger (11 rules, 5 categories) | `src/rag/injection_flagging.py`, plus its tests | Written |
-| AI-assistance entry | `docs/ai-assistance credit/week7/member3-AI-assistance.md` | Written |
+| Injection flagger (first written with 11 rules in 5 categories; committed together with its Week 8 tuning, so the committed version has 16 rules in 6 categories) | `src/rag/injection_flagging.py`, plus its tests | Written |
+| AI-assistance entry | `docs/ai-assistance credit/week7/Week7-member3-ai-assistance.md` | Written |
 
 ## What I found before building
 
@@ -56,9 +56,9 @@ I had the AI re-explore the repo before designing anything. This changed the wor
 
 ## Verification
 
-- **Before and after, wrapper fix:** `3 failed, 533 passed` before, with the new cases added and `context_builder.py` unfixed. `580 passed, 1 skipped, 489 subtests` after.
+- **Before and after, wrapper fix:** `3 failed, 533 passed` before, with the new cases added and `context_builder.py` unfixed (`evidence/test-runs/week7/wrapper-fix-before.txt`, line 15). `580 passed, 1 skipped, 489 subtests` after (`evidence/test-runs/week7/wrapper-and-flagging-after.txt`, line 3).
 - **Byte-identity:** the model-visible text is unchanged for the 15 RAG queries over the fixture corpus and for all 226 real corpus chunks, and both hashes are pinned in a regression test.
-- **Case results at end of week:** 24 PASS, 2 PARTIAL (R4 credentials, R10 draft claims), 0 FAIL, out of 26. The first 24 cases scored 19 PASS and 5 PARTIAL before the fixes.
+- **Case results at end of week:** 24 PASS, 2 PARTIAL (R4 credentials, R10 draft claims), 0 FAIL, out of 26. This is a historical figure from the build report; the scorer was not committed at that point, so I could not re-run it. The first 24 cases scored 19 PASS and 5 PARTIAL before the fixes (`evidence/test-runs/week7/r1-flagging-before.txt`).
 - **Scorer parity:** the scorer and the Week 2 evaluation function agree on 9 of the 10 Week 2 cases.
 - **Flagger:** 0 of 226 real corpus chunks flagged. On my own labelled set, precision is 15/16 (0.94) and recall is 15/19 (0.79). This is not independent evidence.
 - **My own checks:** [PASTE MY OWN TERMINAL OUTPUT HERE]
@@ -77,6 +77,7 @@ The scorer and the Week 2 evaluation disagree on `edge_vague_requirement`. Week 
 5. **Four cases need story and risk confirmed** against the requirements and security leads, because I assigned the mappings myself.
 6. **The first commit is incomplete.** Commit `30c6bc8` contains only `tests/adversarial/fixtures.py`, which imports the uncommitted scorer. The rest must be committed before pushing.
 7. **Team decisions needed:** whether the existing 10 prompt and 15 RAG cases count toward the 30 scenarios, who builds the real sensor and planner, and the 120 second wall-clock budget, which is still a placeholder.
+8. **The criteria document is not in the repository.** Copy `AI_Behaviour_Evaluation_Criteria.docx` into `docs/evaluation/`.
 
 ## Started early for Week 8
 
@@ -89,4 +90,4 @@ These are not Week 7 deliverables. They are listed separately so the record matc
 
 ## Constraints respected
 
-I did not modify the Week 2 case files or their loaders, `validation.py`, `router.py`, `loop.py`, `stop_conditions.py`, `approval_gate.py`, `memory/`, `observability/`, `tag_provenance.py`, the source register, or `models/types.py`. `context_builder.py` is my own Week 3 file, and I approved the change to it. No credentials were used in test data beyond documented example values.
+I did not modify the Week 2 case files or their loaders, `validation.py`, `router.py`, `loop.py`, `stop_conditions.py`, `approval_gate.py`, `memory/`, `observability/`, `tag_provenance.py`, the source register, or `models/types.py`. `context_builder.py` is my own Week 3 file, and I approved the change to it. No credentials were used in test data beyond documented example values. Commits for Weeks 7 and 8 are mixed in the history because of how the work was built, and a commit-to-week table is in the Week 8 report.
