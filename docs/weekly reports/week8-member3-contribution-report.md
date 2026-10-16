@@ -15,11 +15,11 @@ This week I closed the R4 gap with a credential scan on ingested content, stoppe
 |---|---|---|
 | Prompt v1.3 (`no_action` failure behaviour) | `docs/prompts/propose_action/v1.3.md`, `docs/evaluation/week8-no-action-reconciliation.md` | Committed (c98316d, ca40527) |
 | Memory block delimiter neutralisation | `src/rag/context_builder.py`, `tests/test_context_builder_wrapper.py` | Committed (9f6d94c) |
-| Credential scan on ingested content (R4) | `src/rag/credential_scan.py`, `tests/test_credential_scan.py` | Committed (8e6eeca, 942c5c1) |
+| Credential scan on ingested content (R4) | `src/rag/credential_scan.py`, `tests/test_credential_scan.py` | Committed (8e6eeca, efd626f) |
 | Flagger tuning (16 rules, 6 categories) | `src/rag/injection_flagging.py`, `tests/test_injection_flagging_week8.py` | Committed (22a9a48, e71f775) |
-| Real-model evaluation script | `scripts/real_model_eval.py`, `tests/test_real_model_eval.py` | Committed (d851370); the `--min-interval-seconds` option is not committed yet |
-| Real-model run records | `evidence/test-runs/week8/real-model/` | Not committed yet |
-| Push protection fix for a test fixture | `tests/test_credential_scan.py` | TBC (see below) |
+| Real-model evaluation script | `scripts/real_model_eval.py`, `tests/test_real_model_eval.py` | Committed (1b4afd5); the `--min-interval-seconds` option committed (4663d88) |
+| Real-model run records | `evidence/test-runs/week8/real-model/` | Committed (f1280de) |
+| Push protection fix for a test fixture | `tests/test_credential_scan.py` | Done; committed (efd626f) |
 | This report and the Week 8 AI-assistance entry | `docs/weekly reports/week8-member3-contribution-report.md`, `docs/ai-assistance credit/week8/member3-AI-assistance.md` | Draft |
 
 - **Prompt v1.3.** FAILURE BEHAVIOR now says: return an evidence-free `no_action` only when the context says nothing was found; when evidence is insufficient, return `no_action`, cite each source read with a note on what is missing, and set confidence to low. ROLE and TASK are unchanged.
@@ -29,7 +29,7 @@ This week I closed the R4 gap with a credential scan on ingested content, stoppe
   - **Real corpus:** 3 of 226 chunks flagged, all false positives from AI-5 on documents that describe the system-prompt exfiltration test.
   - **Week 7 labelled set (29 rows):** precision 0.94 and recall 0.79, unchanged.
   - **Wider labelled set (90 rows):** these figures show coverage of the new rules, not independent evidence, because I wrote the rules and the rows.
-- **Push protection fix.** TBC. A Stripe-test-key-shaped fixture in `tests/test_credential_scan.py` was blocked on push and is to be rewritten so it is assembled at run time. TBC: the rewrite is committed, and TBC: the push succeeded.
+- **Push protection fix.** A Stripe-test-key-shaped fixture in `tests/test_credential_scan.py` was blocked on push. It was rewritten so the value is assembled at run time, and the rewrite is committed in efd626f. No commit on the branch contains the literal value, and the branch is pushed.
 - **Full suite:** `645 passed, 1 skipped, 619 subtests`. The skip is the Windows permission test.
 
 ## Real-model evidence
@@ -46,13 +46,13 @@ All calls used Gemini 2.5 Flash through the Google AI Studio OpenAI-compatible e
 |---|---|---|---|
 | Smoke | TBC (kept outside the repository) | 1 | Valid JSON. The citation check rejected it: it cited the requirement ID, and the script's input gave a Windows path. The proposed test had a step that would fail against the code. |
 | Trial, v1.3, 1 run | `20261016T145654Z_live` | 10 of 10 scored | 6 PASS, 4 FAIL, 0 invalid citations, 2 rate-limit retries. |
-| Partial, v1.1 then v1.3, 3 runs planned | `20261016T152707Z_live` | 10 of 15 recorded v1.1 calls scored | Stopped after 3 consecutive rate-limit (429) failures. Details below. |
+| Partial, v1.1 then v1.3, 3 runs planned | `20261016T152707Z_live` | 15 v1.1 calls recorded, 10 scored | Stopped after three consecutive rate-limit (429) failures. Details below. |
 
-**The partial run in detail:**
+**The partial run in detail:** it recorded 15 calls, 10 scored (nine first-run calls scored 5 PASS and 4 FAIL, plus one repeat that passed) and 5 calls failed with rate-limit errors; the run stopped after three consecutive failures.
 
-- **Run 1:** scored 9 of 10 cases, 5 PASS and 4 FAIL. The tenth case, `security_system_prompt_exfiltration_attempt`, failed on rate limits.
-- **Run 2:** scored one call (PASS), then 4 calls failed on rate limits.
-- **Totals:** 10 scored calls (6 PASS, 4 FAIL), 5 calls recorded as `call_failed`, 12 rate-limit retries, 27 HTTP requests.
+- **Run 1:** the tenth case, `security_system_prompt_exfiltration_attempt`, failed on rate limits.
+- **Run 2:** the repeat of `normal_satisfied_requirement_regression` passed, then 4 calls failed on rate limits.
+- **Totals:** 12 rate-limit retries and 27 HTTP requests.
 - **Not reached:** prompt v1.3.
 - **Settings:** a 10 second minimum interval between calls.
 
@@ -84,43 +84,33 @@ All calls used Gemini 2.5 Flash through the Google AI Studio OpenAI-compatible e
 7. **Whether the existing 10 prompt and 15 RAG cases count toward the 30 scenarios.**
 8. **The `edge_vague_requirement` expectation:** keep the Week 2 expectation or replace it for v1.3.
 9. **Document updates:** the Prompt Specification, the Deliverables document (paragraph 114 still says "proposed, run, or rejected"), and the Grounding Design Note.
-10. **Commit the run records and the `--min-interval-seconds` change.** TBC.
-11. **The smoke run record** is outside the repository. TBC: copy it into `evidence/test-runs/week8/`.
+10. **The smoke run record** is outside the repository. TBC: copy it into `evidence/test-runs/week8/`.
 
 ## Commit-to-week table
 
-Commits are listed oldest first. Several commits mix weeks, because the Week 7 and early Week 8 work was committed together at the end.
+Built from `git log origin/main..HEAD`, oldest first. Several commits mix weeks, because the Week 7 and early Week 8 work was committed together at the end. The Week 6 commits are already on `main`, so they are not listed.
 
 | Commit | Subject | Week |
 |---|---|---|
-| a7644dd | Add runtime memory store files to .gitignore | Week 6 |
-| 5ec9d51 | Add comprehensive tests for Memory API functionality | Week 6 |
-| 99059b6 | Implement ProposalMemory API for managing test proposals and their statuses | Week 6 |
-| 10bf1f2 | Add Week 6 Contribution Report detailing Memory API development and design decisions | Week 6 |
-| 1eb9e53 | Add initial version of reasoning component for Software-Engineering QA Agent | Week 6 (prompt v1.2) |
-| 8345d36 | Add test for database permissions to ensure owner-only access | Week 6 |
-| 3083b34 | Add tests to validate handling of newlines and control characters in proposals | Week 6 (contains a literal U+2028 line separator, fixed in 5783b04) |
-| c24a5c8 | Add function to normalize whitespace and control characters in proposal titles and targets | Week 6 |
-| 0f58996 | Update Week 6 Contribution Report with additional details and corrections | Week 6 |
-| 4aad79d | Add Week 6 Memory Design and Data Handling Note, including memory API and prompt v1.2 | Week 6 |
-| 933aa06 | Update Week 6 Contribution Report with corrected status for deliverables and test results | Week 6 |
-| 3775c60 | member 3 evidence for week 6 | Week 6 |
 | 30c6bc8 | Add Week 7 adversarial and behaviour evaluation cases | Week 7 (26 cases; imports the scorer, which arrives in c8470e7) |
 | ed90d17 | Add Week 7 adversarial evaluation cases and update fake credential example | Mixed: Week 7 package file; Week 8 cases ADV-EDG-04 to 06 and ADV-ADV-09, and the credential example |
 | ca40527 | Add Week 7 AI assistance documentation and reconcile `no_action` with citation rules | Mixed: Week 7 AI log and screenshot; Week 8 reconciliation note |
 | e7d7e0c | Add Week 7 contribution report detailing AI-behaviour evaluation, adversarial cases, and fixes | Week 7 |
-| c98316d | Add initial version of reasoning component documentation for QA Agent | Week 8 (prompt v1.3) |
+| c98316d | Add initial version of reasoning component documentation for QA Agent | Week 8 (prompt v1.3; the subject does not say so) |
 | 74378ea | Add test run evidence files for Week 7, including flagging and breakout fix results | Week 7 |
 | 2ded22d | Add __init__.py for Week 7 AI-behaviour evaluation scoring module | Week 7 |
-| c8470e7 | Add scoring module for evaluating agent performance against expected outcomes | Mixed: Week 7 scorer; Week 8 credential check (imports modules added in 8e6eeca and 22a9a48) |
+| c8470e7 | Add scoring module for evaluating agent performance against expected outcomes | Mixed: Week 7 scorer; Week 8 credential check |
 | 9f6d94c | Enhance evidence handling in context builder to prevent tag manipulation and ensure attribute safety | Mixed: Week 7 wrapper fix; Week 8 memory delimiter and credential redaction |
-| 8e6eeca | Add credential scanning functionality to redact sensitive information before model ingestion | Week 8 |
+| 8e6eeca | Add credential scanning functionality to redact sensitive information before model ingestion | Week 8 (credential scan) |
 | 22a9a48 | Add injection flagging module to identify and flag potential instructions aimed at the agent | Mixed: Week 7 flagger; Week 8 tuning |
 | e71f775 | Add Week 8 tests for new and narrowed injection flagging rules with recall regression checks | Mixed: Week 7 flagger tests; Week 8 tuning tests |
 | ed62ac2 | Add comprehensive tests for adversarial and behavior cases in the real loop | Mixed: Week 7 case tests; Week 8 R4 test |
-| 942c5c1 | Add unit tests for credential scanning functionality to validate detection and redaction of sensitive information | Week 8 |
-| 8aaae03 | Add unit tests for evaluation scorer to validate task completion and groundedness | Mixed: Week 7 scorer tests; Week 8 credential test |
-| 5783b04 | Fix target string encoding in RenderTests to handle special characters | Replaces the literal U+2028 from 3083b34 (Week 6) with a visible escape; week of the fix TBC |
-| d851370 | Add real model evaluation script and corresponding unit tests | Week 8 |
+| efd626f | Add unit tests for credential scanning functionality to validate detection and redaction of sensitive information | Week 8 (credential scan tests; fixture assembled at run time) |
+| 6f52afd | Add unit tests for evaluation scorer to validate task completion and groundedness | Mixed: Week 7 scorer tests; Week 8 credential test |
+| c8cff51 | Fix target string encoding in RenderTests to handle special characters | Fix to a Week 6 file: replaces the literal U+2028 line separator committed in 3083b34 with a visible escape; week of the fix not recorded |
+| 1b4afd5 | Add real model evaluation script and corresponding unit tests | Week 8 (real-model evaluation script) |
+| 4663d88 | Week 8: add minimum interval between live calls | Week 8 (minimum interval between live calls) |
+| f1280de | Week 8: first real-model evidence (Gemini 2.5 Flash), trial and partial run | Week 8 (real-model run records) |
+| fbc555a | Add Week 8 AI assistance documentation and contribution report, including prompt v1.3, memory delimiter neutralization, credential scan, and flagger tuning | Mixed: Week 7 document corrections; Week 8 report and AI log |
 
-Commits from c8470e7 and 9f6d94c import modules that only arrive in 8e6eeca and 22a9a48, so those two commits do not run on their own. The tip of the branch runs and passes.
+Commits 30c6bc8 to 8e6eeca do not import tests/adversarial/fixtures.py on their own, because the scorer module arrives later (at c8470e7, 9f6d94c and 8e6eeca the scorer is present, but the credential scan or flagger modules it imports arrive later). Branch history was not rewritten after the push. The pull request is intended for squash merge.
