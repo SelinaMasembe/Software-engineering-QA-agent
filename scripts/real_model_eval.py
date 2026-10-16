@@ -27,6 +27,11 @@ one JSON file per call, ``summary.csv`` (one row per call) and
 Usage (Git Bash, from the repository root):
     python scripts/real_model_eval.py --prompt-version v1.3 --runs 1
     python scripts/real_model_eval.py --prompt-version v1.3 --runs 1 --live
+    python scripts/real_model_eval.py --prompt-version v1.3 --runs 1 --live --min-interval-seconds 7
+
+``--min-interval-seconds`` spaces out the starts of live requests (retries
+included) to stay under a provider's requests-per-minute limit. Each wait is
+recorded in the call JSON as ``interval_waits_seconds``, one entry per attempt.
 """
 
 from __future__ import annotations
@@ -233,6 +238,8 @@ class CallRecord:
     status: str = "pending"  # ok | call_failed | parse_failed
     attempts: int = 0
     retries_after_429: int = 0
+    # Seconds waited for --min-interval-seconds before each HTTP attempt.
+    interval_waits_seconds: list[float] = field(default_factory=list)
     model_returned: str | None = None
     latency_ms: int | None = None
     usage: dict[str, int | None] = field(default_factory=dict)
@@ -272,6 +279,39 @@ class _ScoredPromptCase:
     gap_check: str | None = None
 
 
+class Pacer:
+    """Keeps at least ``min_interval`` seconds between the starts of live requests.
+
+    Applies to every HTTP attempt, retries included. A 429 backoff already
+    spent counts toward the interval, so it is never waited for twice.
+    ``clock`` and ``sleep`` are injectable so tests use a fake clock.
+    """
+
+    def __init__(
+        self,
+        min_interval: float,
+        *,
+        clock: Callable[[], float] = time.monotonic,
+        sleep: Callable[[float], None] = time.sleep,
+    ) -> None:
+        self.min_interval = min_interval
+        self.clock = clock
+        self.sleep = sleep
+        self.last_start: float | None = None
+
+    def wait(self) -> float:
+        """Sleep if needed, mark this start, and return the seconds waited."""
+
+        waited = 0.0
+        if self.min_interval > 0 and self.last_start is not None:
+            remaining = self.min_interval - (self.clock() - self.last_start)
+            if remaining > 0:
+                self.sleep(remaining)
+                waited = remaining
+        self.last_start = self.clock()
+        return waited
+
+
 def _call_with_backoff(
     client: Any,
     system_prompt: str,
@@ -279,11 +319,14 @@ def _call_with_backoff(
     record: CallRecord,
     budget: "CallBudget",
     sleep: Callable[[float], None],
+    pacer: Pacer | None = None,
 ) -> ModelCallResult:
     """One logical call. A 429 waits and retries at most twice, each recorded."""
 
     while True:
         budget.take()
+        if pacer is not None:
+            record.interval_waits_seconds.append(round(pacer.wait(), 3))
         record.attempts += 1
         try:
             return client.generate(system_prompt=system_prompt, user_content=user_content)
@@ -332,6 +375,7 @@ def run_one(
     *,
     live: bool,
     sleep: Callable[[float], None] = time.sleep,
+    pacer: Pacer | None = None,
 ) -> CallRecord:
     context = build_case_context(case)
     record = CallRecord(
@@ -353,7 +397,9 @@ def run_one(
         client.next_source_path = case.source_path
 
     try:
-        result = _call_with_backoff(client, prompt_text, context.text, record, budget, sleep)
+        result = _call_with_backoff(
+            client, prompt_text, context.text, record, budget, sleep, pacer if live else None
+        )
     except BudgetExhausted:
         raise
     except ModelIntegrationError as exc:
@@ -515,7 +561,11 @@ def run_evaluation(
     sleep: Callable[[float], None] = time.sleep,
     cases: list[PromptCase] | None = None,
     stamp: str | None = None,
+    min_interval_seconds: float = 0.0,
+    clock: Callable[[], float] = time.monotonic,
 ) -> RunResult:
+    if min_interval_seconds < 0:
+        raise ValueError("min_interval_seconds must not be negative.")
     cases = load_cases() if cases is None else cases
     prompts = {v: load_prompt(PROMPT_ID, v).text for v in versions}
     client = client_factory() if live else StubClient()
@@ -535,9 +585,12 @@ def run_evaluation(
     print(f"  prompt versions: {', '.join(versions)}  runs: {runs}  cases: {len(cases)}")
     print(f"  planned calls: {planned}  hard stop (--max-calls): {max_calls}"
           + ("  (the run will stop before finishing)" if planned > max_calls else ""))
+    print(f"  min interval between live call starts: {min_interval_seconds:g}s"
+          + ("" if live else " (not applied in a dry run)"))
     print(f"  output: {out_dir}")
 
     budget = CallBudget(max_calls)
+    pacer = Pacer(min_interval_seconds, clock=clock, sleep=sleep)
     records: list[CallRecord] = []
     stopped: str | None = None
     consecutive = 0
@@ -547,7 +600,7 @@ def run_evaluation(
                 for case in cases:
                     record = run_one(
                         case, version, prompts[version], run_index, client, budget,
-                        live=live, sleep=sleep,
+                        live=live, sleep=sleep, pacer=pacer,
                     )
                     records.append(record)
                     name = f"{case.case_id}__{version}__run{run_index}.json"
@@ -579,6 +632,10 @@ def run_evaluation(
         "planned_calls": planned,
         "http_attempts": budget.used,
         "max_calls": max_calls,
+        "min_interval_seconds": min_interval_seconds,
+        "interval_wait_total_seconds": round(
+            sum(sum(r.interval_waits_seconds) for r in records), 3
+        ),
         "stopped_early": stopped,
         "requirement_path_template": REQUIREMENT_PATH_TEMPLATE,
         "note": (
@@ -611,6 +668,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     parser.add_argument("--max-calls", type=int, default=80,
                         help="Hard stop on HTTP attempts, retries included.")
+    parser.add_argument("--min-interval-seconds", type=float, default=0.0,
+                        help="Wait at least this long between the starts of consecutive "
+                        "live requests, retries included (default 0).")
     return parser
 
 
@@ -618,11 +678,14 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.runs < 1 or args.max_calls < 1:
         raise SystemExit("--runs and --max-calls must be at least 1.")
+    if args.min_interval_seconds < 0:
+        raise SystemExit("--min-interval-seconds must not be negative.")
     versions = list(dict.fromkeys(args.versions or ["v1.3"]))
     try:
         result = run_evaluation(
             versions=versions, runs=args.runs, live=args.live,
             out_root=args.out, max_calls=args.max_calls,
+            min_interval_seconds=args.min_interval_seconds,
         )
     except ModelIntegrationError as exc:
         # Configuration errors name the variable, never its value.

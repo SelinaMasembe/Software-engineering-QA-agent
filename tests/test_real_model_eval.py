@@ -261,6 +261,144 @@ class RateLimitTests(RunMixin, unittest.TestCase):
         self.assertEqual(result.records[0].status, "call_failed")
 
 
+class FakeClock:
+    """Time only moves when something sleeps or a fake call takes time."""
+
+    def __init__(self) -> None:
+        self.now = 0.0
+        self.sleeps: list[float] = []
+
+    def __call__(self) -> float:
+        return self.now
+
+    def sleep(self, seconds: float) -> None:
+        self.sleeps.append(seconds)
+        self.now += seconds
+
+
+class TimedClient(ScriptedClient):
+    """Each call takes ``duration`` seconds of fake time; start times are kept."""
+
+    def __init__(self, clock: FakeClock, duration: float, script=()) -> None:
+        super().__init__(script)
+        self.clock = clock
+        self.duration = duration
+        self.starts: list[float] = []
+
+    def generate(self, *, system_prompt: str, user_content: str) -> ModelCallResult:
+        self.starts.append(self.clock())
+        self.clock.now += self.duration
+        return super().generate(system_prompt=system_prompt, user_content=user_content)
+
+
+class MinIntervalTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self._tmp.name)
+        self.addCleanup(self._tmp.cleanup)
+        self.clock = FakeClock()
+
+    def run_eval(self, client, *, interval, live=True, max_calls=80):
+        with mock.patch("builtins.print"):
+            return rme.run_evaluation(
+                versions=["v1.3"], runs=1, live=live, out_root=self.root, max_calls=max_calls,
+                client_factory=lambda: client, sleep=self.clock.sleep, clock=self.clock,
+                min_interval_seconds=interval,
+            )
+
+    def test_starts_are_spaced_by_at_least_the_interval_and_waits_are_recorded(self) -> None:
+        client = TimedClient(self.clock, duration=3.0)
+        result = self.run_eval(client, interval=10.0)
+
+        gaps = [b - a for a, b in zip(client.starts, client.starts[1:])]
+        self.assertEqual(len(client.starts), 10)
+        self.assertTrue(all(gap >= 10.0 for gap in gaps), gaps)
+        self.assertEqual(result.records[0].interval_waits_seconds, [0.0])
+        for record in result.records[1:]:
+            self.assertEqual(record.interval_waits_seconds, [7.0])
+        saved = json.loads(next((result.out_dir / "calls").glob("normal_clear_defect*")).read_text())
+        self.assertEqual(saved["interval_waits_seconds"], [0.0])
+        summary = json.loads((result.out_dir / "summary.json").read_text(encoding="utf-8"))
+        self.assertEqual(summary["min_interval_seconds"], 10.0)
+        self.assertEqual(summary["interval_wait_total_seconds"], 63.0)
+
+    def test_no_wait_when_a_call_already_took_longer_than_the_interval(self) -> None:
+        client = TimedClient(self.clock, duration=12.0)
+        result = self.run_eval(client, interval=10.0)
+
+        self.assertEqual(self.clock.sleeps, [])
+        self.assertTrue(all(r.interval_waits_seconds == [0.0] for r in result.records))
+
+    def test_the_default_of_zero_never_waits(self) -> None:
+        client = TimedClient(self.clock, duration=0.5)
+        result = self.run_eval(client, interval=0.0)
+
+        self.assertEqual(self.clock.sleeps, [])
+        self.assertTrue(all(r.interval_waits_seconds == [0.0] for r in result.records))
+
+    def test_a_429_backoff_counts_toward_the_interval_and_retries_are_paced(self) -> None:
+        client = TimedClient(self.clock, duration=1.0, script=[ModelRateLimitError("quota")])
+        result = self.run_eval(client, interval=10.0)
+
+        first = result.records[0]
+        self.assertEqual(first.attempts, 2)
+        # The 20 s backoff already exceeds the 10 s interval: no extra wait.
+        self.assertEqual(first.interval_waits_seconds, [0.0, 0.0])
+        self.assertEqual(self.clock.sleeps[0], rme.RATE_LIMIT_BACKOFF_SECONDS[0])
+        self.assertEqual(result.records[1].interval_waits_seconds, [9.0])
+
+    def test_short_backoff_still_honours_a_longer_interval(self) -> None:
+        client = TimedClient(self.clock, duration=1.0, script=[ModelRateLimitError("quota")])
+        with mock.patch.object(rme, "RATE_LIMIT_BACKOFF_SECONDS", (2.0, 2.0)):
+            result = self.run_eval(client, interval=10.0)
+
+        self.assertEqual(result.records[0].interval_waits_seconds, [0.0, 7.0])
+        self.assertGreaterEqual(client.starts[1] - client.starts[0], 10.0)
+
+    def test_max_calls_still_counts_and_a_refused_call_is_not_waited_for(self) -> None:
+        client = TimedClient(self.clock, duration=1.0)
+        result = self.run_eval(client, interval=5.0, max_calls=3)
+
+        self.assertEqual(client.calls, 3)
+        self.assertIn("--max-calls 3", result.stopped_early)
+        self.assertEqual(self.clock.sleeps, [4.0, 4.0])
+
+    def test_three_consecutive_failures_still_stop_the_run(self) -> None:
+        client = TimedClient(self.clock, duration=1.0, script=[ModelProviderError("down")] * 5)
+        result = self.run_eval(client, interval=5.0)
+
+        self.assertEqual(client.calls, 3)
+        self.assertIn("3 consecutive failures", result.stopped_early)
+        self.assertEqual([r.interval_waits_seconds for r in result.records], [[0.0], [4.0], [4.0]])
+
+    def test_the_key_is_still_never_written(self) -> None:
+        client = TimedClient(self.clock, duration=1.0)
+        result = self.run_eval(client, interval=5.0)
+
+        self.assertNotIn(FAKE_KEY, all_output_text(result.out_dir))
+
+    def test_a_dry_run_never_waits_and_never_builds_a_client(self) -> None:
+        def no_client():
+            raise AssertionError("the dry run constructed a model client")
+
+        with mock.patch("models.client.urlopen", side_effect=AssertionError("network")), \
+                mock.patch("builtins.print"):
+            result = rme.run_evaluation(
+                versions=["v1.3"], runs=1, live=False, out_root=self.root, max_calls=80,
+                client_factory=no_client, sleep=self.clock.sleep, clock=self.clock,
+                min_interval_seconds=30.0,
+            )
+
+        self.assertEqual(self.clock.sleeps, [])
+        self.assertTrue(all(r.interval_waits_seconds == [] for r in result.records))
+
+    def test_negative_interval_is_rejected(self) -> None:
+        with self.assertRaises(SystemExit), mock.patch("sys.stderr"):
+            rme.main(["--min-interval-seconds", "-1"])
+        with self.assertRaises(ValueError):
+            self.run_eval(ScriptedClient([]), interval=-1.0)
+
+
 class DryRunTests(RunMixin, unittest.TestCase):
     def test_the_dry_run_never_constructs_a_client_or_opens_a_connection(self) -> None:
         def no_client():
