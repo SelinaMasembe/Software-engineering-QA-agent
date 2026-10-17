@@ -48,7 +48,7 @@ How these are enforced in code:
 | 6. Dispatch       | Registry, role and argument checks, approval, output limits | `src/orchestrator/router.py`, `src/orchestrator/approval_gate.py`   |
 | 7. Tools          | `search_repo`, `read_file`, `run_tests`, `draft_issue`     | `src/tools/`, `src/sandbox/executor.py`                             |
 | 8. Agent loop     | Sense, plan, validate, act, observe, stop or pause         | `src/agent/loop.py`, `stop_conditions.py`, `task_contract.yaml`     |
-| 9. Observability  | Every run saved as JSON Lines evidence                     | `src/observability/run_logger.py`                                   |
+| 9. Observability  | Every run saved as JSON Lines evidence; step telemetry (model, retrieval, tools, timing) | `src/observability/run_logger.py`, `telemetry.py`, `instrumentation.py` |
 | 10. Memory        | Per-module record of proposed, run and human-rejected tests; session state | `src/memory/`, `src/integration/mcp_interface.py`        |
 
 Diagrams:
@@ -71,7 +71,7 @@ M4 Quality/Security, M5 DevOps/Documentation.
 | 4 | Tools and approval | Tool-schema audit and citation validation (M1); tool dispatcher (M2); four tools and sandbox (M3); authorization and failure tests (M4); human approval gate and CLI (M5) | `src/orchestrator/`, `src/tools/`, `src/sandbox/`, `docs/evaluation/week4-tool-authorization-evaluation.md` |
 | 5 | Bounded agent | Stop conditions and charter audit (M1); agent loop (M2); agent task contract (M3); stop-condition tests and three execution traces (M4); run logger saving every run (M5) | `src/agent/`, `src/observability/`, `evidence/traces/` |
 | 6 | Memory, state, interoperability | Memory description audit and record schema (M1); session state model, SQLite memory store and MCP-style interface (M2); memory API, design note and prompt v1.2 (M3); memory-cannot-bypass-approval guard tests (M4); retention job, human clear command and proposal-rejection path (M5). Retention: kept until a human clears it | `src/memory/`, `src/integration/`, `docs/integration/week6-member2-mcp-interface.md`, `docs/requirements/week6/` |
-| 7 | Evaluation, observability, guardrails | Upcoming: 30-scenario evaluation, failure catalogue | |
+| 7 | Evaluation, observability, guardrails | Scenario-to-story traceability (M1); step telemetry and instrumentation (M2); evaluation criteria, 30 adversarial/behaviour cases, scorer, evidence-wrapper and injection-flagging guardrails (M3); Failure Catalogue and automatic re-tests (M4); one runner for all 60 scenarios with combined results (M5) | `tests/run_scenarios.py`, `src/evaluation/`, `tests/adversarial/`, `docs/evaluation/week7-failure-catalogue.md`, `evidence/evaluation/` |
 | 8 | Final integration and presentation | Upcoming | |
 
 Weekly progress reports are in `docs/weekly reports/`. AI-assistance records
@@ -87,7 +87,8 @@ src/                      application code (run with pytest.ini or PYTHONPATH=sr
   integration/            MCP-style memory/state interface contract
   memory/                 memory schema, store and session state, memory API, retention
   models/                 model client and shared domain types
-  observability/          run logger (trace sink) for evidence/traces/runs/
+  evaluation/             scorer for evaluation scenarios
+  observability/          run logger (trace sink) and step telemetry
   orchestrator/           tool dispatcher, citation validation, approval gate
   prompts/                versioned prompt loader
   rag/                    chunking, retrieval, context builder, baseline pipeline
@@ -125,6 +126,7 @@ set -a; source .env; set +a
 
 ```bash
 python3 -m pytest -q                        # full offline suite (pytest.ini sets paths)
+python3 tests/run_scenarios.py              # all 60 evaluation scenarios, writes evidence/evaluation/
 python3 scripts/check_sensitive.py --all    # secret / personal-data scan, must exit 0
 ```
 
@@ -184,6 +186,9 @@ PYTHONPATH=src python3 -m memory.retention run          # scheduled expiry job (
 | `data/` | Approval queue and lock, approval audit log, memory database (`memory.sqlite3`), retention audit (`memory_audit.jsonl`) | No (`.gitignore`) |
 | `evidence/traces/runs/` | One `.jsonl` file per agent run plus `index.jsonl` | Yes, after review |
 | `evidence/traces/week5-run-*.json` | Week 5 execution traces (M4) | Yes |
+| `evidence/traces/observability/` | Week 7 step telemetry demo traces (M2) | Yes |
+| `evidence/evaluation/week7-scenario-results.*` | Combined results of all evaluation scenarios (M5 runner) | Yes |
+| `evidence/evaluation/week7-failure-retest.json` | Failure re-test evidence (M4) | Yes |
 | `evidence/screenshots/`, `evidence/demo/` | Test and demo screenshots per week | Yes |
 
 | Variable | Default | Used by |
@@ -225,7 +230,8 @@ Each member's weekly work is linked to repository evidence.
 | Charter, user stories, traceability, audits | `docs/requirements/` |
 | Architecture and diagrams | `docs/architecture/` |
 | Prompts and model selection | `docs/prompts/` |
-| Evaluations (Weeks 2–4) | `docs/evaluation/` |
+| Evaluations, criteria and Failure Catalogue (Weeks 2–7) | `docs/evaluation/` |
+| Scenario runner | `docs/evaluation/week7-member5-scenario-runner.md` |
 | Member 2 integration documents | `docs/integration/` |
 | Grounding design note | `docs/context/` |
 | Approval gate walkthrough | `docs/requirements/week4/member5-approval-gate-explained.md` |
