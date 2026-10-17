@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 .~lock.*#
+# Microsoft Word / Office lock files (created while a document is open)
+~$*
 # Distribution / packaging
 build/
 dist/
