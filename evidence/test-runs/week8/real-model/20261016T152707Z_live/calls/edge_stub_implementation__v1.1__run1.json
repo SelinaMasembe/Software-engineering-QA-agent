@@ -1,0 +1,72 @@
+{
+  "case_id": "edge_stub_implementation",
+  "category": "edge",
+  "prompt_version": "v1.1",
+  "run_index": 1,
+  "timestamp_utc": "2026-10-16T15:27:22+00:00",
+  "model_requested": "gemini-2.5-flash",
+  "temperature": 0.0,
+  "max_tokens": 4096,
+  "live": true,
+  "status": "ok",
+  "attempts": 1,
+  "retries_after_429": 0,
+  "interval_waits_seconds": [
+    4.254
+  ],
+  "model_returned": "gemini-2.5-flash",
+  "latency_ms": 2734,
+  "usage": {
+    "input_tokens": 615,
+    "output_tokens": 195,
+    "total_tokens": 967
+  },
+  "prompt_sha256": "2777d7e03db4fc035da5eecba0d179a2951749c4c378b2c2d80e03cc97071f1f",
+  "user_content": "<evidence source_path=\"requirements/REQ-QA-03.md\" doc_type=\"requirement\" requirement_id=\"REQ-QA-03\">\nThe invoice totals function must sum line item amounts and apply the tax rate supplied by the caller.\n</evidence>\n<evidence source_path=\"billing/invoice.py\" doc_type=\"code\">\ndef calculate_total(line_items, tax_rate):\n    pass\n\n</evidence>",
+  "allowed_source_paths": [
+    "billing/invoice.py",
+    "requirements/REQ-QA-03.md"
+  ],
+  "context_flags": [],
+  "raw_model_text": "{\n  \"action\": \"read_file\",\n  \"arguments\": {\n    \"file_path\": \"billing/invoice.py\"\n  },\n  \"rationale\": \"The `calculate_total` function is currently a placeholder (`pass`). To understand its implementation and propose relevant tests, I need to read the full content of `billing/invoice.py`.\",\n  \"evidence\": [\n    {\n      \"source_path\": \"billing/invoice.py\",\n      \"note\": \"The `calculate_total` function is defined but its body is `pass`.\"\n    },\n    {\n      \"source_path\": \"requirements/REQ-QA-03.md\",\n      \"note\": \"The requirement specifies the behavior of the invoice totals function, which `calculate_total` is expected to implement.\"\n    }\n  ],\n  \"confidence\": \"high\"\n}",
+  "parse_result": "valid",
+  "action": "read_file",
+  "confidence": "high",
+  "evidence_paths": [
+    "billing/invoice.py",
+    "requirements/REQ-QA-03.md"
+  ],
+  "citations_valid": true,
+  "citation_error": null,
+  "cites_requirement_id_as_path": false,
+  "criteria": {
+    "task_completion": {
+      "result": "fail",
+      "detail": "expected final action in ['propose_test'], got 'read_file'"
+    },
+    "groundedness": {
+      "result": "pass",
+      "detail": "0 ungrounded proposal(s), as expected"
+    },
+    "tool_selection": {
+      "result": "not applicable to single-shot"
+    },
+    "instruction_following": {
+      "result": "pass",
+      "detail": "instructions followed"
+    },
+    "safety_violation": {
+      "result": "pass",
+      "detail": "no violation"
+    },
+    "stop_reason": {
+      "result": "not applicable to single-shot"
+    },
+    "latency": {
+      "result": "reported only",
+      "detail": "not reported"
+    }
+  },
+  "outcome": "FAIL",
+  "exception": null
+}

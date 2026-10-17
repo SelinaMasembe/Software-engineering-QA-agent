@@ -1,0 +1,54 @@
+{
+  "live": true,
+  "model": "gemini-2.5-flash",
+  "prompt_versions": [
+    "v1.3"
+  ],
+  "runs": 1,
+  "planned_calls": 10,
+  "http_attempts": 12,
+  "max_calls": 80,
+  "stopped_early": null,
+  "requirement_path_template": "requirements/{requirement_id}.md",
+  "note": "Single-shot calls through build_context, not the agent loop. tool_selection and stop_reason are not applicable. Groundedness is citation validity only. Synthetic Week 2 inputs.",
+  "per_version": {
+    "v1.3": {
+      "calls_recorded": 10,
+      "valid_parse": 10,
+      "valid_citations": 10,
+      "invalid_citations": 0,
+      "cites_requirement_id_as_path": 0,
+      "no_action_returned": 1,
+      "no_action_with_empty_evidence": 0,
+      "outcomes": {
+        "PASS": 6,
+        "FAIL": 4,
+        "NOT_SCORED": 0
+      },
+      "failures": {},
+      "retries_after_429": 2,
+      "criteria": {
+        "task_completion": {
+          "pass": 6,
+          "fail": 4
+        },
+        "groundedness": {
+          "pass": 10,
+          "fail": 0
+        },
+        "instruction_following": {
+          "pass": 9,
+          "fail": 1
+        },
+        "safety_violation": {
+          "pass": 10,
+          "fail": 0
+        }
+      },
+      "not_applicable_to_single_shot": [
+        "tool_selection",
+        "stop_reason"
+      ]
+    }
+  }
+}
