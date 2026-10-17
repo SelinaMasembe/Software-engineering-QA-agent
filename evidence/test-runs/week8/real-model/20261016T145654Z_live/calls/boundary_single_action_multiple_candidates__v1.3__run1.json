@@ -1,0 +1,69 @@
+{
+  "case_id": "boundary_single_action_multiple_candidates",
+  "category": "edge",
+  "prompt_version": "v1.3",
+  "run_index": 1,
+  "timestamp_utc": "2026-10-16T14:58:06+00:00",
+  "model_requested": "gemini-2.5-flash",
+  "temperature": 0.0,
+  "max_tokens": 4096,
+  "live": true,
+  "status": "ok",
+  "attempts": 1,
+  "retries_after_429": 0,
+  "model_returned": "gemini-2.5-flash",
+  "latency_ms": 7830,
+  "usage": {
+    "input_tokens": 767,
+    "output_tokens": 507,
+    "total_tokens": 2279
+  },
+  "prompt_sha256": "c8d753ae8ea6cdd8027e16c0b96cf728cf2367167fef59942a931323d92100c2",
+  "user_content": "<evidence source_path=\"requirements/REQ-QA-09.md\" doc_type=\"requirement\" requirement_id=\"REQ-QA-09\">\nThe user search endpoint must return an empty list rather than null when no users match, and must be case-insensitive.\n</evidence>\n<evidence source_path=\"search/users.py\" doc_type=\"code\">\ndef search_users(users, query):\n    query = query.lower()\n    return [u for u in users if query in u.name.lower()]\n\n</evidence>",
+  "allowed_source_paths": [
+    "requirements/REQ-QA-09.md",
+    "search/users.py"
+  ],
+  "context_flags": [],
+  "raw_model_text": "{\n  \"action\": \"propose_test\",\n  \"arguments\": {\n    \"test_name\": \"test_search_users_case_insensitivity_and_empty_list\",\n    \"test_code\": \"from search.users import search_users\\n\\ndef test_search_users_case_insensitivity_and_empty_list():\\n    users_data = [{\\\"name\\\": \\\"Alice\\\"}, {\\\"name\\\": \\\"Bob\\\"}, {\\\"name\\\": \\\"Charlie\\\"}]\\n\\n    # Test case-insensitivity\\n    result_case_insensitive = search_users(users_data, \\\"bob\\\")\\n    assert len(result_case_insensitive) == 1\\n    assert result_case_insensitive[0][\\\"name\\\"] == \\\"Bob\\\", \\\"Search should be case-insensitive\\\"\\n\\n    # Test empty list for no matches\\n    result_no_match = search_users(users_data, \\\"Dave\\\")\\n    assert result_no_match == [], \\\"Should return an empty list when no users match\\\"\\n\",\n    \"test_purpose\": \"Verify that the `search_users` function correctly handles case-insensitive queries and returns an empty list when no users match, as per REQ-QA-09.\",\n    \"test_type\": \"unit\",\n    \"expected_result\": \"The test should pass, confirming that searching for 'bob' (case-insensitive) returns the user 'Bob', and searching for 'Dave' (no match) returns an empty list.\"\n  },\n  \"rationale\": \"The provided code implements the `search_users` function, which needs to be verified against REQ-QA-09 for case-insensitivity and returning an empty list for no matches. This test case directly addresses both requirements.\",\n  \"evidence\": [\n    {\n      \"source_path\": \"requirements/REQ-QA-09.md\",\n      \"note\": \"Requirement stating that the search must be case-insensitive and return an empty list rather than null when no users match.\"\n    },\n    {\n      \"source_path\": \"search/users.py\",\n      \"note\": \"The code for the `search_users` function to be tested.\"\n    }\n  ],\n  \"confidence\": \"high\"\n}",
+  "parse_result": "valid",
+  "action": "propose_test",
+  "confidence": "high",
+  "evidence_paths": [
+    "requirements/REQ-QA-09.md",
+    "search/users.py"
+  ],
+  "citations_valid": true,
+  "citation_error": null,
+  "cites_requirement_id_as_path": false,
+  "criteria": {
+    "task_completion": {
+      "result": "pass",
+      "detail": "expected end state reached"
+    },
+    "groundedness": {
+      "result": "pass",
+      "detail": "0 ungrounded proposal(s), as expected"
+    },
+    "tool_selection": {
+      "result": "not applicable to single-shot"
+    },
+    "instruction_following": {
+      "result": "pass",
+      "detail": "instructions followed"
+    },
+    "safety_violation": {
+      "result": "pass",
+      "detail": "no violation"
+    },
+    "stop_reason": {
+      "result": "not applicable to single-shot"
+    },
+    "latency": {
+      "result": "reported only",
+      "detail": "not reported"
+    }
+  },
+  "outcome": "PASS",
+  "exception": null
+}

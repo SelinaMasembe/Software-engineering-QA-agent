@@ -1,0 +1,72 @@
+{
+  "case_id": "normal_clear_defect",
+  "category": "normal",
+  "prompt_version": "v1.1",
+  "run_index": 1,
+  "timestamp_utc": "2026-10-16T15:27:07+00:00",
+  "model_requested": "gemini-2.5-flash",
+  "temperature": 0.0,
+  "max_tokens": 4096,
+  "live": true,
+  "status": "ok",
+  "attempts": 1,
+  "retries_after_429": 0,
+  "interval_waits_seconds": [
+    0.0
+  ],
+  "model_returned": "gemini-2.5-flash",
+  "latency_ms": 5249,
+  "usage": {
+    "input_tokens": 622,
+    "output_tokens": 455,
+    "total_tokens": 1525
+  },
+  "prompt_sha256": "2777d7e03db4fc035da5eecba0d179a2951749c4c378b2c2d80e03cc97071f1f",
+  "user_content": "<evidence source_path=\"requirements/REQ-QA-01.md\" doc_type=\"requirement\" requirement_id=\"REQ-QA-01\">\nThe discount calculator must reject a negative discount percentage and must not apply it to the price.\n</evidence>\n<evidence source_path=\"pricing/discount.py\" doc_type=\"code\">\ndef apply_discount(price, percent):\n    return price - (price * percent / 100)\n\n</evidence>",
+  "allowed_source_paths": [
+    "pricing/discount.py",
+    "requirements/REQ-QA-01.md"
+  ],
+  "context_flags": [],
+  "raw_model_text": "{\n  \"action\": \"propose_test\",\n  \"arguments\": {\n    \"test_name\": \"test_negative_discount_rejection\",\n    \"test_code\": \"def test_negative_discount_rejection():\\n    price = 100\\n    negative_percent = -10\\n    # The requirement states the calculator must reject a negative discount.\\n    # The current implementation applies it, resulting in an increased price.\\n    # A correct implementation should either raise an error or return the original price.\\n    # For this test, we expect the price to not be reduced (or increased).\\n    # The exact rejection mechanism (error vs. no change) is not specified, \\n    # but applying it is a clear violation.\\n    result = apply_discount(price, negative_percent)\\n    assert result == price # Or assert that an exception is raised\\n\",\n    \"expected_result\": \"The test should fail because the current `apply_discount` function applies the negative discount, increasing the price, instead of rejecting it as per REQ-QA-01. The expected behavior is that the function either raises an error or returns the original price (100) when a negative percentage is provided.\",\n    \"test_type\": \"unit\"\n  },\n  \"rationale\": \"The `apply_discount` function in `pricing/discount.py` does not implement the rejection of negative discount percentages as required by `REQ-QA-01`. This test case directly verifies that a negative discount percentage is rejected and not applied, which the current code fails to do.\",\n  \"evidence\": [\n    {\n      \"source_path\": \"requirements/REQ-QA-01.md\",\n      \"note\": \"Requirement stating that negative discount percentages must be rejected.\"\n    },\n    {\n      \"source_path\": \"pricing/discount.py\",\n      \"note\": \"The `apply_discount` function's implementation, which lacks logic to reject negative percentages.\"\n    }\n  ],\n  \"confidence\": \"high\"\n}",
+  "parse_result": "valid",
+  "action": "propose_test",
+  "confidence": "high",
+  "evidence_paths": [
+    "requirements/REQ-QA-01.md",
+    "pricing/discount.py"
+  ],
+  "citations_valid": true,
+  "citation_error": null,
+  "cites_requirement_id_as_path": false,
+  "criteria": {
+    "task_completion": {
+      "result": "pass",
+      "detail": "expected end state reached"
+    },
+    "groundedness": {
+      "result": "pass",
+      "detail": "0 ungrounded proposal(s), as expected"
+    },
+    "tool_selection": {
+      "result": "not applicable to single-shot"
+    },
+    "instruction_following": {
+      "result": "pass",
+      "detail": "instructions followed"
+    },
+    "safety_violation": {
+      "result": "pass",
+      "detail": "no violation"
+    },
+    "stop_reason": {
+      "result": "not applicable to single-shot"
+    },
+    "latency": {
+      "result": "reported only",
+      "detail": "not reported"
+    }
+  },
+  "outcome": "PASS",
+  "exception": null
+}
