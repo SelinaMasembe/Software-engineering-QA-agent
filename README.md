@@ -4,16 +4,16 @@ An AI-native QA assistant for a software team, built by Group J for BSE4104
 Emerging Trends in Software Engineering (Makerere University, 2026/2027).
 
 The agent reads team-owned requirements, source code and test logs, proposes
-grounded tests, runs only human-approved tests in a sandbox, and drafts
-failure notes for human review. The model interprets and proposes;
-deterministic code and people control permissions, validation, execution and
-anything with side effects.
+grounded tests, runs only human-approved manifest-listed tests in a controlled
+subprocess, and drafts failure notes for human review. The model interprets and
+proposes; deterministic code and people control permissions, validation,
+execution and anything with side effects.
 
 ```text
 requirements / code / logs
   -> retrieve evidence (RAG) -> model proposes ONE next action
   -> citation check -> dispatcher (role + arguments) -> human approval
-  -> sandboxed tool -> observe -> repeat or stop -> draft for human review
+  -> approved test subprocess -> observe -> repeat or stop -> draft for human review
 ```
 
 ## Safety Boundaries
@@ -31,7 +31,9 @@ How these are enforced in code:
 - **Citation validation:** every proposal must cite a source it was actually given.
 - **Fixed tool registry with role checks.**
 - **Human approval gate** for `run_tests` and `draft_issue`.
-- **Sandbox:** tests run with a stripped environment and a timeout.
+- **Test execution:** one allow-listed pytest node runs in a subprocess with a
+  stripped environment and timeout. This does not isolate filesystem or network
+  access, so only reviewed, trusted test code should be run.
 - **Bounded agent loop:** an iteration cap, a time budget, repeat detection and a no-progress check.
 - **Run log:** every run is saved to `evidence/traces/runs/`.
 - **Pre-commit secret scanner.**
@@ -42,14 +44,20 @@ How these are enforced in code:
 | ----------------- | ---------------------------------------------------------- | ------------------------------------------------------------------- |
 | 1. Corpus         | Curated, provenance-tagged documents                       | `src/ingestion/tag_provenance.py`, `knowledge/`                     |
 | 2. Retrieval      | Boundary-aware chunks, local BM25, `not_in_corpus` decision | `src/rag/chunking.py`, `retriever.py`, `retrieval.py`               |
-| 3. Context        | Evidence block plus the sources it is safe to cite         | `src/rag/context_builder.py`                                        |
-| 4. Planning       | Model proposes one action (`propose_action` v1.1)          | `src/models/client.py`, `docs/prompts/propose_action/`              |
+| 3. Context        | Evidence block; credential redaction, delimiter neutralisation, and injection flags | `src/rag/context_builder.py`, `src/rag/credential_scan.py`, `src/rag/injection_flagging.py` |
+| 4. Planning       | Model proposes one action (`propose_action` v1.3)          | `src/models/client.py`, `docs/prompts/propose_action/`              |
 | 5. Validation     | Reject untraceable or fabricated citations                 | `src/orchestrator/validation.py`                                    |
 | 6. Dispatch       | Registry, role and argument checks, approval, output limits | `src/orchestrator/router.py`, `src/orchestrator/approval_gate.py`   |
 | 7. Tools          | `search_repo`, `read_file`, `run_tests`, `draft_issue`     | `src/tools/`, `src/sandbox/executor.py`                             |
-| 8. Agent loop     | Sense, plan, validate, act, observe, stop or pause         | `src/agent/loop.py`, `stop_conditions.py`, `task_contract.yaml`     |
-| 9. Observability  | Every run saved as JSON Lines evidence; step telemetry (model, retrieval, tools, timing) | `src/observability/run_logger.py`, `telemetry.py`, `instrumentation.py` |
-| 10. Memory        | Per-module record of proposed, run and human-rejected tests; session state | `src/memory/`, `src/integration/mcp_interface.py`        |
+| 8. Agent loop     | Sense, plan, validate, act, observe, stop or pause         | `src/agent/loop.py`, `src/agent/stop_conditions.py`, `src/agent/task_contract.yaml` |
+| 9. Observability  | Run traces and metadata-only step telemetry for model, retrieval, tools, timing and outcomes | `src/observability/run_logger.py`, `telemetry.py`, `instrumentation.py` |
+| 10. Memory        | SQLite-backed per-module proposal memory and session state, exposed through a bounded capability interface | `src/memory/`, `src/integration/mcp_interface.py` |
+
+The repository exposes Python interfaces and command-line scripts; it does not
+include a web UI or a GitHub posting client. `draft_issue` creates an
+in-memory draft for human review. The `AgentLoop` receives its sensor and
+planner through injected interfaces, so the loop can be composed with different
+adapters without changing its control rules.
 
 Diagrams:
 
@@ -92,7 +100,7 @@ src/                      application code (run with pytest.ini or PYTHONPATH=sr
   orchestrator/           tool dispatcher, citation validation, approval gate
   prompts/                versioned prompt loader
   rag/                    chunking, retrieval, context builder, baseline pipeline
-  sandbox/                sandboxed pytest executor
+  sandbox/                allow-listed pytest subprocess executor
   tools/                  search_repo, read_file, run_tests, draft_issue
 scripts/                  smoke tests, demos, approval CLI, secret scanner, docx generators
 tests/                    unit tests; tests/integration/ end-to-end tests; tests/fixtures/
