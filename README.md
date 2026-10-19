@@ -123,6 +123,25 @@ python3 -m pip install -r requirements.txt
 git config core.hooksPath .githooks        # enable the secret scanner once per clone
 ```
 
+## Run the Tagged Release
+
+After cloning the repository, check out the release tag and install its
+dependencies from the repository root:
+
+```bash
+git checkout v1.0.0
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -r requirements.txt
+python3 -m pytest -q
+python3 scripts/member2_observability_demo.py --no-write
+```
+
+The test suite and observability demonstration run offline and do not require
+model credentials. `--no-write` keeps the demonstration from adding telemetry
+files to the checkout. The demo uses fixture documents and a deterministic
+stand-in model; it is a reproducible smoke check, not a live provider test.
+
 For live model calls, create a local `.env` from the template and load it:
 
 ```bash
@@ -164,6 +183,7 @@ Run these from the repository root with `PYTHONPATH=src python3 <script>`.
 | `scripts/member1_stop_conditions_smoke.py` | The four stop conditions | No |
 | `scripts/member2_model_smoke.py` | One live `propose_action` model call (see its `--help`) | **Yes** |
 | `scripts/member2_tool_dispatch_demo.py` | Four dispatcher scenarios | No |
+| `scripts/member2_observability_demo.py` | Three offline agent runs with step telemetry (`--no-write` avoids writing evidence) | No |
 | `scripts/member5_approval_demo.py` | Pending, approved once, approval consumed | No |
 | `scripts/member5_run_log_demo.py` | Three saved runs, including a human approval pause and resume | No |
 | `scripts/show_run_log.py` | Lists saved runs or prints one as a timeline (`--last`) | No |
