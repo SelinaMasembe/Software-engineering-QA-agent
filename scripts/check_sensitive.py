@@ -130,7 +130,7 @@ PATTERN_RULES: list[tuple[str, re.Pattern[str], Validator, int]] = [
     ("Slack token", re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{10,}"), None, 0),
     ("Stripe live key", re.compile(r"\b[rs]k_live_[0-9A-Za-z]{20,}"), None, 0),
     ("JSON Web Token", re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}"), None, 0),
-    ("password in URL", re.compile(r"\b[a-z][a-z0-9+.\-]*://[^\s:/@]+:([^\s:/@]+)@", re.I), not_placeholder, 1),
+    ("password in URL", re.compile(r"\b(?<![a-z0-9+.\-])[a-z][a-z0-9+.\-]*://[^\s:/@]+:([^\s:/@]+)@", re.I), not_placeholder, 1),
     ("Uganda phone number", re.compile(r"(?<![\d+])(?:\+256|256|0)7\d{8}(?!\d)"), None, 0),
     ("Uganda National ID (NIN)", re.compile(r"\bC[MF]\d{2}[A-Z0-9]{10}\b"), nin_ok, 0),
     ("payment card number", re.compile(
@@ -138,7 +138,7 @@ PATTERN_RULES: list[tuple[str, re.Pattern[str], Validator, int]] = [
 ]
 
 KEY_NAME = (
-    r"(?<![A-Za-z0-9_])"
+    r"(?<![A-Za-z0-9_.\-])"
     r"(?P<name>[A-Za-z0-9_.\-]*?(?:api[_-]?key|access[_-]?key|private[_-]?key|"
     r"client[_-]?secret|secret(?:[_-]?key)?|auth[_-]?token|token|password|passwd|pwd))"
 )
