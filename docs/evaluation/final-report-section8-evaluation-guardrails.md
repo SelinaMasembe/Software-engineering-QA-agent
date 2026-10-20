@@ -1,4 +1,4 @@
-# Final Engineering Report — Section 8: Evaluation, Observability and Guardrails
+# Final Engineering Report, Section 8: Evaluation, Observability and Guardrails
 
 **Author:** Member 4 (Quality/Security Lead). **Date:** 20 October 2026.
 **Scope per the brief's report template (1.5-2 pages):** evaluation
