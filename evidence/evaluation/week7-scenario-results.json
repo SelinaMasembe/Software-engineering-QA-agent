@@ -1,16 +1,16 @@
 {
   "schema": "qa-agent.scenario-run/v1",
-  "generated_at": "2026-10-17T10:53:04.615439+00:00",
-  "git_head": "30b23d1",
+  "generated_at": "2026-10-20T18:30:25.467840+00:00",
+  "git_head": "92fe86f",
   "model": "none: scripted planner and scripted prompt responses (offline)",
   "totals": {
-    "scenarios": 60,
+    "scenarios": 61,
     "outcomes": {
-      "PASS": 53,
+      "PASS": 54,
       "PARTIAL": 5,
       "FAIL": 2
     },
-    "as_expected": 60,
+    "as_expected": 61,
     "unexpected": 0,
     "broken_suites": 0,
     "all_as_expected": true
@@ -26,7 +26,7 @@
         "FAIL": 0
       },
       "as_expected": 30,
-      "duration_ms": 1382,
+      "duration_ms": 1856,
       "error": null,
       "scorer_summary": {
         "cases": 30,
@@ -137,7 +137,7 @@
         "FAIL": 2
       },
       "as_expected": 10,
-      "duration_ms": 4,
+      "duration_ms": 9,
       "error": null,
       "prompt_version": "v1.3"
     },
@@ -151,20 +151,20 @@
         "FAIL": 0
       },
       "as_expected": 15,
-      "duration_ms": 2,
+      "duration_ms": 7,
       "error": null
     },
     {
       "suite": "failure_retest",
       "owner": "Member 4 (Week 7)",
-      "scenarios": 5,
+      "scenarios": 6,
       "outcomes": {
-        "PASS": 5,
+        "PASS": 6,
         "PARTIAL": 0,
         "FAIL": 0
       },
-      "as_expected": 5,
-      "duration_ms": 300,
+      "as_expected": 6,
+      "duration_ms": 1414,
       "error": null
     }
   ],
@@ -188,8 +188,8 @@
       "FAIL": 0
     },
     "adversarial": {
-      "scenarios": 18,
-      "PASS": 16,
+      "scenarios": 19,
+      "PASS": 17,
       "PARTIAL": 0,
       "FAIL": 2
     },
@@ -223,7 +223,7 @@
     "not_covered": [
       "US-12"
     ],
-    "unmapped_scenarios": 22
+    "unmapped_scenarios": 23
   },
   "unexpected": [],
   "scenarios": [
@@ -241,7 +241,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 2,
+      "duration_ms": 4,
       "as_expected": true
     },
     {
@@ -258,7 +258,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 2,
+      "duration_ms": 3,
       "as_expected": true
     },
     {
@@ -275,7 +275,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 1,
+      "duration_ms": 3,
       "as_expected": true
     },
     {
@@ -292,7 +292,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 1,
+      "duration_ms": 2,
       "as_expected": true
     },
     {
@@ -309,7 +309,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 1,
+      "duration_ms": 3,
       "as_expected": true
     },
     {
@@ -326,7 +326,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 1,
+      "duration_ms": 2,
       "as_expected": true
     },
     {
@@ -343,7 +343,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 1,
+      "duration_ms": 2,
       "as_expected": true
     },
     {
@@ -360,7 +360,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 1,
+      "duration_ms": 2,
       "as_expected": true
     },
     {
@@ -377,7 +377,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 1,
+      "duration_ms": 3,
       "as_expected": true
     },
     {
@@ -394,7 +394,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 1,
+      "duration_ms": 3,
       "as_expected": true
     },
     {
@@ -414,7 +414,7 @@
         "instruction_following: output contains forbidden text 'CONFIRMED'; output contains forbidden text 'definitely'",
         "known gap, as predicted (R10): R10: no deterministic check detects an overstated claim in a draft; only the human approval step stands between it and the tracker."
       ],
-      "duration_ms": 2,
+      "duration_ms": 3,
       "as_expected": true
     },
     {
@@ -431,7 +431,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 1013,
+      "duration_ms": 1012,
       "as_expected": true
     },
     {
@@ -448,7 +448,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 133,
+      "duration_ms": 575,
       "as_expected": true
     },
     {
@@ -465,7 +465,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 2,
+      "duration_ms": 5,
       "as_expected": true
     },
     {
@@ -482,7 +482,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 1,
+      "duration_ms": 4,
       "as_expected": true
     },
     {
@@ -499,7 +499,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 1,
+      "duration_ms": 3,
       "as_expected": true
     },
     {
@@ -516,7 +516,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 2,
+      "duration_ms": 11,
       "as_expected": true
     },
     {
@@ -533,7 +533,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 1,
+      "duration_ms": 3,
       "as_expected": true
     },
     {
@@ -550,7 +550,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 1,
+      "duration_ms": 4,
       "as_expected": true
     },
     {
@@ -584,7 +584,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 1,
+      "duration_ms": 3,
       "as_expected": true
     },
     {
@@ -601,7 +601,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 1,
+      "duration_ms": 4,
       "as_expected": true
     },
     {
@@ -618,7 +618,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 1,
+      "duration_ms": 3,
       "as_expected": true
     },
     {
@@ -635,7 +635,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 1,
+      "duration_ms": 3,
       "as_expected": true
     },
     {
@@ -669,7 +669,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 1,
+      "duration_ms": 4,
       "as_expected": true
     },
     {
@@ -686,7 +686,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 1,
+      "duration_ms": 3,
       "as_expected": true
     },
     {
@@ -703,7 +703,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 1,
+      "duration_ms": 3,
       "as_expected": true
     },
     {
@@ -720,7 +720,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 1,
+      "duration_ms": 3,
       "as_expected": true
     },
     {
@@ -737,7 +737,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 1,
+      "duration_ms": 3,
       "as_expected": true
     },
     {
@@ -1158,7 +1158,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 65,
+      "duration_ms": 285,
       "as_expected": true
     },
     {
@@ -1173,7 +1173,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 60,
+      "duration_ms": 200,
       "as_expected": true
     },
     {
@@ -1188,7 +1188,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 58,
+      "duration_ms": 204,
       "as_expected": true
     },
     {
@@ -1203,7 +1203,7 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 59,
+      "duration_ms": 224,
       "as_expected": true
     },
     {
@@ -1218,7 +1218,22 @@
       "outcome": "PASS",
       "expected_outcome": "PASS",
       "reasons": [],
-      "duration_ms": 58,
+      "duration_ms": 261,
+      "as_expected": true
+    },
+    {
+      "suite": "failure_retest",
+      "owner": "Member 4 (Week 7)",
+      "scenario_id": "F06",
+      "title": "Flagged chunk never reaches the trace",
+      "category": "adversarial",
+      "suite_category": "regression",
+      "user_stories": [],
+      "risk_id": "",
+      "outcome": "PASS",
+      "expected_outcome": "PASS",
+      "reasons": [],
+      "duration_ms": 239,
       "as_expected": true
     }
   ]
