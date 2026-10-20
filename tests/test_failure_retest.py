@@ -1,4 +1,4 @@
-"""Member 4: rerun five historical failures against the real implementations.
+"""Member 4: rerun six historical failures against the real implementations.
 
     python3 tests/test_failure_retest.py
     python3 tests/test_failure_retest.py --verify-history --report evidence/evaluation/week7-failure-retest.json
@@ -31,6 +31,7 @@ CASES = {
     "F03": {"title": "Requester approves their own action", "module": "orchestrator.approval_gate", "fix": "3f121b75c361673fb54c20480773633a90016f5d"},
     "F04": {"title": "Unauthorized reviewer destroys a pending request", "module": "orchestrator.approval_gate", "fix": "3f121b75c361673fb54c20480773633a90016f5d"},
     "F05": {"title": "Telemetry sink deadlocks while reading summary", "module": "observability.telemetry", "fix": "8fa18d6892ea64a1ccbc1eb70fb65dddc653635e"},
+    "F06": {"title": "Flagged chunk never reaches the trace", "module": "agent.loop", "fix": "dcf470f408ad3eb9aedef08bff0f7e0917f995ba"},
 }
 
 
@@ -173,8 +174,66 @@ def sink_deadlock(module, directory):
     return {"sink_step_counts": seen, "dropped_writes": recorder.dropped_writes}
 
 
+def injection_trace_wiring(module, directory):
+    from models.types import Action, Confidence, EvidenceRef, ProposalSet, StopReason
+    from orchestrator import ExecutionContext
+    from rag import AssembledContext
+    from rag.injection_flagging import ChunkFlags, InjectionFlag
+
+    flagged_context = AssembledContext(
+        text="<evidence source_path=\"requirements/auth.md\">fixture</evidence>",
+        chunks_used=1, chunks_dropped=0, not_in_corpus=False,
+        allowed_source_paths=frozenset({"requirements/auth.md"}),
+        flagged=(ChunkFlags(
+            chunk_id="requirements/auth.md#L1-L2", source_path="requirements/auth.md",
+            doc_type="requirement",
+            flags=(InjectionFlag("IO-1", "instruction_override", 0, 10),),
+        ),),
+    )
+
+    class Sensor:
+        def sense(self, task, state):
+            return flagged_context
+
+    class Planner:
+        def plan(self, task, context, state):
+            return ProposalSet(
+                action=Action.PROPOSE_TEST, arguments={"title": "Synthetic regression fixture"},
+                rationale="Grounded in the supplied context.",
+                evidence=(EvidenceRef(source_path="requirements/auth.md"),),
+                confidence=Confidence.HIGH,
+            )
+
+    class Dispatcher:
+        def dispatch(self, proposal, *, context):
+            raise AssertionError("PROPOSE_TEST must never be dispatched.")
+
+    class StopEvaluator:
+        def evaluate(self, state):
+            return None if state.iterations_completed == 0 else StopReason.ITERATION_CAP
+
+    class RecordingSink:
+        def __init__(self):
+            self.actions = []
+
+        def record(self, entry):
+            self.actions.append(entry.action)
+
+    sink = RecordingSink()
+    loop = module.AgentLoop(
+        sensor=Sensor(), planner=Planner(), dispatcher=Dispatcher(),
+        stop_evaluator=StopEvaluator(), trace_sink=sink,
+    )
+    context = ExecutionContext(session_id="failure-retest-session", actor_id="dev-1", role="developer")
+    task = module.AgentTask(goal="Propose tests for the login lockout requirement.", context=context)
+    loop.run(task)
+    require("injection_flagged" in sink.actions,
+            f"a flagged chunk's injection/credential flags never reached the trace: {sink.actions!r}")
+    return {"trace_actions": sink.actions}
+
+
 PROBES = dict(zip(CASES, (path_escape, forged_memory, self_approval,
-                         unauthorized_decision, sink_deadlock)))
+                         unauthorized_decision, sink_deadlock, injection_trace_wiring)))
 
 
 def run_probe(case_id, source_file=None):
@@ -217,6 +276,9 @@ class FailureRetestTests(unittest.TestCase):
 
     def test_F05_telemetry_sink_can_read_summary(self):
         self.check_case("F05")
+
+    def test_F06_flagged_chunk_reaches_the_trace(self):
+        self.check_case("F06")
 
 
 def git(*arguments):

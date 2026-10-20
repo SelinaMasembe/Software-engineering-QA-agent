@@ -14,7 +14,7 @@ Suite               Owner                      Cases  Runs through
                                                       (real loop, router, gate, sandbox)
 ``prompt``          Member 4, Week 2           10     ``evaluate_case`` (scripted model)
 ``rag``             Member 4, Week 3           15     ``evaluate_case`` (real retrieval)
-``failure_retest``  Member 4, Week 7           5      ``run_probe`` (current code)
+``failure_retest``  Member 4, Weeks 7-8        6      ``run_probe`` (current code)
 ==================  =========================  =====  =======================================
 
 Every scenario gets one row: suite, ID, brief category, user stories, risk,
