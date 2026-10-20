@@ -1,0 +1,41 @@
+{
+  "model": "gemini-2.5-flash",
+  "prompt_version": "v1.3",
+  "latency_ms": 6688,
+  "request_id": null,
+  "usage": {
+    "input_tokens": 1143,
+    "output_tokens": 445,
+    "total_tokens": 2323
+  },
+  "output": {
+    "action": "propose_test",
+    "arguments": {
+      "test_case": {
+        "test_id": "TEST-AUTH-02-01",
+        "name": "Verify account locks after five failed attempts and resets on success",
+        "description": "Tests that an account is locked after five consecutive failed login attempts, returns 'account_locked', and that a subsequent successful login resets the failure counter.",
+        "steps": [
+          "Initialize LoginService.",
+          "Attempt login with an incorrect password for 'testuser' five times.",
+          "Attempt login with an incorrect password for 'testuser' a sixth time, assert result is 'account_locked'.",
+          "Attempt login with the correct password for 'testuser', assert result is 'authenticated'.",
+          "Attempt login with an incorrect password for 'testuser' again, assert result is 'invalid_credentials' (not 'account_locked')."
+        ],
+        "expected_result": "The account should be locked after five failed attempts, returning 'account_locked'. A successful login should reset the failure counter, allowing subsequent incorrect attempts to return 'invalid_credentials' instead of 'account_locked'."
+      }
+    },
+    "rationale": "The proposed test case directly verifies the behavior described in REQ-AUTH-02, ensuring that an account locks after the specified number of failures and that a successful login correctly resets the failure counter.",
+    "evidence": [
+      {
+        "source_path": "REQ-AUTH-02",
+        "note": "Requirement to lock an account after five consecutive failed attempts and reset the counter on successful login."
+      },
+      {
+        "source_path": "tests\\fixtures\\member2\\corpus\\src\\login_service.py",
+        "note": "Code defines MAX_FAILED_ATTEMPTS = 5, increments failure count, checks for locked status, and resets count on successful authentication."
+      }
+    ],
+    "confidence": "high"
+  }
+}
