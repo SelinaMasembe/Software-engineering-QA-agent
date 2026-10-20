@@ -42,12 +42,12 @@ How these are enforced in code:
 | ----------------- | ---------------------------------------------------------- | ------------------------------------------------------------------- |
 | 1. Corpus         | Curated, provenance-tagged documents                       | `src/ingestion/tag_provenance.py`, `knowledge/`                     |
 | 2. Retrieval      | Boundary-aware chunks, local BM25, `not_in_corpus` decision | `src/rag/chunking.py`, `retriever.py`, `retrieval.py`               |
-| 3. Context        | Evidence block plus the sources it is safe to cite         | `src/rag/context_builder.py`                                        |
-| 4. Planning       | Model proposes one action (`propose_action` v1.1)          | `src/models/client.py`, `docs/prompts/propose_action/`              |
+| 3. Context        | Evidence block plus the sources it is safe to cite; the real sensor retrieves and builds it each turn and traces its flags | `src/rag/context_builder.py`, `src/agent/sensor.py` |
+| 4. Planning       | Model proposes one action with the current `propose_action` prompt; earlier tool output is guarded before it is shown | `src/agent/planner.py`, `src/agent/history_guard.py`, `src/models/client.py`, `docs/prompts/propose_action/` |
 | 5. Validation     | Reject untraceable or fabricated citations                 | `src/orchestrator/validation.py`                                    |
 | 6. Dispatch       | Registry, role and argument checks, approval, output limits | `src/orchestrator/router.py`, `src/orchestrator/approval_gate.py`   |
 | 7. Tools          | `search_repo`, `read_file`, `run_tests`, `draft_issue`     | `src/tools/`, `src/sandbox/executor.py`                             |
-| 8. Agent loop     | Sense, plan, validate, act, observe, stop or pause         | `src/agent/loop.py`, `stop_conditions.py`, `task_contract.yaml`     |
+| 8. Agent loop     | Sense, plan, validate, act, observe, stop or pause; `build_agent_session` wires the real sensor and planner | `src/agent/loop.py`, `runner.py`, `stop_conditions.py`, `task_contract.yaml` |
 | 9. Observability  | Every run saved as JSON Lines evidence; step telemetry (model, retrieval, tools, timing) | `src/observability/run_logger.py`, `telemetry.py`, `instrumentation.py` |
 | 10. Memory        | Per-module record of proposed, run and human-rejected tests; session state | `src/memory/`, `src/integration/mcp_interface.py`        |
 
@@ -81,7 +81,7 @@ are in `docs/ai-assistance credit/`.
 
 ```text
 src/                      application code (run with pytest.ini or PYTHONPATH=src)
-  agent/                  agent loop, stop conditions, task contract (YAML + loader + adapter)
+  agent/                  agent loop, stop conditions, task contract (YAML + loader + adapter), real sensor and planner, history guard
   config/                 environment settings loader
   ingestion/              corpus collection and provenance register
   integration/            MCP-style memory/state interface contract
@@ -155,6 +155,7 @@ Run these from the repository root with `PYTHONPATH=src python3 <script>`.
 | `scripts/member1_validation_smoke.py` | Parse, validate citations, dispatch | No |
 | `scripts/member1_stop_conditions_smoke.py` | The four stop conditions | No |
 | `scripts/member2_model_smoke.py` | One live `propose_action` model call (see its `--help`) | **Yes** |
+| `scripts/run_agent_session.py` | One agent session end to end with the real sensor and planner; offline stub by default, real model only with `--live` | Only with `--live` |
 | `scripts/member2_tool_dispatch_demo.py` | Four dispatcher scenarios | No |
 | `scripts/member5_approval_demo.py` | Pending, approved once, approval consumed | No |
 | `scripts/member5_run_log_demo.py` | Three saved runs, including a human approval pause and resume | No |

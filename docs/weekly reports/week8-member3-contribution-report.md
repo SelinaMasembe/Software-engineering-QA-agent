@@ -26,6 +26,7 @@ A read-only inspection of my areas then found four guardrail patterns that slowe
 | `not_text` status for non-UTF-8 files | `src/tools/read_file.py`, `tests/integration/test_read_file_tool.py` | Committed (f44edd8) |
 | Stale prompt-version and stop-condition comments | `src/rag/context_builder.py`, `src/agent/task_contract.yaml`, `tests/test_task_contract.py` | Committed (1fdfc00) |
 | Smoke run record and test screenshot | `evidence/test-runs/week8/smoke/`, `evidence/screenshots/week8/tests_member3.png` | Committed (25ef0c7) |
+| Real ContextSensor and Planner, history guard, end-to-end script | `src/agent/sensor.py`, `src/agent/planner.py`, `src/agent/history_guard.py`, `scripts/run_agent_session.py`, `tests/test_agent_sensor.py`, `tests/test_agent_planner.py`, `tests/integration/test_real_agent_session.py` | Written and tested; not committed yet |
 | This report and the Week 8 AI-assistance entry | `docs/weekly reports/week8-member3-contribution-report.md`, `docs/ai-assistance credit/week8/member3-AI-assistance.md` | Written |
 
 - **Prompt v1.3.** FAILURE BEHAVIOR now says: return an evidence-free `no_action` only when the context says nothing was found; when evidence is insufficient, return `no_action`, cite each source read with a note on what is missing, and set confidence to low. ROLE and TASK are unchanged.
@@ -42,6 +43,7 @@ A read-only inspection of my areas then found four guardrail patterns that slowe
   - **Timings on 200,000 hostile characters:** RM-2 went from over 60 s to 0.02 s; the URL-password and both assignment rules from over 60 s to 0.02 to 0.04 s; the PEM block from 18.1 s to 0.003 s. A timing regression test now covers each one.
   - **`build_context` on one 24,000-character chunk:** a line of spaces went from 8.1 s to 0.03 s, and `a-a-a-` from 31.5 to 40.3 s down to 0.03 to 0.04 s.
 - **`read_file` on a non-UTF-8 file.** A binary file in the corpus raised an exception that the router reported as a generic execution failure. It now returns a typed `not_text` status with no content, like `path_not_allowed` and `not_found`.
+- **Real sensor and planner.** `RetrievalContextSensor` retrieves with the goal text, returns exactly what `build_context` produces, and records an `injection_flagged` trace entry when the context has flags; a failing sink never stops sensing. `PromptPlanner` sends the current prompt (`load_latest`) with the goal, the context text, an optional memory block and the guarded observation history, parses the reply with `ProposalSet.model_validate_json`, and reports every failure as a typed `PlannerError` (malformed reply, empty reply, client error, timeout, rate limit, authentication) with a fixed message, so no provider text or key can reach the loop or the trace. `scripts/run_agent_session.py` runs one session end to end through `build_agent_session`; it is offline by default and uses the real model only with `--live`.
 - **Stale comments.** `context_builder.py` now cites the current prompt through `prompts.loader.load_latest` instead of v1.1, and the task contract comment no longer says the stop conditions are unenforced. The task contract test also checks the goal sentences against the latest prompt.
 
 ## Real-model evidence
@@ -89,8 +91,8 @@ All calls used Gemini 2.5 Flash through the Google AI Studio OpenAI-compatible e
 ## Open items
 
 1. **Complete the missing v1.1 calls** after the quota resets, including `security_system_prompt_exfiltration_attempt`, then the v1.3 repeats.
-2. **Real sensor and planner.** Only scripted ones exist.
-3. **Flags to a trace sink.** `flag_trace_entry` has no caller outside tests.
+2. **Real sensor and planner.** Built and tested: `RetrievalContextSensor` (`src/agent/sensor.py`) and `PromptPlanner` (`src/agent/planner.py`), run end to end through `build_agent_session` with a stub model client, and once live on 20 Oct 2026 (see Known limitations). Still open: a specific goal for real sessions, and more than one live run.
+3. **Flags to a trace sink.** Done. `AgentLoop` now records a `context_flagged` entry (counts, categories and rule ids only) whenever the sensed context has flags, whatever the sensor, and the real planner records flags it finds in earlier tool output. The change to `src/agent/loop.py` needs its owner's (Andrew's) review.
 4. **Independent injection cases from Member 4.**
 5. **R10 decision.** No deterministic check detects an overstated claim in a draft.
 6. **The 120 second wall-clock budget** is still a placeholder.
@@ -104,12 +106,14 @@ All calls used Gemini 2.5 Flash through the Google AI Studio OpenAI-compatible e
 
 These are recorded, not fixed.
 
-- In a real run, injection and credential flags are computed and then discarded: nothing calls `flag_trace_entry`, and no trace sink receives them.
-- Tool output stored in the loop history (read_file content, search_repo chunks, run_tests output) bypasses credential redaction, tag neutralisation and flagging. Whoever renders history for a planner must apply the same guard as `build_context`.
+- Flags are recorded for review and change nothing the model sees. A flagged chunk is still shown, and the Week 8 live run showed a model obeying flagged text.
+- The retrieval query is the task goal text, because `AgentTask` carries only a goal. With the shipped task contract the goal is the prompt's ROLE text, which retrieves nothing from the fixture corpus (`not_in_corpus`, 0 chunks), so a real session needs a specific goal. The query is built by one small function (`retrieval_query`) so it can be replaced.
+- Earlier tool output is now guarded before the planner shows it (`src/agent/history_guard.py`: credential redaction, evidence, memory and observation tag neutralisation, and flagging, applied to each string). Credential rules use the stricter prose set, so ordinary code assignments in read_file output may be over-redacted.
+- A truncated model reply cannot be told apart from a malformed one, because the client does not report why generation stopped; the planner reports both as `malformed_reply`.
+- One live end-to-end run is recorded (`evidence/test-runs/week8/agent-session/live_session.json`, 20 Oct 2026, Gemini 2.5 Flash, prompt v1.3, goal "Propose a test that the account locks after five failed login attempts."). It completed in 2 iterations with a `propose_test` citing `requirements/authentication.md` and `src/login_service.py`. Turn 1 dispatched a tool, and the planner's history guard flagged and redacted one credential-shaped assignment (CR-ASSIGN) in that tool's output before turn 2. It is one run, made before the loop's `context_flagged` event existed, and its summary does not record which tool ran. The automated tests use stub model clients only.
 - Groundedness is citation validity only. Nothing checks that the cited text supports the claim.
 - `record_proposal` and `record_run` have no real caller, and neither does `render_for_prompt`, so memory never reaches the model.
 - The real-model results are single calls: no query, invented `requirements/<REQ-ID>.md` paths, temperature fixed at 0.0, one run per case, and no v1.1 score for the security case.
-- The model client does not report why generation stopped, so a truncated reply shows only as a parse failure.
 - The flagger rules and their test cases were written by the same author, so passing them is not independent evidence.
 - Branch commits 30c6bc8 to 8e6eeca do not run on their own.
 

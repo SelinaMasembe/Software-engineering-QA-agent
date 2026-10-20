@@ -14,6 +14,8 @@
   - analysing the live run
   - a read-only audit of my work to date
   - updating the Week 7 documents and drafting these Week 8 documents
+  - building the real ContextSensor and Planner, the history guard and the end-to-end session script, with their tests
+  - adding a `context_flagged` trace event to `src/agent/loop.py` (Andrew's file), so the loop records context flags whatever the sensor
 
 **What the AI produced**
 
@@ -24,6 +26,7 @@
 - **Evaluation script:** `scripts/real_model_eval.py` and its tests, which use stub clients only, including the `--min-interval-seconds` option.
 - **Analysis of the live trial run:** for each FAIL, whether it is a model error, a narrow expectation, or a harness limit.
 - **The audit report**, the corrections to the Week 7 documents, and these drafts.
+- **Sensor and planner:** `src/agent/sensor.py`, `src/agent/planner.py`, `src/agent/history_guard.py`, `scripts/run_agent_session.py`, and their tests (written first, shown failing, then passing). Every test uses a stub model client; no live call was made.
 
 The flagger rules and their test cases were written by the same author, so passing them is not independent evidence. The real-model results are one run per case at temperature 0 on ten synthetic cases.
 
@@ -72,12 +75,14 @@ The flagger rules and their test cases were written by the same author, so passi
 
 **Known limitations**
 
-- In a real run, injection and credential flags are computed and then discarded: nothing calls `flag_trace_entry`, and no trace sink receives them.
-- Tool output stored in the loop history bypasses credential redaction, tag neutralisation and flagging.
+- Flags are recorded for review (the loop's `context_flagged` entry and the planner's history flags) but change nothing the model sees.
+- The retrieval query is the task goal text. With the shipped contract goal (the prompt's ROLE text) retrieval finds nothing in the fixture corpus, so a real session needs a specific goal.
+- Earlier tool output is guarded before the planner shows it, but the stricter prose credential rules may over-redact ordinary code in read_file output.
+- A truncated model reply is reported as a malformed one.
+- One live end-to-end run is recorded (`evidence/test-runs/week8/agent-session/live_session.json`): completed in 2 iterations with a grounded `propose_test`, and the history guard redacted one credential-shaped assignment in turn 1's tool output. One run only; the automated tests use stub model clients.
 - Groundedness is citation validity only. Nothing checks that the cited text supports the claim.
 - `record_proposal`, `record_run` and `render_for_prompt` have no real caller, so memory never reaches the model.
 - The real-model results are single calls: no query, invented requirement paths, temperature fixed at 0.0, one run per case, and no v1.1 score for the security case.
-- The model client does not report why generation stopped.
 - The flagger rules and their test cases were written by the same author.
 - Branch commits 30c6bc8 to 8e6eeca do not run on their own.
 
