@@ -2,7 +2,7 @@
 
 **Status:** draft, in progress. Items marked TBC are not confirmed yet.
 **Date:** 16th Oct 2026
-**Branch:** `week_7_member_3`
+**Branch:** `week_7_member_3` (merged to main in PR #58)
 **Topic:** prompt v1.3, memory delimiter, ingested-content credential scan, flagger tuning, and the first real-model evidence
 
 ## Summary
@@ -30,7 +30,8 @@ This week I closed the R4 gap with a credential scan on ingested content, stoppe
   - **Week 7 labelled set (29 rows):** precision 0.94 and recall 0.79, unchanged.
   - **Wider labelled set (90 rows):** these figures show coverage of the new rules, not independent evidence, because I wrote the rules and the rows.
 - **Push protection fix.** A Stripe-test-key-shaped fixture in `tests/test_credential_scan.py` was blocked on push. It was rewritten so the value is assembled at run time, and the rewrite is committed in efd626f. No commit on the branch contains the literal value, and the branch is pushed.
-- **Full suite:** `645 passed, 1 skipped, 619 subtests`. The skip is the Windows permission test.
+- **Full suite:** `645 passed, 1 skipped, 619 subtests` on 16 Oct 2026, and `669 passed, 1 skipped, 625 subtests` on main, 20 Oct 2026. The skip is the Windows permission test.
+- **Long-input fixes.** Four guardrail patterns that slowed down quadratically on long hostile input (RM-2, the password-in-URL rule, the key-name assignment rules and the PEM block) were rewritten, with no change to any flag or redaction. `scripts/check_sensitive.py` was changed with its owner's agreement, because a sync test pins its patterns to the copies in `credential_scan.py`.
 
 ## Real-model evidence
 
@@ -44,7 +45,7 @@ All calls used Gemini 2.5 Flash through the Google AI Studio OpenAI-compatible e
 
 | Run | Folder | Calls | Result |
 |---|---|---|---|
-| Smoke | TBC (kept outside the repository) | 1 | Valid JSON. The citation check rejected it: it cited the requirement ID, and the script's input gave a Windows path. The proposed test had a step that would fail against the code. |
+| Smoke | `smoke/20261016_gemini_smoke_run.json` | 1 | Valid JSON. The citation check rejected it: it cited the requirement ID, and the script's input gave a Windows path. The proposed test had a step that would fail against the code. |
 | Trial, v1.3, 1 run | `20261016T145654Z_live` | 10 of 10 scored | 6 PASS, 4 FAIL, 0 invalid citations, 2 rate-limit retries. |
 | Partial, v1.1 then v1.3, 3 runs planned | `20261016T152707Z_live` | 15 v1.1 calls recorded, 10 scored | Stopped after three consecutive rate-limit (429) failures. Details below. |
 
@@ -84,7 +85,20 @@ All calls used Gemini 2.5 Flash through the Google AI Studio OpenAI-compatible e
 7. **Whether the existing 10 prompt and 15 RAG cases count toward the 30 scenarios.**
 8. **The `edge_vague_requirement` expectation:** keep the Week 2 expectation or replace it for v1.3.
 9. **Document updates:** the Prompt Specification, the Deliverables document (paragraph 114 still says "proposed, run, or rejected"), and the Grounding Design Note.
-10. **The smoke run record** is outside the repository. TBC: copy it into `evidence/test-runs/week8/`.
+10. **The smoke run record** is now in `evidence/test-runs/week8/smoke/20261016_gemini_smoke_run.json`.
+
+## Known limitations
+
+These are recorded, not fixed.
+
+- In a real run, injection and credential flags are computed and then discarded: nothing calls `flag_trace_entry`, and no trace sink receives them.
+- Tool output stored in the loop history (read_file content, search_repo chunks, run_tests output) bypasses credential redaction, tag neutralisation and flagging. Whoever renders history for a planner must apply the same guard as `build_context`.
+- Groundedness is citation validity only. Nothing checks that the cited text supports the claim.
+- `record_proposal` and `record_run` have no real caller, and neither does `render_for_prompt`, so memory never reaches the model.
+- The real-model results are single calls: no query, invented `requirements/<REQ-ID>.md` paths, temperature fixed at 0.0, one run per case, and no v1.1 score for the security case.
+- The model client does not report why generation stopped, so a truncated reply shows only as a parse failure.
+- The flagger rules and their test cases were written by the same author, so passing them is not independent evidence.
+- Branch commits 30c6bc8 to 8e6eeca do not run on their own.
 
 ## Commit-to-week table
 
