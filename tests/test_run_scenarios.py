@@ -59,7 +59,10 @@ class RealRunTests(unittest.TestCase):
         self.assertGreaterEqual(suites["behaviour"]["scenarios"], 30)
         self.assertEqual(suites["prompt"]["scenarios"], 10)
         self.assertEqual(suites["rag"]["scenarios"], 15)
-        self.assertEqual(suites["failure_retest"]["scenarios"], 5)
+        # >= rather than ==, matching the "behaviour" check above: Member 4
+        # added a sixth case (F06) in Week 8, and the count should be free to
+        # grow again without this assertion becoming another thing to update.
+        self.assertGreaterEqual(suites["failure_retest"]["scenarios"], 5)
         self.assertTrue(all(suite["error"] is None for suite in suites.values()))
 
     def test_every_scenario_behaves_as_its_owner_expects(self) -> None:

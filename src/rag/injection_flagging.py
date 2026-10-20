@@ -372,10 +372,11 @@ def flag_trace_entry(
 ) -> TraceEntry:
     """Build the trace entry that records "these chunks were flagged".
 
-    Nothing calls this yet. Whoever wires a real sensor to a trace sink can
-    pass the result to ``sink.record``. The detail holds counts, rule ids and
-    categories only: no chunk text, and no source path, because a path comes
-    from the content being flagged.
+    Called by ``agent.loop.AgentLoop`` (Week 8, Member 4) whenever a sensed
+    turn's ``AssembledContext.flagged`` is non-empty, and passed straight to
+    its trace sink. The detail holds counts, rule ids and categories only:
+    no chunk text, and no source path, because a path comes from the content
+    being flagged.
     """
 
     records = tuple(flagged)
