@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import json
 import math
-import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
@@ -90,7 +89,6 @@ class LoopEvent(str, Enum):
     STARTED = "loop_started"
     RESUMED = "loop_resumed"
     CONTEXT_SENSED = "context_sensed"
-    CONTEXT_FLAGGED = "context_flagged"
     ACTION_PLANNED = "action_planned"
     CITATIONS_REJECTED = "citations_rejected"
     TOOL_DISPATCHED = "tool_dispatched"
@@ -435,7 +433,7 @@ class AgentLoop:
 
         # Sense. The allow-list is snapshotted before planning so nothing the
         # planner does to the context object can widen what may be cited.
-        context, allowed, flag_summary = self._sense(run)
+        context, allowed = self._sense(run)
         not_in_corpus = context.not_in_corpus is True
         self._record(
             run,
@@ -443,10 +441,6 @@ class AgentLoop:
             f"iteration={turn}; not_in_corpus={not_in_corpus}; "
             f"allowed_sources={len(allowed)}",
         )
-        # Injection and credential flags on the context (rag.build_context)
-        # are recorded here, so they reach the trace whatever the sensor.
-        if flag_summary is not None:
-            self._record(run, LoopEvent.CONTEXT_FLAGGED, f"iteration={turn}; {flag_summary}")
 
         # Plan exactly one action.
         planned = self._plan(run, context)
@@ -495,9 +489,7 @@ class AgentLoop:
         # Observe.
         return self._observe(run, observation, LoopEvent.TOOL_DISPATCHED)
 
-    def _sense(
-        self, run: _Run
-    ) -> tuple[AssembledContext, frozenset[str], str | None]:
+    def _sense(self, run: _Run) -> tuple[AssembledContext, frozenset[str]]:
         try:
             context = self._sensor.sense(run.task, run.state)
             if not isinstance(context, AssembledContext):
@@ -507,10 +499,9 @@ class AgentLoop:
             allowed = frozenset(context.allowed_source_paths)
             if not all(isinstance(path, str) for path in allowed):
                 raise TypeError("Allowed source paths must be strings.")
-            flag_summary = _summarize_flags(context.flagged)
         except Exception:
             raise _Abort(LoopFailure.SENSE_FAILED) from None
-        return context, allowed, flag_summary
+        return context, allowed
 
     def _plan(self, run: _Run, context: AssembledContext) -> PlannedAction:
         try:
@@ -690,30 +681,6 @@ class AgentLoop:
             halt=halt,
             failure=failure,
         )
-
-
-_UNSAFE_LABEL = re.compile(r"[^A-Za-z0-9_-]")
-
-
-def _summarize_flags(flagged: Any) -> str | None:
-    """Counts, categories and rule ids of the context's flags, or None.
-
-    Never chunk text, spans or source paths. Rule ids and categories come
-    from fixed rule tables, but are still reduced to safe characters so a
-    custom sensor cannot put free text into the trace.
-    """
-
-    if not isinstance(flagged, tuple):
-        raise TypeError("AssembledContext.flagged must be a tuple.")
-    if not flagged:
-        return None
-    flags = [flag for record in flagged for flag in tuple(record.flags)]
-    categories = sorted({_UNSAFE_LABEL.sub("", str(flag.category)) for flag in flags})
-    rules = sorted({_UNSAFE_LABEL.sub("", str(flag.rule_id)) for flag in flags})
-    return (
-        f"chunks_flagged={len(flagged)}; flags={len(flags)}; "
-        f"categories={','.join(categories)}; rules={','.join(rules)}"
-    )
 
 
 def _require(dependency: Any, method: str, label: str) -> None:
