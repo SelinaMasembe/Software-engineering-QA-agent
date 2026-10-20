@@ -52,7 +52,10 @@ builder packages evidence with source paths that can be checked by the citation
 validator. Before context reaches the model, the builder redacts values matching
 known credential patterns, neutralises evidence and memory delimiters in chunk
 text, and flags injection-like content. The flagger identifies content for
-review; it does not decide whether the content is safe or remove it.
+review; it does not decide whether the content is safe or remove it. When a
+sensed turn contains flagged chunks, the `AgentLoop` records a flag entry in the
+run trace with counts, rule identifiers and categories only, so a reviewer can
+see the flag without the trace copying the flagged text.
 
 The configured model client sends the versioned prompt and context to an
 external HTTPS endpoint. Its response is parsed as a `ProposalSet` and treated
