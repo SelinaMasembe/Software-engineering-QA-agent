@@ -36,7 +36,6 @@ SRC_DIR = REPO_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from agent.loop import LoopEvent  # noqa: E402
 from agent.planner import PromptPlanner  # noqa: E402
 from agent.runner import build_agent_session  # noqa: E402
 from agent.sensor import RetrievalContextSensor  # noqa: E402
@@ -112,8 +111,8 @@ def build_session(goal: str, corpus: Path, *, live: bool, sink: MemorySink):
         session_id=f"session-{_utc_now().strftime('%Y%m%dT%H%M%SZ')}",
         actor_id="member3-cli",
         role="developer",
-        # The loop records context flags itself (context_flagged), so the
-        # sensor gets no sink here; the planner still traces history flags.
+        # The loop records sensed-context flags itself (flag_trace_entry), so
+        # the sensor gets no sink here; the planner still traces history flags.
         sensor=RetrievalContextSensor(pipeline),
         planner=planner,
         dispatcher=dispatcher,
@@ -135,9 +134,7 @@ def summarize(result: Any, planner: PromptPlanner, sink: MemorySink, *, live: bo
         "iterations": result.iterations,
         "final_action": None if proposal is None else proposal.action.value,
         "cited_paths": [] if proposal is None else [ref.source_path for ref in proposal.evidence],
-        "flag_entries": [
-            e.detail for e in sink.entries if e.action in (TRACE_ACTION, LoopEvent.CONTEXT_FLAGGED.value)
-        ],
+        "flag_entries": [e.detail for e in sink.entries if e.action == TRACE_ACTION],
         "trace_actions": [e.action for e in sink.entries],
     }
 

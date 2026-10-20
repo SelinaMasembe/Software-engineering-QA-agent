@@ -15,7 +15,7 @@
   - a read-only audit of my work to date
   - updating the Week 7 documents and drafting these Week 8 documents
   - building the real ContextSensor and Planner, the history guard and the end-to-end session script, with their tests
-  - adding a `context_flagged` trace event to `src/agent/loop.py` (Andrew's file), so the loop records context flags whatever the sensor
+  - fitting the sensor and planner to the loop's flag recording: the loop records sensed-context flags through `flag_trace_entry`, as merged on main, so the sensor and planner add no recording of their own for the sensed context; the planner still traces flags it finds in earlier tool output (history guard), because the loop never sees those
 
 **What the AI produced**
 
@@ -75,7 +75,7 @@ The flagger rules and their test cases were written by the same author, so passi
 
 **Known limitations**
 
-- Flags are recorded for review (the loop's `context_flagged` entry and the planner's history flags) but change nothing the model sees.
+- Flags are recorded for review (the loop's `injection_flagged` entry for the sensed context, through `flag_trace_entry`, and the planner's entry for history flags) but change nothing the model sees.
 - The retrieval query is the task goal text. With the shipped contract goal (the prompt's ROLE text) retrieval finds nothing in the fixture corpus, so a real session needs a specific goal.
 - Earlier tool output is guarded before the planner shows it, but the stricter prose credential rules may over-redact ordinary code in read_file output.
 - A truncated model reply is reported as a malformed one.

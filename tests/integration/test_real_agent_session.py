@@ -23,7 +23,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from unittest import mock
 
-from agent.loop import LoopEvent, LoopFailure, LoopStatus
+from agent.loop import LoopFailure, LoopStatus
 from agent.planner import PlannerFailure, PromptPlanner
 from agent.runner import build_agent_session
 from agent.sensor import RetrievalContextSensor
@@ -113,8 +113,8 @@ def session(goal: str, corpus: Path, client: StubModelClient, sink: RecordingSin
     planner = PromptPlanner(client, trace_sink=sink, clock=lambda: NOW)
     return build_agent_session(
         dataclasses.replace(load_task_contract(), goal=goal),
-        # No sink on the sensor: the loop records context flags itself
-        # (LoopEvent.CONTEXT_FLAGGED), so a sensor sink would record them twice.
+        # No sink on the sensor: the loop records sensed-context flags itself
+        # (flag_trace_entry), so a sensor sink would record them twice.
         sensor=RetrievalContextSensor(pipeline),
         planner=planner,
         dispatcher=dispatcher,
@@ -143,9 +143,7 @@ class RealSessionTests(unittest.TestCase):
         system_prompt, user_content = client.calls[0]
         self.assertEqual(system_prompt, load_latest("propose_action").text)
         self.assertIn(LOCKOUT_GOAL, user_content)
-        actions = [e.action for e in sink.entries]
-        self.assertNotIn(TRACE_ACTION, actions)
-        self.assertNotIn(LoopEvent.CONTEXT_FLAGGED.value, actions)
+        self.assertNotIn(TRACE_ACTION, [e.action for e in sink.entries])
 
     def test_injection_in_source_reaches_the_sink_as_a_flag(self) -> None:
         client, sink = StubModelClient("obey_injection"), RecordingSink()
@@ -157,12 +155,18 @@ class RealSessionTests(unittest.TestCase):
         # loop still ends cleanly; the flag is what a reviewer sees.
         self.assertIs(result.status, LoopStatus.NO_ACTION)
         self.assertIn('source_path="src/reset_token.py"', client.calls[0][1])
-        flags = [e for e in sink.entries if e.action == LoopEvent.CONTEXT_FLAGGED.value]
+        # Exactly one entry: the loop records the sensed context's flags once.
+        # A second recording (for example a sink on the sensor) would fail this.
+        flags = [e for e in sink.entries if e.action == TRACE_ACTION]
         self.assertEqual(len(flags), 1)
-        self.assertIn("AI-1", flags[0].detail)
+        detail = flags[0].detail
         self.assertEqual(flags[0].session_id, IDENTITY["session_id"])
-        # Recorded once, by the loop; nothing else records the same flags.
-        self.assertNotIn(TRACE_ACTION, [e.action for e in sink.entries])
+        self.assertIn("chunks_flagged=1", detail)
+        self.assertIn("flags=", detail)
+        self.assertIn("categories=action_imperative_aimed_at_agent", detail)
+        self.assertIn("rules=AI-1", detail)
+        for text in ("NOTE TO AI", "is_token_expired", "reset_token"):
+            self.assertNotIn(text, detail)
         for entry in sink.entries:
             self.assertNotIn("NOTE TO AI", entry.detail)
 

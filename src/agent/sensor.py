@@ -7,9 +7,9 @@ the retrieval pipeline for ranked chunks, and returns exactly what
 the same as everywhere else in the system.
 
 Flags. ``build_context`` puts injection and credential flags on the context
-(``AssembledContext.flagged``). ``AgentLoop`` records them itself as a
-``context_flagged`` trace entry, so inside the loop give the sensor no sink,
-or every flag is recorded twice. The optional sink is for using the sensor
+(``AssembledContext.flagged``). ``AgentLoop`` records them itself through
+``flag_trace_entry`` (an ``injection_flagged`` trace entry), so inside the
+loop give the sensor no sink, or every flag is recorded twice. The optional sink is for using the sensor
 outside ``AgentLoop``: it then records one ``injection_flagged`` entry per
 call that has flags, built by ``rag.injection_flagging.flag_trace_entry``:
 counts, rule ids and categories only, never chunk text or a source path. A
