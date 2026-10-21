@@ -53,9 +53,9 @@ COPIED_PATTERNS: tuple[tuple[str, str, str], ...] = (
     ("CR-STRIPE", "Stripe live key", r"\b[rs]k_live_[0-9A-Za-z]{20,}"),
     ("CR-JWT", "JSON Web Token", r"\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}"),
 )
-COPIED_URL_PASSWORD = r"\b[a-z][a-z0-9+.\-]*://[^\s:/@]+:([^\s:/@]+)@"
+COPIED_URL_PASSWORD = r"\b(?<![a-z0-9+.\-])[a-z][a-z0-9+.\-]*://[^\s:/@]+:([^\s:/@]+)@"
 COPIED_KEY_NAME = (
-    r"(?<![A-Za-z0-9_])"
+    r"(?<![A-Za-z0-9_.\-])"
     r"(?P<name>[A-Za-z0-9_.\-]*?(?:api[_-]?key|access[_-]?key|private[_-]?key|"
     r"client[_-]?secret|secret(?:[_-]?key)?|auth[_-]?token|token|password|passwd|pwd))"
 )
@@ -81,9 +81,12 @@ _PLACEHOLDER = re.compile(COPIED_PLACEHOLDER)
 _CODE_ASSIGN = re.compile(COPIED_KEY_NAME + COPIED_CODE_ASSIGN_SUFFIX, re.I)
 _LOOSE_ASSIGN = re.compile(COPIED_KEY_NAME + COPIED_LOOSE_ASSIGN_SUFFIX, re.I)
 _BEARER = re.compile(r"\bBearer\s+(?P<value>[A-Za-z0-9._~+/\-]{20,}=*)")
-# A whole PEM private key, header to footer, when the footer is present.
+# A whole PEM private key, header to footer, when the footer is present. The
+# body may not cross another "-----BEGIN ", so each scan stops at the next
+# header and many headers with no footer stay linear.
 _PEM_BLOCK = re.compile(
-    r"-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY-----.*?-----END (?:[A-Z0-9]+ )*PRIVATE KEY-----",
+    r"-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY-----(?:(?!-----BEGIN ).)*?"
+    r"-----END (?:[A-Z0-9]+ )*PRIVATE KEY-----",
     re.DOTALL,
 )
 

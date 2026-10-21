@@ -13,6 +13,7 @@ import ast
 import base64
 import importlib.util
 import sys
+import time
 import unittest
 from pathlib import Path
 
@@ -269,6 +270,42 @@ class PurityTests(unittest.TestCase):
         self.assertLessEqual(imported, {"__future__", "re", "dataclasses"})
         for forbidden in ("open", "now", "sleep", "read_text"):
             self.assertNotIn(forbidden, calls)
+
+
+class LongInputTimingTests(unittest.TestCase):
+    """Week 8 (F2, F3): each rule must stay linear on long hostile input."""
+
+    @staticmethod
+    def elapsed(pattern, text: str) -> float:
+        start = time.perf_counter()
+        for _ in pattern.finditer(text):
+            pass
+        return time.perf_counter() - start
+
+    def test_url_password_rule_on_a_long_run_of_dashes(self) -> None:
+        import rag.credential_scan as module
+
+        pattern = dict(module._FORMAT_RULES)["CR-URL-PASSWORD"]
+        self.assertLess(self.elapsed(pattern, "a-" * 100_000), 1.0)
+
+    def test_code_assign_rule_on_a_long_run_of_dashes(self) -> None:
+        import rag.credential_scan as module
+
+        self.assertLess(self.elapsed(module._CODE_ASSIGN, "a-" * 100_000), 1.0)
+
+    def test_loose_assign_rule_on_a_long_run_of_dashes(self) -> None:
+        import rag.credential_scan as module
+
+        self.assertLess(self.elapsed(module._LOOSE_ASSIGN, "a-" * 100_000), 1.0)
+
+    def test_pem_block_on_many_headers_without_a_footer(self) -> None:
+        import rag.credential_scan as module
+
+        # Assembled at run time so the commit scanner and push protection do
+        # not read the test input as a key.
+        header = "-----BEGIN " + "PRIVATE " + "KEY-----"
+        text = (header * (200_000 // len(header) + 1))[:200_000]
+        self.assertLess(self.elapsed(module._PEM_BLOCK, text), 1.0)
 
 
 if __name__ == "__main__":

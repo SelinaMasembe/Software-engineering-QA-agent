@@ -1,0 +1,29 @@
+{
+  "live": true,
+  "model": "gemini-2.5-flash",
+  "prompt_version": "v1.3",
+  "goal": "Propose a test that the account locks after five failed login attempts.",
+  "status": "completed",
+  "failure": null,
+  "planner_failure": null,
+  "iterations": 2,
+  "final_action": "propose_test",
+  "cited_paths": [
+    "requirements/authentication.md",
+    "src/login_service.py",
+    "src/login_service.py"
+  ],
+  "flag_entries": [
+    "chunks_flagged=1; flags=1; categories=credential; rules=CR-ASSIGN"
+  ],
+  "trace_actions": [
+    "loop_started",
+    "context_sensed",
+    "action_planned",
+    "tool_dispatched",
+    "context_sensed",
+    "injection_flagged",
+    "action_planned",
+    "loop_completed"
+  ]
+}

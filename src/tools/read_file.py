@@ -22,7 +22,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_REGISTER_PATH = REPO_ROOT / "knowledge" / "source-register.json"
 DEFAULT_CORPUS_DIR = REPO_ROOT / "knowledge" / "corpus"
 
-_VALID_STATUSES = frozenset({"ok", "path_not_allowed", "not_found"})
+_VALID_STATUSES = frozenset({"ok", "path_not_allowed", "not_found", "not_text"})
 
 
 class ReadFileTool:
@@ -61,10 +61,11 @@ class ReadFileTool:
     ) -> Mapping[str, Any]:
         """Return the file's content, or why it could not be returned.
 
-        path_not_allowed and not_found are reported as distinct, structured
-        outcomes rather than raised -- both are ordinary results of a
-        request, not tool failures, so they go through validate_output like
-        any other successful dispatch.
+        path_not_allowed, not_found and not_text are reported as distinct,
+        structured outcomes rather than raised -- each is an ordinary result
+        of a request, not a tool failure, so it goes through validate_output
+        like any other successful dispatch. not_text means the file is not
+        valid UTF-8 (for example a binary file); no content is returned.
         """
 
         path = arguments["path"]
@@ -78,7 +79,10 @@ class ReadFileTool:
         if not file_path.is_file():
             return {"status": "not_found", "path": path}
 
-        content = file_path.read_text(encoding="utf-8")
+        try:
+            content = file_path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            return {"status": "not_text", "path": path}
         return {"status": "ok", "path": path, "content": content}
 
     def validate_output(self, output: Mapping[str, Any]) -> dict[str, Any]:

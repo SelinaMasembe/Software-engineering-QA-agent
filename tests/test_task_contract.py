@@ -41,17 +41,30 @@ class ShippedContractTests(unittest.TestCase):
         }
         self.assertEqual(set(load_task_contract().tools), names)
 
+    GOAL_SENTENCES = (
+        "You are the reasoning component of a Software-Engineering QA Agent.",
+        "You only propose.",
+        "decide the ONE next action to take this turn.",
+    )
+
     def test_goal_matches_the_prompt_role(self) -> None:
+        # History: the goal was first taken from v1.1, and that still holds.
         prompt = DEFAULT_CONTRACT_PATH.parents[2] / "docs/prompts/propose_action/v1.1.md"
         text = " ".join(prompt.read_text(encoding="utf-8").split())
         goal = load_task_contract().goal
-        for sentence in (
-            "You are the reasoning component of a Software-Engineering QA Agent.",
-            "You only propose.",
-            "decide the ONE next action to take this turn.",
-        ):
+        for sentence in self.GOAL_SENTENCES:
             self.assertIn(sentence, text)
             self.assertIn(sentence, goal)
+
+    def test_goal_matches_the_current_prompt(self) -> None:
+        from prompts.loader import load_latest
+
+        text = " ".join(load_latest("propose_action").text.split())
+        goal = load_task_contract().goal
+        for sentence in self.GOAL_SENTENCES:
+            with self.subTest(sentence=sentence):
+                self.assertIn(sentence, text)
+                self.assertIn(sentence, goal)
 
 
 class LoaderValidationTests(unittest.TestCase):

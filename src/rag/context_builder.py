@@ -3,8 +3,9 @@
 Trusts ``RetrievalPipeline.retrieve``'s ranking completely: chunks are never
 re-sorted, re-filtered, or truncated internally here. A chunk is either shown
 whole or dropped whole, so every ``source_path`` a model cites stays
-verbatim-checkable against docs/prompts/propose_action/v1.1.md's citation
-constraint.
+verbatim-checkable against the citation constraint in the current
+propose_action prompt (the latest version under docs/prompts/propose_action/,
+as returned by ``prompts.loader.load_latest``).
 
 Each chunk is wrapped in one ``<evidence ...>`` block. The wrapper must be
 the only thing that opens or closes a block, so two things are made safe
