@@ -19,6 +19,11 @@ CHARTER_PATH = (
 # this check. US-12 is diagram/matrix literacy, not a prompt runtime story.
 ACTIVE_STORIES = {"US-1", "US-2", "US-7", "US-8", "US-11"}
 DEFERRED_STORIES = {"US-3", "US-4", "US-5", "US-6", "US-9", "US-10"}
+ALL_RUNTIME_STORIES = ACTIVE_STORIES | DEFERRED_STORIES
+
+# These cases are intentionally not mapped to a user story. They validate the
+# prompt/tool contract itself rather than a user-facing story.
+UNMAPPED_CASES = {"failure_malformed_source_code"}
 
 # The repo's traceability notes explicitly map edge_stub_implementation to both
 # US-1 and US-2 because the stub itself is the grounded defect and the same
@@ -28,6 +33,9 @@ CASE_TO_STORIES = {
     "normal_satisfied_requirement_regression": {"US-1"},
     "edge_stub_implementation": {"US-1", "US-2"},
     "edge_vague_requirement": {"US-7"},
+    # This is indirect evidence for US-9's bounded-turn design, not evidence
+    # that the iteration-cap halt itself has been implemented.
+    "boundary_single_action_multiple_candidates": {"US-9"},
     "adversarial_prompt_injection_in_requirement": {"US-11"},
     "adversarial_prompt_injection_in_source_comment": {"US-11"},
     "adversarial_fabricated_citation_temptation": {"US-8"},
@@ -54,6 +62,48 @@ def active_story_coverage(cases: list[dict]) -> dict[str, list[str]]:
     return coverage
 
 
+def mapping_errors(cases: list[dict], traceability_text: str) -> list[str]:
+    """Return stale, incomplete, or undocumented traceability relationships."""
+    errors: list[str] = []
+    case_ids = [case["id"] for case in cases]
+    case_id_set = set(case_ids)
+
+    duplicate_case_ids = sorted(
+        case_id for case_id in case_id_set if case_ids.count(case_id) > 1
+    )
+    if duplicate_case_ids:
+        errors.append("duplicate fixture case IDs: " + ", ".join(duplicate_case_ids))
+
+    mapped_case_ids = set(CASE_TO_STORIES)
+    unknown_case_ids = sorted(mapped_case_ids - case_id_set)
+    if unknown_case_ids:
+        errors.append("mapping references unknown case IDs: " + ", ".join(unknown_case_ids))
+
+    missing_case_ids = sorted(case_id_set - mapped_case_ids - UNMAPPED_CASES)
+    if missing_case_ids:
+        errors.append("fixture cases have no mapping or exception: " + ", ".join(missing_case_ids))
+
+    unknown_stories = sorted(
+        {story for stories in CASE_TO_STORIES.values() for story in stories}
+        - ALL_RUNTIME_STORIES
+    )
+    if unknown_stories:
+        errors.append("mapping references unknown user stories: " + ", ".join(unknown_stories))
+
+    for case_id, stories in CASE_TO_STORIES.items():
+        if case_id not in traceability_text:
+            errors.append(f"{case_id} is missing from the traceability document")
+        for story in stories:
+            if story not in traceability_text:
+                errors.append(f"{case_id} -> {story} is missing from the traceability document")
+
+    for case_id in UNMAPPED_CASES:
+        if case_id not in traceability_text:
+            errors.append(f"unmapped exception {case_id} is missing from the traceability document")
+
+    return errors
+
+
 def uncovered_active_stories(cases: list[dict]) -> list[str]:
     """Return active, in-scope stories that currently lack support."""
     return sorted(
@@ -72,8 +122,6 @@ def deferred_story_status() -> dict[str, str]:
 def print_coverage_report(cases: list[dict]) -> None:
     """Print human-readable progress and coverage results for direct execution."""
     coverage = active_story_coverage(cases)
-    mapped_case_ids = set(CASE_TO_STORIES)
-
     print("Scenario-to-story coverage report")
     print("=" * 35)
     print(f"[PASS] Loaded fixture: {len(cases)} evaluation cases")
@@ -85,7 +133,7 @@ def print_coverage_report(cases: list[dict]) -> None:
         stories = sorted(CASE_TO_STORIES.get(case_id, set()))
         if stories:
             print(f"[PASS] {case_id} -> {', '.join(stories)}")
-        elif case_id not in mapped_case_ids:
+        else:
             print(f"[INFO] {case_id} -> no user-story mapping (documented exception)")
 
     print("\nActive story coverage:")
@@ -107,6 +155,10 @@ class ScenarioCoverageTests(unittest.TestCase):
         self.assertTrue(CHARTER_PATH.exists(), f"Missing charter: {CHARTER_PATH}")
         self.cases = load_cases()
 
+    def test_mapping_matches_fixture_and_traceability_document(self) -> None:
+        traceability_text = TRACEABILITY_PATH.read_text(encoding="utf-8")
+        self.assertEqual(mapping_errors(self.cases, traceability_text), [])
+
     def test_active_stories_are_all_covered(self) -> None:
         missing = uncovered_active_stories(self.cases)
         self.assertEqual(
@@ -127,6 +179,12 @@ class ScenarioCoverageTests(unittest.TestCase):
     def test_edge_stub_mapping_covers_both_us_1_and_us_2(self) -> None:
         self.assertIn("US-1", CASE_TO_STORIES["edge_stub_implementation"])
         self.assertIn("US-2", CASE_TO_STORIES["edge_stub_implementation"])
+
+    def test_boundary_case_is_recorded_as_indirect_us_9_evidence(self) -> None:
+        self.assertEqual(
+            CASE_TO_STORIES["boundary_single_action_multiple_candidates"],
+            {"US-9"},
+        )
 
 
 if __name__ == "__main__":
