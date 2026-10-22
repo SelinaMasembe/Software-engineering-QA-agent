@@ -1,12 +1,17 @@
-# Week 7 Failure Catalogue — Member 4
+# Week 7-8 Failure Catalogue — Member 4
 
-Date: 16 October 2026. Owner: Member 4, Quality/Security Lead.
+Date: 16 October 2026 (F01-F05); updated 20 October 2026 (F06). Owner:
+Member 4, Quality/Security Lead.
 
-This deliverable documents five genuine defects from the repository's history
-and automatically re-tests their existing fixes. Member 4 owns this catalogue,
-the regression runner and the evidence; the original implementation fixes belong
-to the teammates credited below. No new production fix was needed for these five
-cases on the branch baseline, `3df49eb` (latest fetched `main`).
+This deliverable documents six genuine defects and automatically re-tests
+their fixes. Member 4 owns this catalogue, the regression runner and the
+evidence. F01-F05 are from the repository's history; the original
+implementation fixes belong to the teammates credited below, and no new
+production fix was needed for those five on the branch baseline, `3df49eb`
+(latest fetched `main` as of Week 7). F06 is a sixth case added during the
+Week 8 hardening pass: a genuine guardrail gap Member 4 found and fixed
+directly (`dcf470f`), folded into the same harness and the same
+before/fixed/current evidence shape as the other five.
 
 The allocation plan assigns Member 4 the Failure Catalogue and
 `tests/test_failure_retest.py`. The capstone brief requires at least five genuine
@@ -21,16 +26,16 @@ python3 tests/test_failure_retest.py
 
 # Reproduce the defect, test the fixing module, and test current code for each case.
 python3 tests/test_failure_retest.py --verify-history \
-  --report evidence/evaluation/week7-failure-retest.json
+  --report evidence/evaluation/week8-failure-retest.json
 
-# The same five checks are also part of the ordinary test suite.
+# The same six checks are also part of the ordinary test suite.
 python3 -m pytest -q tests/test_failure_retest.py
 ```
 
-All five cases reproduced the expected safety/liveness assertion failure in the
-module immediately before its fixing commit. All five passed with the module
-from the fixing commit and with the current implementation: **15 checks total**.
-The generated [JSON evidence](../../evidence/evaluation/week7-failure-retest.json)
+All six cases reproduced the expected safety/liveness assertion failure in the
+module immediately before its fixing commit. All six passed with the module
+from the fixing commit and with the current implementation: **18 checks total**.
+The generated [JSON evidence](../../evidence/evaluation/week8-failure-retest.json)
 contains the observed failures, successful outcomes, exact commit IDs, source
 hashes, Python version and execution time. A CLI failure returns a nonzero exit
 code. Import failures, unexpected exceptions and outer subprocess timeouts are
@@ -43,6 +48,7 @@ errors, not proof that the historical defect reproduced.
 | F03 | An authorized requester approves their own action | `src/orchestrator/approval_gate.py` | `3f121b7` | Defect reproduced / pass / pass |
 | F04 | An unauthorized decision makes a request unusable | `src/orchestrator/approval_gate.py` | `3f121b7` | Defect reproduced / pass / pass |
 | F05 | A summary-reading telemetry sink deadlocks | `src/observability/telemetry.py` | `8fa18d6` | Defect reproduced / pass / pass |
+| F06 | A flagged chunk's injection/credential flags never reach the trace | `src/agent/loop.py` | `dcf470f` | Defect reproduced / pass / pass |
 
 F03 and F04 share a fixing commit but are different defects: one permits a
 forbidden decision; the other lets an outsider prevent legitimate review.
@@ -155,6 +161,47 @@ two seconds of sink entry, summary step counts `[1, 2]`, and zero dropped writes
 The old module deadlocks; both fixed and current modules finish. A daemon worker
 and a 20-second subprocess limit prevent this regression from hanging the suite.
 
+## F06 — Flagged chunk never reaches the trace
+
+**Trigger:** A sensed turn's `AssembledContext.flagged` is non-empty — a chunk
+the retrieval pipeline showed the model matched an injection-shaped or
+credential-shaped rule (`src/rag/injection_flagging.py`,
+`src/rag/credential_scan.py`, wired together in `context_builder.py`).
+
+**Observed failure:** `AgentLoop` senses the context, plans, and completes
+the turn. The trace contains `loop_started`, `context_sensed`,
+`action_planned`, `loop_completed` — nothing names the flag at all. The flag
+was computed correctly by `build_context` and attached to
+`AssembledContext.flagged`; the loop just never read that field.
+`injection_flagging.flag_trace_entry` — the function written specifically to
+turn a `ChunkFlags` tuple into a `TraceEntry` — was called only by its own
+unit tests.
+
+**Cause and impact:** Risk R1 states flagged content is "flagged during
+ingestion for review." Detection worked; review did not, because nothing a
+human could read — a trace, a log, the evidence pack — ever recorded that a
+chunk had been flagged. A real session could show the model attacker-shaped
+content and leave no trace of it having been noticed.
+
+**Fix:** Member 4's `dcf470f` has `AgentLoop._take_turn` call
+`flag_trace_entry` and record it through the same fail-closed trace-sink
+path (`_record_entry`, factored out of `_record`) every other trace entry
+already uses, whenever `context.flagged` is non-empty. A sink failure on
+this entry fails the loop closed, the same as any other trace write.
+
+**Re-test:** `test_F06_flagged_chunk_reaches_the_trace` requires
+`"injection_flagged"` to appear in the recorded trace actions for a turn
+whose sensed context carries a flag. The historical module (`b4d5450`, the
+commit immediately before the fix) produces the trace shown above with no
+such entry; both the fixing commit and current code produce one. Unlike
+F01-F05, this defect was found live during the Week 8 review, not pulled
+from older history — the "before" snapshot is simply this fix's own parent
+commit. `tests/test_loop_injection_trace.py` (also Member 4) covers the
+same fix from five additional angles directly against current code: an
+unflagged turn stays silent, multiple flagged chunks combine into one entry,
+the entry never carries the flagged chunk's text, and a sink failure on it
+still fails the loop closed.
+
 ## Evidence boundaries and remaining limitations
 
 - Historical mode loads the exact affected module from Git, using current
@@ -166,6 +213,9 @@ and a 20-second subprocess limit prevent this regression from hanging the suite.
 - These are deterministic implementation regressions, not measurements of
   live-model quality. The earlier Week 3 retrieval limitations are still
   limitations and are not counted here as fixed failures.
-- The automated evidence was generated by Codex in this workspace. Member 4
-  should run the commands and review the observations before claiming personal
-  verification in the submission.
+- F01-F05's automated evidence was generated by Codex in an earlier session.
+  F06 was found, fixed and re-tested by Claude Code in this session, and its
+  evidence file was generated and inspected directly (the `before`/`fixed`
+  entries above were read from `evidence/evaluation/week8-failure-retest.json`,
+  not assumed). Member 4 should run the commands and review the observations
+  before claiming personal verification in the submission.

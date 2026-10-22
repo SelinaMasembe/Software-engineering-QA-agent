@@ -50,6 +50,7 @@ from orchestrator import (
 )
 from orchestrator.validation import validate_citations
 from rag import AssembledContext
+from rag.injection_flagging import flag_trace_entry
 
 
 class LoopStatus(str, Enum):
@@ -441,6 +442,16 @@ class AgentLoop:
             f"iteration={turn}; not_in_corpus={not_in_corpus}; "
             f"allowed_sources={len(allowed)}",
         )
+        # R1: a chunk this turn matched an injection or credential rule.
+        # flag_text/redact_credentials already ran inside the sensor's
+        # build_context call; this is what actually puts that fact where a
+        # human reviewing the trace can see it, which is the guardrail's
+        # whole point. Silently dropping context.flagged here would leave
+        # every flag computed but never surfaced -- the gap this closes.
+        if context.flagged:
+            self._record_entry(
+                flag_trace_entry(run.state.session_id, context.flagged, self._clock())
+            )
 
         # Plan exactly one action.
         planned = self._plan(run, context)
@@ -647,8 +658,7 @@ class AgentLoop:
         invocation: ToolInvocation | None = None,
     ) -> None:
         # Details are built only from enums and counts, never from exception
-        # text or free-form model output. A sink failure fails the loop
-        # closed: actions must not continue without an audit trail (US-10).
+        # text or free-form model output.
         entry = TraceEntry(
             session_id=run.state.session_id,
             actor=Actor.AI if event is LoopEvent.ACTION_PLANNED else Actor.DETERMINISTIC,
@@ -657,6 +667,12 @@ class AgentLoop:
             timestamp=self._clock(),
             tool_invocation=invocation,
         )
+        self._record_entry(entry)
+
+    def _record_entry(self, entry: TraceEntry) -> None:
+        # A sink failure fails the loop closed: actions must not continue
+        # without an audit trail (US-10), whether the entry came from
+        # _record above or was built elsewhere, like flag_trace_entry.
         try:
             self._trace_sink.record(entry)
         except Exception:

@@ -1,7 +1,7 @@
 # Week 7 Contribution Report: Member 3 (AI Engineering Lead)
 
 **Date:** 16th Oct 2026
-**Branch:** `week_7_member_3`
+**Branch:** `week_7_member_3` (merged to main in PR #58)
 **Topic:** AI-behaviour evaluation criteria, adversarial cases and scorer, and two guardrail fixes found by testing
 
 ## Summary
@@ -12,7 +12,7 @@ This week I defined how the agent's behaviour is measured, built the scorer that
 
 | Deliverable | File | Status |
 |---|---|---|
-| AI-behaviour evaluation criteria | `docs/evaluation/AI_Behaviour_Evaluation_Criteria.docx` | Written; in `docs/evaluation/`, not committed yet |
+| AI-behaviour evaluation criteria | `docs/evaluation/AI_Behaviour_Evaluation_Criteria.docx` | Written; committed (e8c287e) |
 | Scorer | `src/evaluation/scorer.py`, `src/evaluation/__init__.py` | Written |
 | Scorer tests (46 as of Week 8; the end-of-Week-7 count was not recorded) | `tests/test_evaluation_scorer.py` | Written |
 | Adversarial cases (26 at end of week) | `tests/adversarial/fixtures.py`, `tests/adversarial/__init__.py` | Written |
@@ -61,7 +61,7 @@ I had the AI re-explore the repo before designing anything. This changed the wor
 - **Case results at end of week:** 24 PASS, 2 PARTIAL (R4 credentials, R10 draft claims), 0 FAIL, out of 26. This is a historical figure from the Week 7 build report; the scorer was committed after it, so it was not re-run. The first 24 cases scored 19 PASS and 5 PARTIAL before the fixes (`evidence/test-runs/week7/r1-flagging-before.txt`).
 - **Scorer parity:** the scorer and the Week 2 evaluation function agree on 9 of the 10 Week 2 cases.
 - **Flagger:** 0 of 226 real corpus chunks flagged. On my own labelled set, precision is 15/16 (0.94) and recall is 15/19 (0.79). This is not independent evidence.
-- **My own checks:** Output of commands run on 16 Oct 2026: full suite `645 passed, 1 skipped, 6 warnings, 619 subtests passed` (the skip is the Windows permission test); `python -m pytest tests/adversarial -q` gave `22 passed, 1 warning, 178 subtests passed`. These commands were run by Claude Code, not in my own terminal, and the totals include tests added in Week 8.
+- **My own checks:** Output of commands run on 16 Oct 2026: full suite `645 passed, 1 skipped, 6 warnings, 619 subtests passed` on 16 Oct 2026 (the skip is the Windows permission test), and `669 passed, 1 skipped, 625 subtests` on main, 20 Oct 2026; `python -m pytest tests/adversarial -q` gave `22 passed, 1 warning, 178 subtests passed`. These commands were run by Claude Code, not in my own terminal, and the totals include tests added in Week 8.
 - **Hidden-character scan of changed files:** Output of commands run on 16 Oct 2026: a grep for any non-ASCII character (`LC_ALL=C.UTF-8 grep -rnP`) over `src/evaluation`, `src/rag/injection_flagging.py`, `src/rag/credential_scan.py`, `src/rag/context_builder.py`, `tests/adversarial`, `tests/test_evaluation_scorer.py`, `tests/test_context_builder_wrapper.py`, `tests/test_injection_flagging*.py`, `tests/test_credential_scan.py`, `scripts/real_model_eval.py` and `tests/test_real_model_eval.py` printed no matches (exit 1), so none of these files holds an invisible, bidirectional or line-separator character. Run by Claude Code; two of these files were added in Week 8.
 
 ## Parity finding
@@ -77,7 +77,7 @@ The scorer and the Week 2 evaluation disagree on `edge_vague_requirement`. Week 
 5. **Four cases need story and risk confirmed** against the requirements and security leads, because I assigned the mappings myself.
 6. **Early commits do not run on their own.** Everything is now committed and pushed, but the early part of the branch was not reordered. In a clean export of each commit (checked on 16 Oct 2026), `tests/adversarial/fixtures.py` cannot be imported at `30c6bc8`, `ed90d17`, `ca40527`, `e7d7e0c`, `c98316d`, `74378ea`, `2ded22d`, `c8470e7`, `9f6d94c` and `8e6eeca`, because the scorer, the credential scan or the flagger arrive later. At `9f6d94c` and `8e6eeca` the suite also fails to collect (17 errors). From `22a9a48` on, every commit imports cleanly, and from `ed62ac2` on (the first commit with the case tests) `tests/adversarial` passes. Only the tip of the branch is a working state.
 7. **Team decisions needed:** whether the existing 10 prompt and 15 RAG cases count toward the 30 scenarios, who builds the real sensor and planner, and the 120 second wall-clock budget, which is still a placeholder.
-8. **Commit the criteria document.** `docs/evaluation/AI_Behaviour_Evaluation_Criteria.docx` is in place but not committed.
+8. **Criteria document committed.** `docs/evaluation/AI_Behaviour_Evaluation_Criteria.docx` was committed in e8c287e.
 9. **Week 8 work and mixed commits.** Week 8 work that started early is recorded in the Week 8 report. Week 7 and Week 8 work are mixed in these commits: `ed90d17`, `ca40527`, `c8470e7`, `9f6d94c`, `22a9a48`, `e71f775`, `ed62ac2`, `6f52afd` and `fbc555a`.
 
 ## Started early for Week 8

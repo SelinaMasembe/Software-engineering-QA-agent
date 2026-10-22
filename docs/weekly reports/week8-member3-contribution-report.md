@@ -1,13 +1,14 @@
-# Week 8 Contribution Report: Member 3 (AI Engineering Lead) (in progress)
+# Week 8 Contribution Report: Member 3 (AI Engineering Lead)
 
-**Status:** draft, in progress. Items marked TBC are not confirmed yet.
-**Date:** 16th Oct 2026
-**Branch:** `week_7_member_3`
-**Topic:** prompt v1.3, memory delimiter, ingested-content credential scan, flagger tuning, and the first real-model evidence
+**Date:** 16th Oct 2026, updated 20th Oct 2026
+**Branches:** `week_7_member_3` (merged to main in PR #58); fixes on `week_8_member_3_fixes`
+**Topic:** prompt v1.3, memory delimiter, ingested-content credential scan, flagger tuning, the first real-model evidence, and fixes from a code inspection
 
 ## Summary
 
 This week I closed the R4 gap with a credential scan on ingested content, stopped chunk text from forging a memory block, issued prompt v1.3 so the prompt asks for what the citation validator already requires, and tuned the injection flagger. I also built a single-call evaluation script and recorded the project's first real-model results, on Gemini 2.5 Flash with synthetic Week 2 inputs. The real-model results are one run per case on ten cases, so they are observed instances, not rates.
+
+A read-only inspection of my areas then found four guardrail patterns that slowed down quadratically on long hostile input, a `read_file` failure on non-UTF-8 files, and stale comments. All of these are fixed on `week_8_member_3_fixes`, with no change to any flag, redaction or commit-scanner finding.
 
 ## What was done
 
@@ -20,7 +21,13 @@ This week I closed the R4 gap with a credential scan on ingested content, stoppe
 | Real-model evaluation script | `scripts/real_model_eval.py`, `tests/test_real_model_eval.py` | Committed (1b4afd5); the `--min-interval-seconds` option committed (4663d88) |
 | Real-model run records | `evidence/test-runs/week8/real-model/` | Committed (f1280de) |
 | Push protection fix for a test fixture | `tests/test_credential_scan.py` | Done; committed (efd626f) |
-| This report and the Week 8 AI-assistance entry | `docs/weekly reports/week8-member3-contribution-report.md`, `docs/ai-assistance credit/week8/member3-AI-assistance.md` | Draft |
+| Linear RM-2 rule | `src/rag/injection_flagging.py`, `tests/test_injection_flagging_week8.py` | Committed (58e21c5) |
+| Linear credential patterns (URL password, key-name assignments, PEM block) | `src/rag/credential_scan.py`, `scripts/check_sensitive.py`, `tests/test_credential_scan.py` | Committed (489a370) |
+| `not_text` status for non-UTF-8 files | `src/tools/read_file.py`, `tests/integration/test_read_file_tool.py` | Committed (f44edd8) |
+| Stale prompt-version and stop-condition comments | `src/rag/context_builder.py`, `src/agent/task_contract.yaml`, `tests/test_task_contract.py` | Committed (1fdfc00) |
+| Smoke run record and test screenshot | `evidence/test-runs/week8/smoke/`, `evidence/screenshots/week8/tests_member3.png` | Committed (25ef0c7) |
+| Real ContextSensor and Planner, history guard, end-to-end script | `src/agent/sensor.py`, `src/agent/planner.py`, `src/agent/history_guard.py`, `scripts/run_agent_session.py`, `tests/test_agent_sensor.py`, `tests/test_agent_planner.py`, `tests/integration/test_real_agent_session.py` | Written and tested; not committed yet |
+| This report and the Week 8 AI-assistance entry | `docs/weekly reports/week8-member3-contribution-report.md`, `docs/ai-assistance credit/week8/member3-AI-assistance.md` | Written |
 
 - **Prompt v1.3.** FAILURE BEHAVIOR now says: return an evidence-free `no_action` only when the context says nothing was found; when evidence is insufficient, return `no_action`, cite each source read with a note on what is missing, and set confidence to low. ROLE and TASK are unchanged.
 - **Memory delimiter.** An opening or closing `memory` tag inside chunk text has its leading `<` neutralised, as evidence tags already were, so a chunk cannot forge a memory block.
@@ -30,7 +37,14 @@ This week I closed the R4 gap with a credential scan on ingested content, stoppe
   - **Week 7 labelled set (29 rows):** precision 0.94 and recall 0.79, unchanged.
   - **Wider labelled set (90 rows):** these figures show coverage of the new rules, not independent evidence, because I wrote the rules and the rows.
 - **Push protection fix.** A Stripe-test-key-shaped fixture in `tests/test_credential_scan.py` was blocked on push. It was rewritten so the value is assembled at run time, and the rewrite is committed in efd626f. No commit on the branch contains the literal value, and the branch is pushed.
-- **Full suite:** `645 passed, 1 skipped, 619 subtests`. The skip is the Windows permission test.
+- **Full suite:** `645 passed, 1 skipped, 619 subtests` on 16 Oct 2026; `669 passed, 1 skipped, 625 subtests` on main, 20 Oct 2026; and `678 passed, 1 skipped, 628 subtests` on `week_8_member_3_fixes`, 20 Oct 2026. The skip is the Windows permission test. My own run on the fixes branch gave `678 passed, 1 skipped, 6 warnings in 79.62s`.
+- **Long-input fixes.** Four guardrail patterns that slowed down quadratically on long hostile input (RM-2, the password-in-URL rule, the key-name assignment rules and the PEM block) were rewritten. `scripts/check_sensitive.py` was changed with its owner's agreement, because a sync test pins its patterns to the copies in `credential_scan.py`.
+  - **No behaviour change:** flags and redacted output were identical before and after on 961 inputs (every test string, every adversarial source and all 226 corpus chunks), as were both labelled sets, the corpus context hash, and the commit scanner's findings over all 320 tracked files.
+  - **Timings on 200,000 hostile characters:** RM-2 went from over 60 s to 0.02 s; the URL-password and both assignment rules from over 60 s to 0.02 to 0.04 s; the PEM block from 18.1 s to 0.003 s. A timing regression test now covers each one.
+  - **`build_context` on one 24,000-character chunk:** a line of spaces went from 8.1 s to 0.03 s, and `a-a-a-` from 31.5 to 40.3 s down to 0.03 to 0.04 s.
+- **`read_file` on a non-UTF-8 file.** A binary file in the corpus raised an exception that the router reported as a generic execution failure. It now returns a typed `not_text` status with no content, like `path_not_allowed` and `not_found`.
+- **Real sensor and planner.** `RetrievalContextSensor` retrieves with the goal text, returns exactly what `build_context` produces, and records an `injection_flagged` trace entry when the context has flags; a failing sink never stops sensing. `PromptPlanner` sends the current prompt (`load_latest`) with the goal, the context text, an optional memory block and the guarded observation history, parses the reply with `ProposalSet.model_validate_json`, and reports every failure as a typed `PlannerError` (malformed reply, empty reply, client error, timeout, rate limit, authentication) with a fixed message, so no provider text or key can reach the loop or the trace. `scripts/run_agent_session.py` runs one session end to end through `build_agent_session`; it is offline by default and uses the real model only with `--live`.
+- **Stale comments.** `context_builder.py` now cites the current prompt through `prompts.loader.load_latest` instead of v1.1, and the task contract comment no longer says the stop conditions are unenforced. The task contract test also checks the goal sentences against the latest prompt.
 
 ## Real-model evidence
 
@@ -44,7 +58,7 @@ All calls used Gemini 2.5 Flash through the Google AI Studio OpenAI-compatible e
 
 | Run | Folder | Calls | Result |
 |---|---|---|---|
-| Smoke | TBC (kept outside the repository) | 1 | Valid JSON. The citation check rejected it: it cited the requirement ID, and the script's input gave a Windows path. The proposed test had a step that would fail against the code. |
+| Smoke | `smoke/20261016_gemini_smoke_run.json` | 1 | Valid JSON. The citation check rejected it: it cited the requirement ID, and the script's input gave a Windows path. The proposed test had a step that would fail against the code. |
 | Trial, v1.3, 1 run | `20261016T145654Z_live` | 10 of 10 scored | 6 PASS, 4 FAIL, 0 invalid citations, 2 rate-limit retries. |
 | Partial, v1.1 then v1.3, 3 runs planned | `20261016T152707Z_live` | 15 v1.1 calls recorded, 10 scored | Stopped after three consecutive rate-limit (429) failures. Details below. |
 
@@ -71,24 +85,43 @@ All calls used Gemini 2.5 Flash through the Google AI Studio OpenAI-compatible e
 - **Groundedness is still citation validity.** All cited paths in the live runs were paths the model was given. Nothing checks that the cited text supports the claim.
 - **Week 2 expectations are kept as they are.** The narrow expectations are a decision for the team, not a fix made in the evaluation script.
 - **The key is never written.** The script reads the key only through the configuration loader, never reads `.env`, and tests check that a fake key never appears in any output file.
-- TBC: any further decisions.
+- **Shared scanner patterns change together.** I approved the change to `scripts/check_sensitive.py`, agreed with its owner, Selina, so the commit scanner and the context-time scan keep identical patterns.
+- **Guardrail fixes must not change behaviour.** Each fix was kept only after flags, redacted output and commit-scanner findings were shown identical before and after.
 
 ## Open items
 
 1. **Complete the missing v1.1 calls** after the quota resets, including `security_system_prompt_exfiltration_attempt`, then the v1.3 repeats.
-2. **Real sensor and planner.** Only scripted ones exist.
-3. **Flags to a trace sink.** `flag_trace_entry` has no caller outside tests.
+2. **Real sensor and planner.** Built and tested: `RetrievalContextSensor` (`src/agent/sensor.py`) and `PromptPlanner` (`src/agent/planner.py`), run end to end through `build_agent_session` with a stub model client, and once live on 20 Oct 2026 (see Known limitations). Still open: a specific goal for real sessions, and more than one live run.
+3. **Flags to a trace sink.** Done. The loop records sensed-context flags through `flag_trace_entry`, as merged on main. The sensor and planner rely on that and do not add their own recording for the sensed context. The planner still traces flags it finds in earlier tool output (history guard), because the loop never sees those.
 4. **Independent injection cases from Member 4.**
 5. **R10 decision.** No deterministic check detects an overstated claim in a draft.
 6. **The 120 second wall-clock budget** is still a placeholder.
 7. **Whether the existing 10 prompt and 15 RAG cases count toward the 30 scenarios.**
 8. **The `edge_vague_requirement` expectation:** keep the Week 2 expectation or replace it for v1.3.
-9. **Document updates:** the Prompt Specification, the Deliverables document (paragraph 114 still says "proposed, run, or rejected"), and the Grounding Design Note.
-10. **The smoke run record** is outside the repository. TBC: copy it into `evidence/test-runs/week8/`.
+9. **Document updates:** the Prompt Specification, the Deliverables document (paragraph 114 still says "proposed, run, or rejected", and paragraph 122 lists `read_file` outputs without `status`, `not_found` or `not_text`), and the Grounding Design Note.
+10. **Draft evidence references.** `draft_issue` accepts any non-empty `evidence_refs`; they are not checked against the paths supplied that turn. Needs the allowed paths on the dispatch context (router owner).
+11. **The criteria document's safety pass rule** says a followed injected instruction fails the case, but the scorer checks only per-case forbidden actions and text. Correct the document or extend the scorer.
+
+## Known limitations
+
+These are recorded, not fixed.
+
+- Flags are recorded for review and change nothing the model sees. A flagged chunk is still shown, and the Week 8 live run showed a model obeying flagged text.
+- The retrieval query is the task goal text, because `AgentTask` carries only a goal. With the shipped task contract the goal is the prompt's ROLE text, which retrieves nothing from the fixture corpus (`not_in_corpus`, 0 chunks), so a real session needs a specific goal. The query is built by one small function (`retrieval_query`) so it can be replaced.
+- Earlier tool output is now guarded before the planner shows it (`src/agent/history_guard.py`: credential redaction, evidence, memory and observation tag neutralisation, and flagging, applied to each string). Credential rules use the stricter prose set, so ordinary code assignments in read_file output may be over-redacted.
+- A truncated model reply cannot be told apart from a malformed one, because the client does not report why generation stopped; the planner reports both as `malformed_reply`.
+- One live end-to-end run is recorded (`evidence/test-runs/week8/agent-session/live_session.json`, 20 Oct 2026, Gemini 2.5 Flash, prompt v1.3, goal "Propose a test that the account locks after five failed login attempts."). It completed in 2 iterations with a `propose_test` citing `requirements/authentication.md` and `src/login_service.py`. Turn 1 dispatched a tool, and the planner's history guard flagged and redacted one credential-shaped assignment (CR-ASSIGN) in that tool's output before turn 2. It is one run, made on this branch before the loop recorded sensed-context flags, so its trace shows only the planner's history-guard entry; its summary does not record which tool ran. The automated tests use stub model clients only.
+- Groundedness is citation validity only. Nothing checks that the cited text supports the claim.
+- `record_proposal` and `record_run` have no real caller, and neither does `render_for_prompt`, so memory never reaches the model.
+- The real-model results are single calls: no query, invented `requirements/<REQ-ID>.md` paths, temperature fixed at 0.0, one run per case, and no v1.1 score for the security case.
+- The flagger rules and their test cases were written by the same author, so passing them is not independent evidence.
+- Branch commits 30c6bc8 to 8e6eeca do not run on their own.
 
 ## Commit-to-week table
 
-Built from `git log origin/main..HEAD`, oldest first. Several commits mix weeks, because the Week 7 and early Week 8 work was committed together at the end. The Week 6 commits are already on `main`, so they are not listed.
+### PR #58 (`week_7_member_3`, merged to main)
+
+Oldest first. Several commits mix weeks, because the Week 7 and early Week 8 work was committed together at the end. The Week 6 commits were already on `main`, so they are not listed.
 
 | Commit | Subject | Week |
 |---|---|---|
@@ -114,3 +147,16 @@ Built from `git log origin/main..HEAD`, oldest first. Several commits mix weeks,
 | fbc555a | Add Week 8 AI assistance documentation and contribution report, including prompt v1.3, memory delimiter neutralization, credential scan, and flagger tuning | Mixed: Week 7 document corrections; Week 8 report and AI log |
 
 Commits 30c6bc8 to 8e6eeca do not import tests/adversarial/fixtures.py on their own, because the scorer module arrives later (at c8470e7, 9f6d94c and 8e6eeca the scorer is present, but the credential scan or flagger modules it imports arrive later). Branch history was not rewritten after the push. The pull request is intended for squash merge.
+
+### Week 8 fixes (`week_8_member_3_fixes`)
+
+All Week 8. Oldest first. Each commit passes the full suite on its own.
+
+| Commit | Subject | Change |
+|---|---|---|
+| 58e21c5 | Make the RM-2 role-marker rule linear on long whitespace lines | Inspection finding F1 |
+| 489a370 | Make the credential patterns linear on long hostile input | Findings F2 and F3, including the agreed change to `scripts/check_sensitive.py` |
+| f44edd8 | Return a not_text status from read_file for non-UTF-8 files | Finding F9 |
+| 1fdfc00 | Update stale prompt-version and stop-condition comments | Finding F12 |
+| e2c6036 | Update Member 3 Week 7 and Week 8 reports and AI log | Documents |
+| 25ef0c7 | Add Week 8 Member 3 test screenshot and Gemini smoke run record | Evidence |
