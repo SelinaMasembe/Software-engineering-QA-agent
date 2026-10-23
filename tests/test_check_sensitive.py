@@ -112,3 +112,19 @@ def test_binary_file_skips_content():
 def test_test_credentials_are_placeholders():
     assert scan("config.py", 'api_key = "test-key"\n') == []
     assert scan("config.py", 'api_key = "test-key-never-log"\n') == []
+
+# Week 8 (Member 5): explicit file arguments must never "pass" unscanned.
+
+def test_missing_explicit_file_exits_2_instead_of_passing(capsys):
+    assert cs.main(["does/not/exist.py"]) == 2
+    assert "not scanned" in capsys.readouterr().err
+
+
+def test_relative_path_is_resolved_from_the_current_folder(tmp_path, monkeypatch):
+    leak = tmp_path / "leak.py"
+    leak.write_text('api_key = "' + FAKE_GOOGLE_KEY + '"\n', encoding="utf-8")
+    monkeypatch.setattr(cs, "repo_root", lambda: tmp_path)  # stand-in for the git repo root
+    sub = tmp_path / "sub"
+    sub.mkdir()
+    monkeypatch.chdir(sub)
+    assert cs.main(["../leak.py"]) == 1  # found and scanned, so the fake key is caught

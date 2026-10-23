@@ -7,6 +7,7 @@ from .run_logger import (
     format_run,
     load_index,
     load_run,
+    resolve_run_log_dir,
 )
 
 __all__ = [
@@ -16,4 +17,5 @@ __all__ = [
     "format_run",
     "load_index",
     "load_run",
+    "resolve_run_log_dir",
 ]

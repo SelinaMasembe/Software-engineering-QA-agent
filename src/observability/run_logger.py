@@ -31,7 +31,7 @@ import re
 import threading
 import uuid
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
@@ -112,22 +112,24 @@ class RunLogger:
         with self._lock:
             run = self._run_for(entry)
             payload, redactions = _redact(_entry_to_dict(entry))
+            line = {
+                "schema": SCHEMA_VERSION,
+                "run_id": run.run_id,
+                "seq": run.entries + 1,
+                **payload,
+            }
+            if redactions:
+                line["redacted"] = True
+            _append_line(run.path, line)
+
+            # Count the entry only once its line is safely on disk, so a
+            # failed write cannot leave a gap in seq or inflate the summary.
             run.entries += 1
             run.redactions += redactions
             if entry.tool_invocation is not None:
                 run.tool_calls += 1
             if _enum_value(entry.actor) == "ai":
                 run.ai_decisions += 1
-
-            line = {
-                "schema": SCHEMA_VERSION,
-                "run_id": run.run_id,
-                "seq": run.entries,
-                **payload,
-            }
-            if redactions:
-                line["redacted"] = True
-            _append_line(run.path, line)
 
             if entry.action in RUN_TERMINAL_EVENTS:
                 _append_line(self.index_path, self._summary(run, entry))
@@ -181,14 +183,26 @@ def load_run(path: Path | str) -> list[dict[str, Any]]:
         return [json.loads(line) for line in handle if line.strip()]
 
 
-def load_index(directory: Path | str = DEFAULT_RUN_LOG_DIR) -> list[dict[str, Any]]:
+def resolve_run_log_dir(directory: Path | str | None = None) -> Path:
+    """The run-log folder: ``directory``, else ``QA_AGENT_TRACE_DIR``, else the default.
+
+    Unlike ``RunLogger(...)``, this never creates the folder.
+    """
+
+    if directory is not None:
+        return Path(directory)
+    return Path(os.environ.get(RUN_LOG_DIR_ENV) or DEFAULT_RUN_LOG_DIR)
+
+
+def load_index(directory: Path | str | None = None) -> list[dict[str, Any]]:
     """Return the latest summary row per run, ordered by when each run last stopped.
 
     The index is append-only, so a run that paused and was later resumed has
-    two rows; only the most recent one describes how it ended.
+    two rows; only the most recent one describes how it ended. With no
+    ``directory`` it reads the same folder ``RunLogger()`` writes to.
     """
 
-    path = Path(directory) / INDEX_FILE_NAME
+    path = resolve_run_log_dir(directory) / INDEX_FILE_NAME
     if not path.exists():
         return []
     latest: dict[str, dict[str, Any]] = {}
@@ -300,5 +314,9 @@ def _isoformat(value: Any) -> str:
 
 def _filename_timestamp(value: Any) -> str:
     if isinstance(value, datetime):
+        # The name ends in "Z" (UTC), so convert first; a naive time is
+        # treated as already UTC.
+        if value.tzinfo is not None:
+            value = value.astimezone(timezone.utc)
         return value.strftime("%Y%m%dT%H%M%S%fZ")
     return "unknown-time"

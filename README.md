@@ -35,7 +35,7 @@ How these are enforced in code:
   stripped environment and timeout. This does not isolate filesystem or network
   access, so only reviewed, trusted test code should be run.
 - **Bounded agent loop:** an iteration cap, a time budget, repeat detection and a no-progress check.
-- **Run log:** every run is saved to `evidence/traces/runs/`.
+- **Run log:** each step of a run is recorded; the run logger saves runs to `evidence/traces/runs/` (use `--trace-dir` with `scripts/run_agent_session.py`), and a failed write stops the agent.
 - **Pre-commit secret scanner.**
 
 ## Architecture
@@ -104,7 +104,7 @@ src/                      application code (run with pytest.ini or PYTHONPATH=sr
   sandbox/                allow-listed pytest subprocess executor
   tools/                  search_repo, read_file, run_tests, draft_issue
 scripts/                  smoke tests, demos, approval CLI, secret scanner, docx generators
-tests/                    unit tests; tests/integration/ end-to-end tests; tests/fixtures/
+tests/                    unit tests; integration/ end-to-end; adversarial/ attack cases; run_scenarios.py runs all 61 scenarios
 docs/                     requirements, architecture, prompts, evaluation, integration, reports
 knowledge/                curated corpus (corpus/) and source-register.json/.md
 evidence/                 screenshots, demo captures, execution traces
@@ -115,7 +115,8 @@ evidence/                 screenshots, demo captures, execution traces
 
 Requirements: Python 3.10+, and a Google AI Studio API key for live model
 calls only. Everything else runs offline. Node.js is needed only to rebuild
-the Member 2 `.docx` deliverables (`scripts/generate_week*_member2_docx.js`).
+the generated `.docx` deliverables (`scripts/generate_*.js`, after `npm ci`).
+New to the project? Start with [`docs/SYSTEM_GUIDE.md`](docs/SYSTEM_GUIDE.md).
 
 ```bash
 python3 -m venv .venv
@@ -151,6 +152,9 @@ set -a; source .env; set +a
 ```
 
 ## Running Tests
+
+The same checks run automatically on GitHub for every push and pull request
+(`.github/workflows/ci.yml`: test suite, all scenarios, secret scan).
 
 ```bash
 python3 -m pytest -q                        # full offline suite (pytest.ini sets paths)
@@ -224,11 +228,12 @@ PYTHONPATH=src python3 -m memory.retention run          # scheduled expiry job (
 | Variable | Default | Used by |
 | --- | --- | --- |
 | `MODEL_ENDPOINT`, `MODEL_NAME`, `MODEL_API_KEY`, `MODEL_TIMEOUT_SECONDS`, `MODEL_MAX_TOKENS`, `MODEL_JSON_MODE` | see `.env.example` | `src/config/loader.py` |
-| `QA_AGENT_DATA_DIR` | `data` | `scripts/approve_cli.py` |
+| `QA_AGENT_DATA_DIR` | the repository's `data/` | `scripts/approve_cli.py`, `src/orchestrator/approval_gate.py` |
 | `QA_AGENT_APPROVERS` | none (required) | `scripts/approve_cli.py`, `memory.retention clear-module` (role handles, e.g. `qa-lead`) |
 | `QA_AGENT_MEMORY_PATH` | `data/memory.sqlite3` | `src/memory/retention.py`, `scripts/approve_cli.py` |
 | `QA_AGENT_MEMORY_AUDIT_PATH` | `data/memory_audit.jsonl` | `src/memory/retention.py` |
-| `QA_AGENT_TRACE_DIR` | `evidence/traces/runs` | `src/observability/run_logger.py` |
+| `QA_AGENT_TRACE_DIR` | `evidence/traces/runs` | `src/observability/run_logger.py`, `scripts/show_run_log.py` |
+| `QA_AGENT_OBSERVABILITY_DIR` | `evidence/traces/observability` | `scripts/member2_observability_demo.py` |
 
 ## Security Rules
 
@@ -262,6 +267,11 @@ Each member's weekly work is linked to repository evidence.
 | Prompts and model selection | `docs/prompts/` |
 | Evaluations, criteria and Failure Catalogue (Weeks 2–7) | `docs/evaluation/` |
 | Scenario runner | `docs/evaluation/week7-member5-scenario-runner.md` |
+| **System guide (plain language: what we built, how it works, how to use it)** | `docs/SYSTEM_GUIDE.md` |
+| **Final engineering report (submitted, Sections 1–10 with Appendices A–G)** | `docs/final-report/Final_Engineering_Report_Group_J.docx` |
+| Members' source sections for the report | `docs/evaluation/final-report-sections-1-2.md`, `docs/integration/week8-member2-system-architecture.md` (§3), `docs/evaluation/final-report-section8-evaluation-guardrails.md` |
+| Appendices, ClickUp checklist, QA review | `docs/final-report/` |
+| Presentation deck | `docs/presentation/QA_Agent_Final_Presentation-GroupJ.pptx` |
 | Member 2 integration documents | `docs/integration/` |
 | Grounding design note | `docs/context/` |
 | Approval gate walkthrough | `docs/requirements/week4/member5-approval-gate-explained.md` |
