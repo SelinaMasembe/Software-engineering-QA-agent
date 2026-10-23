@@ -1,0 +1,38 @@
+# Continuous integration (Member 5, Week 8).
+# Runs the same offline checks a developer runs locally, on every push and pull
+# request. No API key or network model call is needed or used.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install pinned dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Full offline test suite
+        run: python -m pytest -q
+
+      - name: All evaluation scenarios behave as expected
+        run: python tests/run_scenarios.py --no-write
+
+      - name: Secret and personal-data scan
+        run: python scripts/check_sensitive.py --all

@@ -29,7 +29,7 @@ python3 -m pip install --upgrade pip
 python3 -m pip install -r requirements.txt
 ```
 
-The current external dependency is `certifi`, used for verified HTTPS connections from Python.
+External dependencies are pinned in `requirements.txt`: `certifi` (verified HTTPS connections), `pytest` (tests), `python-docx` (reading `.docx` sources) and `PyYAML` (the agent task contract).
 
 ## 4. Configure environment variables
 
