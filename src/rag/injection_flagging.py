@@ -266,7 +266,10 @@ RULES: tuple[Rule, ...] = (
     ),
     _rule(
         "RM-2", "role_marker",
-        r"^[ \t]*(?:#|//|\*|-|>)?[ \t]*(?:system|assistant)(?:\s+prompt)?[ \t]*:",
+        # The second whitespace run only follows a comment or quote marker, so
+        # the two runs can never split one stretch of spaces between them
+        # (the earlier form backtracked quadratically on a long blank line).
+        r"^[ \t]*(?:(?:#|//|\*|-|>)[ \t]*)?(?:system|assistant)(?:\s+prompt)?[ \t]*:",
         "A line that begins as a system or assistant turn.",
         flags=re.MULTILINE,
     ),

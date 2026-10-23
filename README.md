@@ -59,6 +59,7 @@ in-memory draft for human review. The `AgentLoop` receives its sensor and
 planner through injected interfaces, so the loop can be composed with different
 adapters without changing its control rules.
 
+
 Diagrams:
 
 - `docs/architecture/l3-retrieval-pipeline.png`
@@ -89,7 +90,7 @@ are in `docs/ai-assistance credit/`.
 
 ```text
 src/                      application code (run with pytest.ini or PYTHONPATH=src)
-  agent/                  agent loop, stop conditions, task contract (YAML + loader + adapter)
+  agent/                  agent loop, stop conditions, task contract (YAML + loader + adapter), real sensor and planner, history guard
   config/                 environment settings loader
   ingestion/              corpus collection and provenance register
   integration/            MCP-style memory/state interface contract
@@ -182,6 +183,7 @@ Run these from the repository root with `PYTHONPATH=src python3 <script>`.
 | `scripts/member1_validation_smoke.py` | Parse, validate citations, dispatch | No |
 | `scripts/member1_stop_conditions_smoke.py` | The four stop conditions | No |
 | `scripts/member2_model_smoke.py` | One live `propose_action` model call (see its `--help`) | **Yes** |
+| `scripts/run_agent_session.py` | One agent session end to end with the real sensor and planner; offline stub by default, real model only with `--live` | Only with `--live` |
 | `scripts/member2_tool_dispatch_demo.py` | Four dispatcher scenarios | No |
 | `scripts/member2_observability_demo.py` | Three offline agent runs with step telemetry (`--no-write` avoids writing evidence) | No |
 | `scripts/member5_approval_demo.py` | Pending, approved once, approval consumed | No |

@@ -165,5 +165,54 @@ class ReadFileToolDispatcherIntegrationTests(unittest.TestCase):
         self.assertEqual(result.output, {"status": "not_found", "path": GHOST_PATH})
 
 
+BINARY_PATH = "logs/capture.bin"
+
+
+class NonTextFileTests(unittest.TestCase):
+    """Week 8 (F9): a registered file that is not UTF-8 text is a typed status."""
+
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        root = Path(self._tmp.name)
+        corpus_dir = root / "corpus"
+        (corpus_dir / "logs").mkdir(parents=True)
+        # Bytes that are not valid UTF-8: a lone continuation byte and 0xFF.
+        (corpus_dir / "logs" / "capture.bin").write_bytes(b"\x89PNG\r\n\x1a\n\xff\xfe\x80")
+        register_path = root / "source-register.json"
+        register_path.write_text(
+            json.dumps({"documents": [{"source_path": BINARY_PATH, "doc_type": "log"}]}),
+            encoding="utf-8",
+        )
+        self.tool = ReadFileTool(register_path=register_path, corpus_dir=corpus_dir)
+
+    def test_a_binary_file_returns_not_text_and_no_content(self) -> None:
+        arguments = self.tool.validate_arguments({"path": BINARY_PATH})
+        output = self.tool.validate_output(self.tool.run(arguments, CONTEXT))
+
+        self.assertEqual(output, {"status": "not_text", "path": BINARY_PATH})
+
+    def test_through_the_dispatcher_it_executes_instead_of_failing(self) -> None:
+        dispatcher = ToolDispatcher(ToolRegistry([self.tool]))
+        proposal = ProposalSet(
+            action=Action.READ_FILE,
+            arguments={"path": BINARY_PATH},
+            rationale="Read the captured log.",
+            evidence=(EvidenceRef(source_path=BINARY_PATH),),
+            confidence=Confidence.HIGH,
+        )
+
+        result = dispatcher.dispatch(proposal, context=CONTEXT)
+
+        self.assertIs(result.status, DispatchStatus.EXECUTED)
+        self.assertEqual(result.output, {"status": "not_text", "path": BINARY_PATH})
+
+    def test_not_text_with_content_is_rejected_by_validate_output(self) -> None:
+        output = self.tool.validate_output(
+            {"status": "not_text", "path": BINARY_PATH, "content": "leak"}
+        )
+        self.assertNotIn("content", output)
+
+
 if __name__ == "__main__":
     unittest.main()

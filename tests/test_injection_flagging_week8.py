@@ -10,6 +10,7 @@ Invisible characters are written only as escapes, never typed literally.
 
 from __future__ import annotations
 
+import time
 import unittest
 
 from rag.injection_flagging import CATEGORIES, RULES, flag_text
@@ -207,6 +208,23 @@ class RecallRegressionTests(unittest.TestCase):
 
         self.assertGreaterEqual(recall, WEEK7_OVERALL_RECALL)
         self.assertLessEqual(false_positives, len(KNOWN_FALSE_POSITIVES))
+
+
+class LongInputTimingTests(unittest.TestCase):
+    """Week 8 (F1): a rule must stay linear on long hostile input."""
+
+    def test_rm2_finishes_quickly_on_a_long_line_of_spaces(self) -> None:
+        # Before the fix the two adjacent [ \t]* runs backtracked against each
+        # other: over 40 s on this input.
+        rule = next(r for r in RULES if r.rule_id == "RM-2")
+        text = " " * 200_000
+
+        start = time.perf_counter()
+        matches = list(rule.pattern.finditer(text))
+        elapsed = time.perf_counter() - start
+
+        self.assertEqual(matches, [])
+        self.assertLess(elapsed, 1.0)
 
 
 if __name__ == "__main__":
