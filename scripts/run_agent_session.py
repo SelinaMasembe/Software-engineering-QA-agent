@@ -41,6 +41,7 @@ from agent.runner import build_agent_session  # noqa: E402
 from agent.sensor import RetrievalContextSensor  # noqa: E402
 from agent.task_contract import load_task_contract  # noqa: E402
 from models.client import ModelCallResult, ModelIntegrationError, TokenUsage  # noqa: E402
+from observability import RunLogger  # noqa: E402
 from orchestrator import ToolDispatcher, ToolRegistry  # noqa: E402
 from rag.injection_flagging import TRACE_ACTION  # noqa: E402
 from rag.retrieval import build_retrieval_pipeline, load_documents_from_directory  # noqa: E402
@@ -76,10 +77,19 @@ class OfflineClient:
 
 
 class MemorySink:
-    def __init__(self) -> None:
+    """Keeps the trace in memory; with ``also`` (a RunLogger) it is saved too.
+
+    A RunLogger write failure is raised, so the loop fails closed rather than
+    acting without an audit trail.
+    """
+
+    def __init__(self, also: Any = None) -> None:
         self.entries: list[Any] = []
+        self.also = also
 
     def record(self, entry: Any) -> None:
+        if self.also is not None:
+            self.also.record(entry)
         self.entries.append(entry)
 
 
@@ -147,13 +157,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--live", action="store_true",
                         help="Use the real configured model. Without it nothing is sent.")
     parser.add_argument("--out", type=Path, default=None, help="Optional JSON summary file.")
+    parser.add_argument("--trace-dir", type=Path, default=None,
+                        help="Also save the full run log (one .jsonl per run) here, "
+                             "e.g. evidence/traces/runs.")
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     goal = args.goal or load_task_contract().goal
-    sink = MemorySink()
+    sink = MemorySink(also=RunLogger(args.trace_dir) if args.trace_dir else None)
     try:
         session, planner = build_session(goal, args.corpus, live=args.live, sink=sink)
     except ModelIntegrationError as exc:
@@ -174,6 +187,8 @@ def main(argv: list[str] | None = None) -> int:
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(json.dumps(summary, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
         print(f"  summary written to {args.out}")
+    if args.trace_dir is not None:
+        print(f"  run log saved in {args.trace_dir}")
     return 0 if result.status.value in ("completed", "no_action") else 1
 
 

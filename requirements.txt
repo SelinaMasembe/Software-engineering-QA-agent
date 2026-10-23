@@ -1,4 +1,6 @@
-certifi    #required by client.py for SSL certificate verification
-pytest     #required for running tests
-python-docx    #required for reading .docx files
-pyyaml    #required for parsing src/agent/task_contract.yaml
+# Pinned to the versions the final release was tested with (Week 8), so every
+# machine and the CI job install exactly the same thing.
+certifi==2026.7.22      # SSL certificate verification for src/models/client.py
+pytest==9.1.1           # test runner (also used inside the test sandbox)
+python-docx==1.2.0      # reading .docx sources in src/ingestion/tag_provenance.py
+PyYAML==6.0.3           # parsing src/agent/task_contract.yaml

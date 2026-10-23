@@ -1,6 +1,6 @@
 # Week 7 Scenario Results
 
-Generated 2026-10-22T12:41:04.413098+00:00 at commit `e5e73f6` by `tests/run_scenarios.py` (Member 5). Model: none: scripted planner and scripted prompt responses (offline).
+Generated 2026-10-23T11:57:35.377201+00:00 at commit `138c521` by `tests/run_scenarios.py` (Member 5). Model: none: scripted planner and scripted prompt responses (offline).
 
 ## Summary
 
@@ -10,10 +10,10 @@ Generated 2026-10-22T12:41:04.413098+00:00 at commit `e5e73f6` by `tests/run_sce
 
 | Suite | Owner | Scenarios | PASS | PARTIAL | FAIL | As expected | Time (ms) |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| behaviour | Member 3 (Week 7) | 30 | 29 | 1 | 0 | 30 | 1641 |
-| prompt | Member 4 (Week 2) | 10 | 8 | 0 | 2 | 10 | 8 |
-| rag | Member 4 (Week 3) | 15 | 11 | 4 | 0 | 15 | 5 |
-| failure_retest | Member 4 (Week 7) | 6 | 6 | 0 | 0 | 6 | 1217 |
+| behaviour | Member 3 (Week 7) | 30 | 29 | 1 | 0 | 30 | 1298 |
+| prompt | Member 4 (Week 2) | 10 | 8 | 0 | 2 | 10 | 4 |
+| rag | Member 4 (Week 3) | 15 | 11 | 4 | 0 | 15 | 3 |
+| failure_retest | Member 4 (Weeks 7-8) | 6 | 6 | 0 | 0 | 6 | 373 |
 
 ## By brief category
 

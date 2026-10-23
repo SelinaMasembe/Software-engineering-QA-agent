@@ -34,6 +34,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+from pathlib import Path
 import tempfile
 import threading
 import time
@@ -59,6 +60,11 @@ class RequestState(str, Enum):
     APPROVED = "approved"
     DENIED = "denied"
     EXPIRED = "expired"
+
+
+#: Default runtime folder: the repository's own ``data/`` (git-ignored), so the
+#: agent and ``scripts/approve_cli.py`` share one queue whatever folder they run from.
+DEFAULT_DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 
 
 @dataclass
@@ -112,7 +118,8 @@ class SelfApprovalError(UnauthorizedApprover):
 class JSONApprovalStore:
     """JSON file of approval requests, shared between processes."""
 
-    def __init__(self, path: str = "data/approval_queue.json") -> None:
+    def __init__(self, path: str | Path | None = None) -> None:
+        path = str(DEFAULT_DATA_DIR / "approval_queue.json" if path is None else path)
         self.path = path
         self.lock_path = f"{path}.lock"
         self._thread_lock = threading.Lock()
@@ -197,7 +204,8 @@ class JSONApprovalStore:
 
 
 class AuditLogger:
-    def __init__(self, path: str = "data/audit.log") -> None:
+    def __init__(self, path: str | Path | None = None) -> None:
+        path = str(DEFAULT_DATA_DIR / "audit.log" if path is None else path)
         self.path = path
         self._lock = threading.Lock()
         os.makedirs(os.path.dirname(path) or ".", exist_ok=True)

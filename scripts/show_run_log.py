@@ -18,10 +18,10 @@ SRC_DIR = REPO_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from observability import RunLogger, format_run, load_index, load_run  # noqa: E402
+from observability import format_run, load_index, load_run, resolve_run_log_dir  # noqa: E402
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("file", nargs="?", help="a run file to print")
     parser.add_argument("--last", action="store_true", help="print the newest run")
@@ -29,11 +29,18 @@ def main() -> int:
         "--dir",
         help="run log directory (default: QA_AGENT_TRACE_DIR or evidence/traces/runs)",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
-    directory = RunLogger(args.dir).directory
+    # Reading must never create the folder, so resolve it without RunLogger.
+    directory = resolve_run_log_dir(args.dir)
     if args.file:
-        print(format_run(load_run(args.file)))
+        path = Path(args.file)
+        if not path.exists() and (directory / path).exists():
+            path = directory / path  # accept a name exactly as the listing prints it
+        if not path.exists():
+            print(f"No run file at {args.file}.", file=sys.stderr)
+            return 1
+        print(format_run(load_run(path)))
         return 0
 
     runs = load_index(directory)
