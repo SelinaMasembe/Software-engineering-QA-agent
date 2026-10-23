@@ -4,16 +4,16 @@ An AI-native QA assistant for a software team, built by Group J for BSE4104
 Emerging Trends in Software Engineering (Makerere University, 2026/2027).
 
 The agent reads team-owned requirements, source code and test logs, proposes
-grounded tests, runs only human-approved tests in a sandbox, and drafts
-failure notes for human review. The model interprets and proposes;
-deterministic code and people control permissions, validation, execution and
-anything with side effects.
+grounded tests, runs only human-approved manifest-listed tests in a controlled
+subprocess, and drafts failure notes for human review. The model interprets and
+proposes; deterministic code and people control permissions, validation,
+execution and anything with side effects.
 
 ```text
 requirements / code / logs
   -> retrieve evidence (RAG) -> model proposes ONE next action
   -> citation check -> dispatcher (role + arguments) -> human approval
-  -> sandboxed tool -> observe -> repeat or stop -> draft for human review
+  -> approved test subprocess -> observe -> repeat or stop -> draft for human review
 ```
 
 ## Safety Boundaries
@@ -31,7 +31,9 @@ How these are enforced in code:
 - **Citation validation:** every proposal must cite a source it was actually given.
 - **Fixed tool registry with role checks.**
 - **Human approval gate** for `run_tests` and `draft_issue`.
-- **Sandbox:** tests run with a stripped environment and a timeout.
+- **Test execution:** one allow-listed pytest node runs in a subprocess with a
+  stripped environment and timeout. This does not isolate filesystem or network
+  access, so only reviewed, trusted test code should be run.
 - **Bounded agent loop:** an iteration cap, a time budget, repeat detection and a no-progress check.
 - **Run log:** every run is saved to `evidence/traces/runs/`.
 - **Pre-commit secret scanner.**
@@ -42,14 +44,21 @@ How these are enforced in code:
 | ----------------- | ---------------------------------------------------------- | ------------------------------------------------------------------- |
 | 1. Corpus         | Curated, provenance-tagged documents                       | `src/ingestion/tag_provenance.py`, `knowledge/`                     |
 | 2. Retrieval      | Boundary-aware chunks, local BM25, `not_in_corpus` decision | `src/rag/chunking.py`, `retriever.py`, `retrieval.py`               |
-| 3. Context        | Evidence block plus the sources it is safe to cite; the real sensor retrieves and builds it each turn and traces its flags | `src/rag/context_builder.py`, `src/agent/sensor.py` |
-| 4. Planning       | Model proposes one action with the current `propose_action` prompt; earlier tool output is guarded before it is shown | `src/agent/planner.py`, `src/agent/history_guard.py`, `src/models/client.py`, `docs/prompts/propose_action/` |
+| 3. Context        | Evidence block; credential redaction, delimiter neutralisation, and injection flags | `src/rag/context_builder.py`, `src/rag/credential_scan.py`, `src/rag/injection_flagging.py` |
+| 4. Planning       | Model proposes one action (`propose_action` v1.3)          | `src/models/client.py`, `docs/prompts/propose_action/`              |
 | 5. Validation     | Reject untraceable or fabricated citations                 | `src/orchestrator/validation.py`                                    |
 | 6. Dispatch       | Registry, role and argument checks, approval, output limits | `src/orchestrator/router.py`, `src/orchestrator/approval_gate.py`   |
 | 7. Tools          | `search_repo`, `read_file`, `run_tests`, `draft_issue`     | `src/tools/`, `src/sandbox/executor.py`                             |
-| 8. Agent loop     | Sense, plan, validate, act, observe, stop or pause; `build_agent_session` wires the real sensor and planner | `src/agent/loop.py`, `runner.py`, `stop_conditions.py`, `task_contract.yaml` |
-| 9. Observability  | Every run saved as JSON Lines evidence; step telemetry (model, retrieval, tools, timing) | `src/observability/run_logger.py`, `telemetry.py`, `instrumentation.py` |
-| 10. Memory        | Per-module record of proposed, run and human-rejected tests; session state | `src/memory/`, `src/integration/mcp_interface.py`        |
+| 8. Agent loop     | Sense, plan, validate, act, observe, stop or pause         | `src/agent/loop.py`, `src/agent/stop_conditions.py`, `src/agent/task_contract.yaml` |
+| 9. Observability  | Run traces and metadata-only step telemetry for model, retrieval, tools, timing and outcomes | `src/observability/run_logger.py`, `telemetry.py`, `instrumentation.py` |
+| 10. Memory        | SQLite-backed per-module proposal memory and session state, exposed through a bounded capability interface | `src/memory/`, `src/integration/mcp_interface.py` |
+
+The repository exposes Python interfaces and command-line scripts; it does not
+include a web UI or a GitHub posting client. `draft_issue` creates an
+in-memory draft for human review. The `AgentLoop` receives its sensor and
+planner through injected interfaces, so the loop can be composed with different
+adapters without changing its control rules.
+
 
 Diagrams:
 
@@ -72,7 +81,7 @@ M4 Quality/Security, M5 DevOps/Documentation.
 | 5 | Bounded agent | Stop conditions and charter audit (M1); agent loop (M2); agent task contract (M3); stop-condition tests and three execution traces (M4); run logger saving every run (M5) | `src/agent/`, `src/observability/`, `evidence/traces/` |
 | 6 | Memory, state, interoperability | Memory description audit and record schema (M1); session state model, SQLite memory store and MCP-style interface (M2); memory API, design note and prompt v1.2 (M3); memory-cannot-bypass-approval guard tests (M4); retention job, human clear command and proposal-rejection path (M5). Retention: kept until a human clears it | `src/memory/`, `src/integration/`, `docs/integration/week6-member2-mcp-interface.md`, `docs/requirements/week6/` |
 | 7 | Evaluation, observability, guardrails | Scenario-to-story traceability (M1); step telemetry and instrumentation (M2); evaluation criteria, 30 adversarial/behaviour cases, scorer, evidence-wrapper and injection-flagging guardrails (M3); Failure Catalogue and automatic re-tests (M4); one runner for all 60 scenarios with combined results (M5) | `tests/run_scenarios.py`, `src/evaluation/`, `tests/adversarial/`, `docs/evaluation/week7-failure-catalogue.md`, `evidence/evaluation/` |
-| 8 | Final integration and presentation | Upcoming | |
+| 8 | Hardening, final release and demonstration | Tagged release `v1.0.0`, release run instructions and final report Section 3, System Architecture (M2); injection and credential flags recorded in the agent trace (F06), refreshed 61-scenario evidence and final report Section 8 (M4); remaining Week 8 work is listed here as it merges | `docs/integration/week8-member2-system-architecture.md`, `docs/architecture/QA_Agent_Architecture_Week1.docx`, `docs/evaluation/final-report-section8-evaluation-guardrails.md`, `evidence/evaluation/` |
 
 Weekly progress reports are in `docs/weekly reports/`. AI-assistance records
 are in `docs/ai-assistance credit/`.
@@ -92,7 +101,7 @@ src/                      application code (run with pytest.ini or PYTHONPATH=sr
   orchestrator/           tool dispatcher, citation validation, approval gate
   prompts/                versioned prompt loader
   rag/                    chunking, retrieval, context builder, baseline pipeline
-  sandbox/                sandboxed pytest executor
+  sandbox/                allow-listed pytest subprocess executor
   tools/                  search_repo, read_file, run_tests, draft_issue
 scripts/                  smoke tests, demos, approval CLI, secret scanner, docx generators
 tests/                    unit tests; tests/integration/ end-to-end tests; tests/fixtures/
@@ -115,6 +124,25 @@ python3 -m pip install -r requirements.txt
 git config core.hooksPath .githooks        # enable the secret scanner once per clone
 ```
 
+## Run the Tagged Release
+
+After cloning the repository, check out the release tag and install its
+dependencies from the repository root:
+
+```bash
+git checkout v1.0.0
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -r requirements.txt
+python3 -m pytest -q
+python3 scripts/member2_observability_demo.py --no-write
+```
+
+The test suite and observability demonstration run offline and do not require
+model credentials. `--no-write` keeps the demonstration from adding telemetry
+files to the checkout. The demo uses fixture documents and a deterministic
+stand-in model; it is a reproducible smoke check, not a live provider test.
+
 For live model calls, create a local `.env` from the template and load it:
 
 ```bash
@@ -126,7 +154,7 @@ set -a; source .env; set +a
 
 ```bash
 python3 -m pytest -q                        # full offline suite (pytest.ini sets paths)
-python3 tests/run_scenarios.py              # all 60 evaluation scenarios, writes evidence/evaluation/
+python3 tests/run_scenarios.py              # all 61 evaluation scenarios, writes evidence/evaluation/
 python3 scripts/check_sensitive.py --all    # secret / personal-data scan, must exit 0
 ```
 
@@ -157,6 +185,7 @@ Run these from the repository root with `PYTHONPATH=src python3 <script>`.
 | `scripts/member2_model_smoke.py` | One live `propose_action` model call (see its `--help`) | **Yes** |
 | `scripts/run_agent_session.py` | One agent session end to end with the real sensor and planner; offline stub by default, real model only with `--live` | Only with `--live` |
 | `scripts/member2_tool_dispatch_demo.py` | Four dispatcher scenarios | No |
+| `scripts/member2_observability_demo.py` | Three offline agent runs with step telemetry (`--no-write` avoids writing evidence) | No |
 | `scripts/member5_approval_demo.py` | Pending, approved once, approval consumed | No |
 | `scripts/member5_run_log_demo.py` | Three saved runs, including a human approval pause and resume | No |
 | `scripts/show_run_log.py` | Lists saved runs or prints one as a timeline (`--last`) | No |
