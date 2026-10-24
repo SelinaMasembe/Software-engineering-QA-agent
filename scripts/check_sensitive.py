@@ -10,7 +10,7 @@ False positives:
     - Add `pragma: allowlist secret` to the offending line.
     - Or add a glob to .sensitive-scan-ignore (one per line, # for comments).
 
-Exit code 1 blocks the commit.
+Exit code 1 blocks the commit. Exit code 2: a named file does not exist (nothing scanned).
 """
 from __future__ import annotations
 
@@ -232,7 +232,7 @@ def is_ignored(path: str, patterns: list[str]) -> bool:
 
 def read_blob(path: str, root: Path, from_index: bool) -> Optional[bytes]:
     try:
-        data = git("show", f":{path}") if from_index else (root / path).read_bytes()
+        data = git("show", f":{path}") if from_index else (root / path).read_bytes()  # absolute paths ignore root
     except (subprocess.CalledProcessError, OSError):
         return None
     return data
@@ -259,7 +259,25 @@ def main(argv: Optional[list[str]] = None) -> int:
     ignores = load_ignores(root)
 
     if args.files:
-        paths, from_index = args.files, False
+        # Resolve explicit files from the current folder (as a shell user
+        # expects) and refuse to "pass" a file that was never scanned.
+        paths, missing = [], []
+        for name in args.files:
+            candidate = Path(name)
+            if not candidate.is_absolute():
+                candidate = Path.cwd() / candidate
+            if not candidate.is_file():
+                missing.append(name)
+                continue
+            try:
+                paths.append(str(candidate.resolve().relative_to(root.resolve())))
+            except ValueError:
+                paths.append(str(candidate.resolve()))
+        if missing:
+            for name in missing:
+                print(f"check_sensitive: file not found, not scanned: {name}", file=sys.stderr)
+            return 2
+        from_index = False
     elif args.all:
         paths, from_index = tracked_files(), False
     else:

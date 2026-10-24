@@ -11,7 +11,7 @@ Usage (from the repository root):
     PYTHONPATH=src python3 scripts/approve_cli.py reject-proposal src/auth/login.py PROPOSAL_KEY \\
         --by qa-lead --reason "duplicates an existing test"
 
-QA_AGENT_DATA_DIR (default: data) must match the agent process, because both
+QA_AGENT_DATA_DIR (default: the repository's data/ folder) must match the agent process, because both
 read and write the same approval_queue.json. QA_AGENT_MEMORY_PATH (default:
 data/memory.sqlite3) is the memory database the agent reads.
 
@@ -32,6 +32,7 @@ from memory.api import MemoryRecordError, ProposalMemory, UnknownProposalError
 from memory.retention import MEMORY_EXPIRES_AFTER, resolve_memory_path, validate_handle
 from memory.store import MemoryStore, StoreConflictError
 from orchestrator.approval_gate import (
+    DEFAULT_DATA_DIR,
     ApprovalStoreError,
     AuditLogger,
     JSONApprovalGate,
@@ -42,7 +43,8 @@ from orchestrator.approval_gate import (
 
 
 def build_gate() -> JSONApprovalGate:
-    data_dir = os.environ.get("QA_AGENT_DATA_DIR", "data")
+    # Repo-rooted default, so running from any folder uses the same queue.
+    data_dir = os.environ.get("QA_AGENT_DATA_DIR") or str(DEFAULT_DATA_DIR)
     approvers = {
         value.strip()
         for value in os.environ.get("QA_AGENT_APPROVERS", "").split(",")

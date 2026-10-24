@@ -85,5 +85,53 @@ class ModelConfigurationTests(unittest.TestCase):
         self.assertEqual(client.api_key, "test-key-never-log")
 
 
+BASE = {
+    "MODEL_ENDPOINT": "https://provider.example/v1/chat/completions",
+    "MODEL_API_KEY": "test-key-never-log",
+    "MODEL_NAME": "test-model",
+}
+
+
+class Week8HardeningTests(unittest.TestCase):
+    """Week 8 (Member 5): infrastructure fixes found in the final QA review."""
+
+    def load(self, **overrides: str):
+        with patch.dict(os.environ, {**BASE, **overrides}, clear=True):
+            return load_model_settings()
+
+    def test_printing_settings_never_shows_the_api_key(self) -> None:
+        settings = self.load()
+        self.assertNotIn("test-key-never-log", repr(settings))
+        self.assertNotIn("test-key-never-log", str(settings))
+        self.assertEqual(settings.api_key, "test-key-never-log")
+
+    def test_rejects_nan_infinite_and_absurd_timeouts(self) -> None:
+        for value in ("nan", "inf", "-inf", "1e9", "0", "-5"):
+            with self.subTest(value=value):
+                with self.assertRaises(ModelConfigurationError):
+                    self.load(MODEL_TIMEOUT_SECONDS=value)
+
+    def test_rejects_absurd_max_tokens(self) -> None:
+        with self.assertRaisesRegex(ModelConfigurationError, "MODEL_MAX_TOKENS"):
+            self.load(MODEL_MAX_TOKENS="999999999")
+
+    def test_blank_optional_values_use_their_defaults(self) -> None:
+        settings = self.load(MODEL_TIMEOUT_SECONDS="", MODEL_MAX_TOKENS="  ", MODEL_JSON_MODE="")
+        self.assertEqual(settings.timeout_seconds, 30.0)
+        self.assertEqual(settings.max_tokens, 1200)
+        self.assertTrue(settings.json_mode)
+
+    def test_rejects_endpoint_with_spaces_or_embedded_credentials(self) -> None:
+        for url in (
+            "https://provider.example/v1/a b",
+            "https://user:secret@provider.example/v1/chat/completions",
+            "https://user@provider.example/v1/chat/completions",
+        ):
+            with self.subTest(url=url):
+                with self.assertRaises(ModelConfigurationError) as caught:
+                    self.load(MODEL_ENDPOINT=url)
+                self.assertNotIn("secret", str(caught.exception))
+
+
 if __name__ == "__main__":
     unittest.main()

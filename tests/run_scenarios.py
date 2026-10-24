@@ -246,7 +246,7 @@ def run_failure_retest_suite() -> SuiteRun:
 
     import test_failure_retest as retest
 
-    run = SuiteRun("failure_retest", "Member 4 (Week 7)")
+    run = SuiteRun("failure_retest", "Member 4 (Weeks 7-8)")
     for case_id, case in retest.CASES.items():
         started = time.perf_counter()
         probe = retest.run_probe(case_id)
