@@ -144,6 +144,10 @@ def summarize(result: Any, planner: PromptPlanner, sink: MemorySink, *, live: bo
         "iterations": result.iterations,
         "final_action": None if proposal is None else proposal.action.value,
         "cited_paths": [] if proposal is None else [ref.source_path for ref in proposal.evidence],
+        # The full final proposal (the test itself for propose_test): action,
+        # arguments, rationale, evidence with notes and confidence. It is the
+        # model's parsed reply, so it never holds the key or any header.
+        "proposal": None if proposal is None else proposal.to_dict(),
         "flag_entries": [e.detail for e in sink.entries if e.action == TRACE_ACTION],
         "trace_actions": [e.action for e in sink.entries],
     }
@@ -183,6 +187,10 @@ def main(argv: list[str] | None = None) -> int:
     for key in ("status", "failure", "planner_failure", "iterations", "final_action", "cited_paths"):
         print(f"  {key}: {summary[key]}")
     print(f"  flag entries traced: {len(summary['flag_entries'])}")
+    if summary["proposal"] is not None:
+        print("PROPOSAL")
+        for line in json.dumps(summary["proposal"], indent=2, ensure_ascii=True).splitlines():
+            print(f"  {line}")
     if args.out is not None:
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(json.dumps(summary, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
