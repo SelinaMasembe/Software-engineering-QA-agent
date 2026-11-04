@@ -208,6 +208,28 @@ class ScriptDryRunTests(unittest.TestCase):
         self.assertIn("live: off", printed)
         self.assertIn("status: completed", printed)
 
+    def test_the_final_proposal_is_printed_and_saved(self) -> None:
+        script = load_script()
+        with tempfile.TemporaryDirectory() as tmp:
+            out_file = Path(tmp) / "summary.json"
+            printed = io.StringIO()
+            with contextlib.redirect_stdout(printed):
+                code = script.main(["--goal", LOCKOUT_GOAL, "--out", str(out_file)])
+            saved = json.loads(out_file.read_text(encoding="utf-8"))
+
+        self.assertEqual(code, 0)
+        self.assertIn("PROPOSAL", printed.getvalue())
+        self.assertIn("offline stub proposal", printed.getvalue())
+        proposal = saved["proposal"]
+        self.assertEqual(proposal["action"], "propose_test")
+        self.assertEqual(proposal["arguments"], {"title": "offline stub proposal"})
+        self.assertEqual(proposal["confidence"], "low")
+        self.assertEqual(
+            [e["source_path"] for e in proposal["evidence"]],
+            ["requirements/authentication.md", "src/login_service.py"],
+        )
+        self.assertIn("rationale", proposal)
+
     def test_the_live_flag_is_required_for_a_real_client(self) -> None:
         script = load_script()
         built = []
